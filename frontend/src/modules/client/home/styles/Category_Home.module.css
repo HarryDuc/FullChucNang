@@ -1,0 +1,19 @@
+.itemLink {
+    display: flex;
+    align-items: center;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    transition: background-color 0.3s;
+    text-decoration: none;
+}
+
+.itemLink:hover {
+    background-color: #f9fafb;
+}
+
+@media (max-width: 1500px) {
+    .itemLink {
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+}

@@ -1,0 +1,28 @@
+/* src/styles/form.css */
+input.input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+input.input:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+button.btn-primary {
+    padding: 10px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button.btn-primary:disabled {
+    background-color: #ddd;
+    cursor: not-allowed;
+}
