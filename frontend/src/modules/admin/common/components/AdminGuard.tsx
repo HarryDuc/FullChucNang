@@ -1,83 +1,113 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { ReactNode } from "react";
 import { toast } from "react-hot-toast";
-
 interface AdminGuardProps {
   children: ReactNode;
 }
-
-// Map routes to required permissions
-const routePermissions: Record<string, { resource: string; action: string }> = {
-  "/admin/products": { resource: "products", action: "read" },
-  "/admin/users": { resource: "users", action: "read" },
-  "/admin/orders": { resource: "orders", action: "read" },
-  "/admin/categories-product": {
-    resource: "categories-product",
-    action: "read",
-  },
-  "/admin/categories-post": { resource: "categories-post", action: "read" },
-  "/admin/posts": { resource: "posts", action: "read" },
-  "/admin/banner": { resource: "banner", action: "read" },
-  "/admin/contact": { resource: "contact", action: "read" },
-  "/admin/create-page": { resource: "create-page", action: "read" },
-  "/admin/info-website": { resource: "info-website", action: "read" },
-  "/admin/media": { resource: "media", action: "read" },
-  "/admin/permission": { resource: "permissions", action: "read" },
-  "/admin/scripts": { resource: "scripts", action: "read" },
-  "/admin/voucher": { resource: "vouchers", action: "read" },
-  "/admin/vietqr-config": { resource: "vietqr", action: "read" },
-};
 
 const AdminGuard = ({ children }: AdminGuardProps) => {
   const {
     isAuthenticated,
     hasAdminAccess,
     hasPermission,
+    hasPathPermission,
     isLoadingPermissions,
+    user,
+    verifyToken,
   } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [isChecking, setIsChecking] = useState(true);
+  const [checkAttempts, setCheckAttempts] = useState(0);
 
   useEffect(() => {
-    const checkAccess = () => {
+    // Phát hiện token trong localStorage và đảm bảo người dùng đã được xác thực
+    const ensureAuthenticated = async () => {
+      const token = localStorage.getItem("token");
+      if (token && !isAuthenticated && checkAttempts < 3) {
+        console.log(
+          "🔄 Token found but not authenticated, trying to verify token..."
+        );
+        await verifyToken(token);
+        setCheckAttempts((prev) => prev + 1);
+      }
+    };
+
+    ensureAuthenticated();
+  }, [isAuthenticated, verifyToken, checkAttempts]);
+
+  useEffect(() => {
+    const checkAccess = async () => {
+      setIsChecking(true);
+
       // Nếu đang load permissions thì chờ
-      if (isLoadingPermissions) return;
+      if (isLoadingPermissions) {
+        console.log("⏳ Still loading permissions, waiting...");
+        return;
+      }
+
+      // Kiểm tra xem có token trong localStorage không
+      const hasToken = !!localStorage.getItem("token");
+
+      console.log("🔒 AdminGuard checking access with data:", {
+        isAuthenticated,
+        hasToken,
+        hasAdminRole: user?.role === "admin",
+        userRole: user?.role,
+        permissionCount: user?.permissions?.length || 0,
+        pathname,
+      });
 
       // Nếu chưa đăng nhập, chuyển về login
-      if (!isAuthenticated || !hasAdminAccess()) {
+      if (!isAuthenticated) {
+        if (hasToken && checkAttempts < 3) {
+          console.log(
+            "⚠️ Has token but not authenticated, waiting for auth state to update..."
+          );
+          return; // Đợi cho xác thực hoàn tất ở useEffect trên
+        }
+
         console.log("🚫 User not authenticated");
         router.replace("/login");
         return;
       }
 
       // Nếu không có quyền admin/staff/manager, chuyển về login
-      // if (hasAdminAccess()) {
-      //   console.log("🚫 User has admin access");
-      //   router.replace("/admin");
-      //   return;
-      // }
-
-      // Kiểm tra quyền cụ thể cho route hiện tại
-      // Bỏ qua kiểm tra với trang /admin (dashboard)
-      if (pathname !== "/admin") {
-        const permission = routePermissions[pathname];
-        if (permission) {
-          const hasAccess = hasPermission(
-            permission.resource,
-            permission.action
-          );
-          if (!hasAccess) {
-            console.log(`🚫 User lacks permission for ${pathname}`);
-            toast.error("Bạn không có quyền truy cập trang này");
-            router.replace("/admin");
-            return;
-          }
-        }
+      if (!hasAdminAccess()) {
+        console.log("🚫 User has no admin access");
+        toast.error("Bạn không có quyền truy cập trang quản trị");
+        router.replace("/login");
+        return;
       }
+
+      // Nếu là trang dashboard, cho phép truy cập
+      if (pathname === "/admin") {
+        console.log("✅ Admin dashboard access granted");
+        setIsChecking(false);
+        return;
+      }
+
+      // Kiểm tra quyền truy cập dựa trên đường dẫn
+      const hasAccess = hasPathPermission(pathname);
+
+      console.log(
+        `🔍 Path permission check result for ${pathname}:`,
+        hasAccess
+      );
+
+      if (!hasAccess) {
+        console.log(`🚫 User lacks permission for path: ${pathname}`);
+        toast.error("Bạn không có quyền truy cập trang này");
+        router.replace("/admin");
+        return;
+      }
+
+      console.log("✅ Access check passed for:", pathname);
+      setIsChecking(false);
     };
 
     checkAccess();
@@ -85,16 +115,27 @@ const AdminGuard = ({ children }: AdminGuardProps) => {
     isAuthenticated,
     hasAdminAccess,
     hasPermission,
+    hasPathPermission,
     router,
     pathname,
     isLoadingPermissions,
+    user,
+    checkAttempts,
   ]);
 
   // Show loading spinner while checking permissions
-  if (isLoadingPermissions) {
+  if (isLoadingPermissions || isChecking) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
+      <div className="fixed inset-0 flex items-center justify-center bg-white bg-opacity-75 z-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900 mb-3"></div>
+          <p className="text-gray-600">Đang kiểm tra quyền truy cập...</p>
+          {checkAttempts > 0 && (
+            <p className="text-gray-500 text-sm mt-2">
+              Đang thử lại lần {checkAttempts}/3...
+            </p>
+          )}
+        </div>
       </div>
     );
   }
@@ -104,12 +145,14 @@ const AdminGuard = ({ children }: AdminGuardProps) => {
     return null;
   }
 
-  // If we're on a specific admin route, check for that route's permission
-  if (pathname !== "/admin") {
-    const permission = routePermissions[pathname];
-    if (permission && !hasPermission(permission.resource, permission.action)) {
-      return null;
-    }
+  // Nếu là trang dashboard, luôn hiển thị nội dung
+  if (pathname === "/admin") {
+    return <>{children}</>;
+  }
+
+  // Sử dụng hasPathPermission để kiểm tra quyền truy cập cho tất cả các đường dẫn khác
+  if (!hasPathPermission(pathname)) {
+    return null;
   }
 
   // If all checks pass, render children

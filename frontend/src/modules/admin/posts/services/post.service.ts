@@ -26,6 +26,13 @@ const fetchOptions = (method: string, data?: any) => ({
   body: data ? JSON.stringify(data) : undefined,
 });
 
+// 🔧 Hàm chuẩn hóa thumbnail thành mảng chuỗi (để backend luôn nhận được mảng)
+const normalizeThumbnail = (thumbnail: string | string[] | undefined): string[] => {
+  if (!thumbnail) return [];
+  if (Array.isArray(thumbnail)) return thumbnail;
+  return [thumbnail]; // Chuyển string thành array có 1 phần tử
+};
+
 // 📦 Service quản lý bài viết
 export const PostService = {
   /**
@@ -34,7 +41,13 @@ export const PostService = {
    * @returns Bài viết đã tạo
    */
   create: async (post: Partial<Post>): Promise<Post> => {
-    const response = await fetch(POST_API, fetchOptions("POST", post));
+    // Đảm bảo thumbnail luôn là mảng chuỗi trước khi gửi lên server
+    const postData = {
+      ...post,
+      thumbnail: normalizeThumbnail(post.thumbnail)
+    };
+
+    const response = await fetch(POST_API, fetchOptions("POST", postData));
     return handleResponse(response);
   },
 
@@ -64,9 +77,20 @@ export const PostService = {
    * @returns Bài viết đã cập nhật
    */
   update: async (slug: string, post: Partial<Post>): Promise<Post> => {
+    // Đảm bảo thumbnail luôn là mảng chuỗi trước khi gửi lên server
+    // Ghi log để debug
+    console.log('Update data before normalize:', JSON.stringify(post));
+
+    const postData = {
+      ...post,
+      thumbnail: normalizeThumbnail(post.thumbnail)
+    };
+
+    console.log('Update data after normalize:', JSON.stringify(postData));
+
     const response = await fetch(
       `${POST_API}/${slug}`,
-      fetchOptions("PATCH", post)
+      fetchOptions("PATCH", postData)
     );
     return handleResponse(response);
   },
@@ -93,7 +117,7 @@ export const PostService = {
   },
 
   /**
-   * 🖼️ Upload ảnh bài viết (cover, nội dung, etc.)
+   * ��️ Upload ảnh bài viết (cover, nội dung, etc.)
    * @param file File ảnh cần upload
    * @returns URL ảnh đã upload (relative path)
    */
@@ -103,6 +127,9 @@ export const PostService = {
 
     const response = await fetch(IMAGE_UPLOAD_API, {
       method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
       body: formData,
     });
 

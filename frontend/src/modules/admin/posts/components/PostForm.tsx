@@ -266,24 +266,31 @@ export const PostForm: React.FC<Props> = ({
 
     // Tạo payload để gửi lên server
     let payload: CreatePostDto | UpdatePostDto;
-    if (isEdit && initialData && 'id' in initialData) {
+    if (isEdit && initialData) {
+      // Ensure we have the ID for updates
+      const id =
+        "id" in initialData ? initialData.id : (initialData as any)?._id;
+
       payload = {
-        id: initialData.id,
+        id: id, // Ensure ID is set for updates
         title: title.trim(),
         excerpt: removeDomain(excerpt),
         postData: removeDomain(postData),
         author: user?.fullName || "Admin",
-        thumbnail: thumbnailUrls[0] || "",
+        thumbnail: thumbnailUrls[0] || "", // Use first element of array (string)
         publishedDate: publishedDateTime,
         category,
       };
+
+      // Log ID for debugging
+      console.log("Update payload ID:", id);
     } else {
       payload = {
         title: title.trim(),
         excerpt: removeDomain(excerpt),
         postData: removeDomain(postData),
         author: user?.fullName || "Admin",
-        thumbnail: thumbnailUrls[0] || "",
+        thumbnail: thumbnailUrls[0] || "", // Use first element of array (string)
         publishedDate: publishedDateTime,
         category,
       };
@@ -292,14 +299,17 @@ export const PostForm: React.FC<Props> = ({
     try {
       if (isEdit && (initialData as any)?.slug) {
         // Ensure payload is UpdatePostDto
-        if (!('id' in payload)) {
-          alert('❌ Dữ liệu cập nhật thiếu id!');
+        if (!("id" in payload) || !payload.id) {
+          const errorMsg = "❌ Dữ liệu cập nhật thiếu id!";
+          console.error(errorMsg, { payload, initialData });
+          alert(errorMsg);
           setIsSubmitting(false);
           return;
         }
+
         await updateMutation.mutateAsync({
           slug: (initialData as any).slug,
-          data: payload,
+          data: payload as UpdatePostDto,
         });
       } else {
         await createMutation.mutateAsync(payload);
@@ -573,8 +583,9 @@ export const PostForm: React.FC<Props> = ({
         </button>
         <button
           type="submit"
-          className={`px-4 py-2 ${isSubmitting ? "bg-blue-400" : "bg-blue-600"
-            } text-white rounded flex items-center justify-center min-w-[150px]`}
+          className={`px-4 py-2 ${
+            isSubmitting ? "bg-blue-400" : "bg-blue-600"
+          } text-white rounded flex items-center justify-center min-w-[150px]`}
           disabled={isSubmitting} // Vô hiệu hóa nút khi đang gửi
         >
           {isSubmitting ? (

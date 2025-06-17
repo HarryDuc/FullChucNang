@@ -15,16 +15,6 @@ export interface CreateBannerDto {
 
 export interface UpdateBannerDto extends Partial<CreateBannerDto> { }
 
-// Helper function to get auth headers
-const getAuthHeaders = () => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  return {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-};
-
 export const AdminBannerService = {
   /**
    * Lấy danh sách banner

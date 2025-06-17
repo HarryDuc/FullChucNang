@@ -38,6 +38,7 @@ interface AuthContextType {
   logout: () => void;
   hasAdminAccess: () => boolean;
   hasPermission: (resource: string, action: string) => boolean;
+  hasPathPermission: (path: string) => boolean;
   verifyToken: (storedToken?: string) => Promise<void>;
   fetchUserPermissions: () => Promise<Permission[]>;
   isLoadingPermissions: boolean;
@@ -84,7 +85,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       );
 
       if (permissions && Array.isArray(permissions)) {
-        // Update user with permissions from API
+        // Update user with permissions from API and ensure isAuthenticated is true
         setUser((prev) => {
           if (!prev) {
             // Nếu không có user, giải mã token để lấy thông tin cơ bản
@@ -94,6 +95,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 email: string;
                 role: UserRole;
               }>(currentToken);
+
+              // Ensure authenticated state is set
+              setIsAuthenticated(true);
+
               return {
                 id: decoded.userId,
                 email: decoded.email,
@@ -122,11 +127,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error) {
       console.error("❌ Error fetching permissions:", error);
+      // Only logout if the error is related to authentication
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        logout();
+      }
       return [];
     } finally {
       setIsLoadingPermissions(false);
     }
   }, [token]);
+
+  // Check authentication state on every render
+  useEffect(() => {
+    // Function to check if the stored token is still valid
+    const checkAuthState = () => {
+      const storedToken = localStorage.getItem("token");
+
+      if (storedToken && !isAuthenticated) {
+        console.log(
+          "🔄 Found token in storage but not authenticated, revalidating..."
+        );
+        verifyToken(storedToken);
+      } else if (!storedToken && isAuthenticated) {
+        console.log(
+          "⚠️ No token in storage but authenticated state is true, fixing state..."
+        );
+        setIsAuthenticated(false);
+        setUser(null);
+      }
+    };
+
+    // Run the check
+    checkAuthState();
+  }, [isAuthenticated]); // Only depend on isAuthenticated to avoid infinite loops
 
   // Setup effect to load token from localStorage on mount
   useEffect(() => {
@@ -339,7 +372,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return true;
     }
 
-    // Staff, manager, technical roles have predefined permissions
+    // For technical users with special exceptions
     if (
       user.role === "technical" &&
       resource !== "users" &&
@@ -349,6 +382,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return true;
     }
 
+    // For manager users with special exceptions
     if (
       user.role === "manager" &&
       !["users", "permissions"].includes(resource)
@@ -364,6 +398,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           permission.resource === resource && permission.action === action
       );
 
+      console.log(`Permission check for ${resource}:${action}:`, {
+        userHasPermission: hasSpecificPermission,
+        permissionsCount: user.permissions.length,
+        userPermissions: user.permissions
+          .map((p) => `${p.resource}:${p.action}`)
+          .slice(0, 5),
+        morePermissions:
+          user.permissions.length > 5
+            ? `...and ${user.permissions.length - 5} more`
+            : "",
+      });
+
       if (hasSpecificPermission) {
         console.log(`✅ User has specific permission: ${resource}:${action}`);
         return true;
@@ -377,6 +423,56 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  /**
+   * Check if user has permission based on path pattern
+   * @param path - Current path like "/admin/categories-post/create"
+   * @returns boolean indicating if user has permission
+   */
+  const hasPathPermission = (path: string): boolean => {
+    if (!user) return false;
+
+    // Admin dashboard always accessible
+    if (path === "/admin") return true;
+
+    // Admin role has access to everything
+    if (user.role === "admin") return true;
+
+    // Extract resource and action from path
+    const pathParts = path.split("/").filter(Boolean);
+
+    if (pathParts.length < 2 || pathParts[0] !== "admin") {
+      return false;
+    }
+
+    // Get resource from path (e.g., "categories-post" from "/admin/categories-post/create")
+    const resource = pathParts[1];
+
+    // Default action is "read"
+    let action = "read";
+
+    // Try to determine action from the path
+    if (pathParts.length > 2) {
+      const actionPath = pathParts[2];
+      if (actionPath === "create") action = "create";
+      else if (actionPath === "edit") action = "update";
+      else if (actionPath === "delete") action = "delete";
+    }
+
+    // Đường dẫn cụ thể có pattern: /admin/resource/edit/[id]
+    // Ví dụ: /admin/categories-post/edit/bai-viet-1
+    if (pathParts.length > 3 && pathParts[2] === "edit") {
+      action = "update";
+    }
+
+    console.log(`🔍 Path permission check for ${path}:`, {
+      derivedResource: resource,
+      derivedAction: action,
+      pathParts,
+    });
+
+    return hasPermission(resource, action);
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -388,6 +484,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         logout,
         hasAdminAccess,
         hasPermission,
+        hasPathPermission,
         fetchUserPermissions,
         isLoadingPermissions,
       }}
