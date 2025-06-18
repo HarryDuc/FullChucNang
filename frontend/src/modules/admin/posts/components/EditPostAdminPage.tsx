@@ -4,12 +4,12 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { usePostBySlug, usePosts } from "../hooks/usePosts";
-import { PostForm } from "./PostForm";
+import { usePostBySlug, usePosts } from "@/modules/admin/posts/hooks/usePosts";
+import PostForm from "@/modules/admin/posts/components/FormPost";
 import {
   CreatePostDto,
   UpdatePostDto,
-} from "../models/post.model";
+} from "@/modules/admin/posts/models/post.model";
 
 const EditPostPage = () => {
   const { slug } = useParams(); // 🧩 Lấy slug từ URL
@@ -21,16 +21,11 @@ const EditPostPage = () => {
     if (!slug) {
       router.push("/admin/posts");
     }
-  }, [slug]);
+  }, [slug, router]);
 
   // 📤 Hàm xử lý cập nhật bài viết
   const handleUpdate = (data: CreatePostDto | UpdatePostDto, slug?: string) => {
     if (!slug) return;
-    // Only allow UpdatePostDto for update
-    if (!('id' in data)) {
-      alert('❌ Dữ liệu cập nhật thiếu id!');
-      return;
-    }
     updateMutation.mutate(
       { slug, data },
       {

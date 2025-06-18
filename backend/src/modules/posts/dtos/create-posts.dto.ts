@@ -10,7 +10,7 @@ import {
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { PostStatus } from '../schemas/post.schema';
-import { safeTrim } from '../../../common/utils/safe-trim';
+// import { safeTrim } from '../../../common/utils/safe-trim';
 
 class PostMetaDto {
   @IsOptional()
@@ -48,28 +48,28 @@ class CategoryDto {
 
 export class CreatePostDto {
   // 📝 Nội dung chính
-  @Transform(({ value }) => safeTrim(value))
+  // @Transform(({ value }) => safeTrim(value))
   @IsString({ message: 'Tiêu đề không được để trống và phải là chuỗi.' })
-  title: string;
+  name: string;
 
   @IsOptional()
-  @Transform(({ value }) => safeTrim(value))
+  // @Transform(({ value }) => safeTrim(value))
   @IsString({ message: 'Slug phải là chuỗi.' })
   slug?: string;
 
   @IsOptional()
-  @Transform(({ value }) => safeTrim(value))
+  // @Transform(({ value }) => safeTrim(value))
   @IsString({ message: 'Mô tả ngắn phải là chuỗi.' })
   excerpt?: string;
 
   @IsOptional()
-  @Transform(({ value }) => safeTrim(value))
+  // @Transform(({ value }) => safeTrim(value))
   @IsString({ message: 'Nội dung bài viết phải là chuỗi.' })
   postData?: string;
 
   // 🎥 Media
   @IsOptional()
-  @Transform(({ value }) => safeTrim(value))
+  // @Transform(({ value }) => safeTrim(value))
   @IsString({ message: 'Video bìa phải là chuỗi.' })
   coverVideo?: string;
 
@@ -106,22 +106,22 @@ export class CreatePostDto {
 
   // 👤 Tác giả & kiểm duyệt
   @IsOptional()
-  @Transform(({ value }) => safeTrim(value))
+  // @Transform(({ value }) => safeTrim(value))
   @IsString({ message: 'Tác giả phải là chuỗi.' })
   author?: string;
 
   @IsOptional()
-  @Transform(({ value }) => safeTrim(value))
+  // @Transform(({ value }) => safeTrim(value))
   @IsString({ message: 'Người tạo phải là chuỗi.' })
   createdBy?: string;
 
   @IsOptional()
-  @Transform(({ value }) => safeTrim(value))
+  // @Transform(({ value }) => safeTrim(value))
   @IsString({ message: 'Người cập nhật phải là chuỗi.' })
   updatedBy?: string;
 
   @IsOptional()
-  @Transform(({ value }) => safeTrim(value))
+  // @Transform(({ value }) => safeTrim(value))
   @IsString({ message: 'Người duyệt phải là chuỗi.' })
   approvedBy?: string;
 

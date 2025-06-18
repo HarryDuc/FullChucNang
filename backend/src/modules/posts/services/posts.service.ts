@@ -17,13 +17,13 @@ export class PostService {
 
     @InjectModel(Post.name)
     private readonly postModel: Model<PostDocument>, // Dùng để tạo slug duy nhất
-  ) {}
+  ) { }
 
   /**
    * Tạo bài viết mới, tự động xử lý slug không dấu và tránh trùng lặp
    */
   async create(dto: CreatePostDto, user: { fullName?: string }) {
-    const rawSlug = dto.slug || dto.title;
+    const rawSlug = dto.slug || dto.name;
     const finalSlug = await generateUniqueSlug(rawSlug, this.postModel);
 
     dto.slug = finalSlug;
@@ -39,11 +39,20 @@ export class PostService {
     return this.postRepo.create(dto);
   }
 
-  /**
-   * Lấy danh sách tất cả bài viết chưa bị xóa
-   */
-  findAll() {
-    return this.postRepo.findAll();
+  async findAll(page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+    const [data, total] = await Promise.all([
+      this.postRepo.findAll(skip, limit),
+      this.postRepo.countAll(),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   /**
@@ -51,28 +60,6 @@ export class PostService {
    */
   findBySlug(slug: string) {
     return this.postRepo.findBySlug(slug);
-  }
-
-  /**
-   * Lấy bài viết theo name danh mục (main hoặc sub) có phân trang
-   */
-  async findByCategorySlugWithPagination(name: string, page = 1, limit = 10) {
-    const filter = {
-      isDeleted: false,
-      $or: [
-        { 'category.main': { $in: [name] } },
-        { 'category.sub': { $in: [name] } },
-      ],
-    };
-
-    const skip = (page - 1) * limit;
-
-    const [data, total] = await Promise.all([
-      this.postRepo.findManyByFilter(filter, skip, limit),
-      this.postRepo.countByFilter(filter),
-    ]);
-
-    return { data, total };
   }
 
   /**
@@ -104,5 +91,21 @@ export class PostService {
    */
   async hardDelete(slug: string) {
     return this.postRepo.hardDelete(slug);
+  }
+
+  async search(name: string, page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+    const [data, total] = await Promise.all([
+      this.postRepo.searchByName(name, skip, limit),
+      this.postRepo.countSearchByName(name),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 }

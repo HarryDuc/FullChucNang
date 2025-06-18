@@ -1,9 +1,10 @@
 // src/modules/posts/components/PostList.tsx
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { usePosts } from "@/modules/admin/posts/hooks/usePosts";
-import { Post } from "../models/post.model";
+import { Post } from "@/modules/admin/posts/models/post.model";
+import SearchProducts from "./SearchProducts";
 
 /**
  * Hàm định dạng ngày giờ từ chuỗi ISO thành định dạng hiển thị
@@ -38,18 +39,34 @@ const formatDateTime = (
 };
 
 const PostList: React.FC = () => {
-  const { postsQuery, hardDeleteMutation } = usePosts();
+  const {
+    postsQuery,
+    hardDeleteMutation,
+    page,
+    setPage,
+    limit,
+    searchTerm,
+    setSearchTerm,
+  } = usePosts();
+  const [isSearching, setIsSearching] = useState(false);
 
   // Xử lý xóa bài viết với confirm
   const handleDelete = async (id: string, slug: string) => {
     if (confirm("Bạn có chắc chắn muốn xóa bài viết này không?")) {
       try {
         await hardDeleteMutation.mutateAsync(slug);
-        // Sau khi xóa thành công, React Query sẽ tự động cập nhật cache
       } catch (error) {
         console.error("Lỗi khi xóa bài viết:", error);
       }
     }
+  };
+
+  // Xử lý tìm kiếm
+  const handleSearch = (term: string) => {
+    setIsSearching(true);
+    setPage(1); // reset về trang 1 khi search mới
+    setSearchTerm(term.trim());
+    setIsSearching(false);
   };
 
   if (postsQuery.isLoading) {
@@ -60,24 +77,35 @@ const PostList: React.FC = () => {
     return <p>Đã xảy ra lỗi khi tải bài viết.</p>;
   }
 
-  // Lấy danh sách bài viết, sử dụng mảng rỗng nếu không có dữ liệu
-  const posts = (postsQuery.data as Post[]) ?? [];
+  const posts = postsQuery.data?.data ?? [];
+  const total = postsQuery.data?.total ?? 0;
+  const totalPages = Math.ceil(total / limit);
 
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-3xl font-bold mb-4">Danh sách bài viết</h2>
-        <a href="/admin/posts/create" target="_blank" rel="noopener noreferrer">
-          <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
-            Thêm mới bài viết
-          </button>
+        <a
+          href="/admin/posts/create"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition inline-block"
+        >
+          Thêm mới bài viết
         </a>
+        <div className="w-full md:w-1/2">
+          <SearchProducts
+            onSearch={handleSearch}
+            isSearching={isSearching}
+            placeholder="Nhập tên bài viết cần tìm..."
+          />
+        </div>
       </div>
 
       <table className="min-w-full bg-white border">
         <thead>
           <tr>
-            <th className="p-3 border">ID</th>
+            <th className="p-3 border">STT</th>
             <th className="p-3 border">Tiêu đề</th>
             <th className="p-3 border">Tác giả</th>
             <th className="p-3 border">Giờ đăng</th>
@@ -90,8 +118,8 @@ const PostList: React.FC = () => {
             const { date, time } = formatDateTime(post.publishedDate);
             return (
               <tr key={post.slug} className="hover:bg-gray-100">
-                <td className="p-3 border">{index + 1}</td>
-                <td className="p-3 border">{post.title}</td>
+                <td className="p-3 border">{(page - 1) * limit + index + 1}</td>
+                <td className="p-3 border">{post.name}</td>
                 <td className="p-3 border">{post.author || "Không rõ"}</td>
                 <td className="p-3 border">{time}</td>
                 <td className="p-3 border">{date}</td>
@@ -116,6 +144,7 @@ const PostList: React.FC = () => {
                         Sửa
                       </button>
                     </a>
+
                     <button
                       onClick={() => handleDelete(post.id, post.slug)}
                       className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
@@ -129,6 +158,28 @@ const PostList: React.FC = () => {
           })}
         </tbody>
       </table>
+      {/* Phân trang */}
+      <div className="flex justify-center items-center gap-4 mt-6">
+        <button
+          onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+          disabled={page === 1}
+          className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+        >
+          ← Trang trước
+        </button>
+
+        <span>{`Trang ${page} / ${totalPages}`}</span>
+
+        <button
+          onClick={() =>
+            setPage((prev) => (prev < totalPages ? prev + 1 : prev))
+          }
+          disabled={page >= totalPages}
+          className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+        >
+          Trang sau →
+        </button>
+      </div>
     </div>
   );
 };

@@ -16,24 +16,26 @@ export interface CategoryInfo {
 export interface Post {
   id: string;
   slug: string; // slug bài viết
-  title: string;
+  name: string;
   excerpt: string;
   postData: string;
   author: string;
-  thumbnail: string;
+  thumbnail: string[];
   publishedDate: string;
   category?: CategoryInfo;
 }
 
 // ✅ Định nghĩa DTO tạo bài viết
 export interface CreatePostDto {
-  title: string;
+  id: string;
+  name: string;
   excerpt: string;
   postData: string;
   author: string;
-  thumbnail: string;
+  thumbnail: string[];
   publishedDate: string;
   category?: CategoryInfo;
+  slug: string;
 }
 
 // ✅ Định nghĩa DTO cập nhật bài viết

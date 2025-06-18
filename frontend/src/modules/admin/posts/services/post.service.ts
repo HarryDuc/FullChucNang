@@ -1,11 +1,10 @@
-// 📁 src/modules/posts/services/post.service.ts
-
 import { Post } from "../models/post.model";
+import { Category } from "../models/post.model";
 
 const BASE_API = process.env.NEXT_PUBLIC_API_URL!;
-const POST_API = `${BASE_API}/postsapi`;
+const POST_API = `${BASE_API}/postapi`;
 const IMAGE_UPLOAD_API = `${BASE_API}/images/upload`;
-const CATEGORY_POST_API = `${BASE_API}/category-postsapi`;
+const CATEGORY_POST_API = `${BASE_API}/categories-post`;
 
 // 🔧 Hàm xử lý phản hồi trả về từ API
 const handleResponse = async (response: Response) => {
@@ -16,54 +15,39 @@ const handleResponse = async (response: Response) => {
   return response.json();
 };
 
-// 🔧 Hàm tạo options fetch chung
-const fetchOptions = (method: string, data?: any) => ({
+// 🔧 Hàm tạo options fetch chung (data giờ phải là object)
+const fetchOptions = (method: string, data?: unknown): RequestInit => ({
   method,
   headers: {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${localStorage.getItem("token")}`,
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
   },
   body: data ? JSON.stringify(data) : undefined,
 });
-
-// 🔧 Hàm chuẩn hóa thumbnail thành mảng chuỗi (để backend luôn nhận được mảng)
-const normalizeThumbnail = (thumbnail: string | string[] | undefined): string[] => {
-  if (!thumbnail) return [];
-  if (Array.isArray(thumbnail)) return thumbnail;
-  return [thumbnail]; // Chuyển string thành array có 1 phần tử
-};
 
 // 📦 Service quản lý bài viết
 export const PostService = {
   /**
    * 📤 Tạo bài viết mới
-   * @param post Dữ liệu bài viết (CreatePostDto)
-   * @returns Bài viết đã tạo
    */
   create: async (post: Partial<Post>): Promise<Post> => {
-    // Đảm bảo thumbnail luôn là mảng chuỗi trước khi gửi lên server
-    const postData = {
-      ...post,
-      thumbnail: normalizeThumbnail(post.thumbnail)
-    };
-
-    const response = await fetch(POST_API, fetchOptions("POST", postData));
+    const response = await fetch(POST_API, fetchOptions("POST", post));
     return handleResponse(response);
   },
 
   /**
-   * 📋 Lấy danh sách tất cả bài viết chưa bị xóa mềm
-   * @returns Mảng bài viết
+   * 📋 Lấy danh sách bài viết có phân trang
    */
-  getAll: async (): Promise<Post[]> => {
-    const response = await fetch(POST_API);
+  getAll: async (
+    page = 1,
+    limit = 10
+  ): Promise<{ data: Post[]; total: number }> => {
+    const response = await fetch(`${POST_API}?page=${page}&limit=${limit}`);
     return handleResponse(response);
   },
 
   /**
-   * 🔍 Lấy chi tiết một bài viết theo slug
-   * @param slug Slug bài viết
-   * @returns Bài viết tương ứng
+   * 🔍 Chi tiết 1 bài theo slug
    */
   getOne: async (slug: string): Promise<Post> => {
     const response = await fetch(`${POST_API}/${slug}`);
@@ -71,33 +55,18 @@ export const PostService = {
   },
 
   /**
-   * ✏️ Cập nhật bài viết theo slug
-   * @param slug Slug bài viết
-   * @param post Dữ liệu cập nhật (UpdatePostDto)
-   * @returns Bài viết đã cập nhật
+   * ✏️ Cập nhật bài viết
    */
   update: async (slug: string, post: Partial<Post>): Promise<Post> => {
-    // Đảm bảo thumbnail luôn là mảng chuỗi trước khi gửi lên server
-    // Ghi log để debug
-    console.log('Update data before normalize:', JSON.stringify(post));
-
-    const postData = {
-      ...post,
-      thumbnail: normalizeThumbnail(post.thumbnail)
-    };
-
-    console.log('Update data after normalize:', JSON.stringify(postData));
-
     const response = await fetch(
       `${POST_API}/${slug}`,
-      fetchOptions("PATCH", postData)
+      fetchOptions("PATCH", post)
     );
     return handleResponse(response);
   },
 
   /**
-   * 🗑️ Xóa mềm bài viết theo slug
-   * @param slug Slug bài viết
+   * 🗑️ Xóa mềm
    */
   softDelete: async (slug: string): Promise<void> => {
     const response = await fetch(`${POST_API}/${slug}`, fetchOptions("DELETE"));
@@ -105,8 +74,7 @@ export const PostService = {
   },
 
   /**
-   * ❌ Xóa vĩnh viễn bài viết khỏi hệ thống
-   * @param slug Slug bài viết
+   * ❌ Xóa vĩnh viễn
    */
   hardDelete: async (slug: string): Promise<void> => {
     const response = await fetch(
@@ -117,9 +85,7 @@ export const PostService = {
   },
 
   /**
-   * ��️ Upload ảnh bài viết (cover, nội dung, etc.)
-   * @param file File ảnh cần upload
-   * @returns URL ảnh đã upload (relative path)
+   * 🖼️ Upload ảnh (cover, nội dung…)
    */
   uploadImage: async (file: File): Promise<{ url: string }> => {
     const formData = new FormData();
@@ -127,23 +93,24 @@ export const PostService = {
 
     const response = await fetch(IMAGE_UPLOAD_API, {
       method: "POST",
+      body: formData,
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
-      body: formData,
     });
 
     const result = await handleResponse(response);
     if (!result.imageUrl) throw new Error("Không tìm thấy URL ảnh");
-
     return { url: result.imageUrl };
   },
 
-  // Lấy danh sách danh mục sản phẩm
-  getAllCategories: async () => {
-    const allCategories: any[] = [];
+  /**
+   * 📂 Lấy full cây category-post (pagin vòng while)
+   */
+  getAllCategories: async (): Promise<{ data: Category[] }> => {
+    const allCategories: Category[] = [];
     let page = 1;
-    const limit = 10; // sử dụng đúng limit mặc định của backend
+    const limit = 10;
 
     while (true) {
       const response = await fetch(
@@ -151,23 +118,31 @@ export const PostService = {
       );
       const result = await handleResponse(response);
 
-      if (!result?.data || !Array.isArray(result.data)) break;
-
+      if (!Array.isArray(result.data)) break;
       allCategories.push(...result.data);
-
-      // Nếu số lượng trả về ít hơn limit thì đã hết dữ liệu
       if (result.data.length < limit) break;
-
       page++;
     }
 
-    return {
-      data: allCategories,
-    };
+    return { data: allCategories };
+  },
+
+  /**
+   * 🔍 Tìm kiếm bài viết theo tên (có phân trang)
+   */
+  search: async (
+    searchTerm: string,
+    page = 1,
+    limit = 10
+  ): Promise<{ data: Post[]; total: number }> => {
+    const response = await fetch(
+      `${POST_API}?page=${page}&limit=${limit}&search=${encodeURIComponent(searchTerm)}`
+    );
+    return handleResponse(response);
   },
 };
 
-// 👇 Export từng hàm để các hook có thể sử dụng trực tiếp
+// 👇 Export từng hàm để hook dùng
 export const createPost = PostService.create;
 export const getPosts = PostService.getAll;
 export const getPostBySlug = PostService.getOne;
@@ -175,3 +150,5 @@ export const updatePost = PostService.update;
 export const softDeletePost = PostService.softDelete;
 export const hardDeletePost = PostService.hardDelete;
 export const uploadImage = PostService.uploadImage;
+export const getAllCategories = PostService.getAllCategories;
+export const searchPosts = PostService.search;

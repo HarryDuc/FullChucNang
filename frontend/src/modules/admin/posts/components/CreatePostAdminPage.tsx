@@ -2,11 +2,11 @@
 "use client";
 
 import React from "react";
-import PostForm from "./PostForm";
-import { CreatePostDto } from "../models/post.model";
+import PostForm from "@/modules/admin/posts/components/FormPost";
+import { CreatePostDto } from "@/modules/admin/posts/models/post.model";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
-import { createPost } from "../services/post.service";
+import { createPost } from "@/modules/admin/posts/services/post.service";
 
 const CreatePostPage = () => {
   const router = useRouter();
@@ -27,10 +27,10 @@ const CreatePostPage = () => {
   };
 
   return (
-      <div className="container mx-auto py-4">
-        <h1 className="text-3xl font-bold mb-4">Tạo bài viết mới</h1>
-        <PostForm onSubmit={handleSubmit} />
-      </div>
+    <div className="container mx-auto py-4">
+      <h1 className="text-3xl font-bold mb-4">Tạo bài viết mới</h1>
+      <PostForm onSubmit={handleSubmit} />
+    </div>
   );
 };
 

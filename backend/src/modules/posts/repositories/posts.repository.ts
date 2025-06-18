@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, FilterQuery } from 'mongoose';
+import { Model } from 'mongoose';
 import { Post, PostDocument } from '../schemas/post.schema';
 import { CreatePostDto } from '../dtos/create-posts.dto';
 import { UpdatePostDto } from '../dtos/update-posts.dto';
@@ -19,8 +19,17 @@ export class PostRepository {
   /**
    * Trả về tất cả bài viết chưa bị xóa mềm
    */
-  findAll() {
-    return this.model.find({ isDeleted: false }).sort({ createdAt: -1 }).lean();
+  async findAll(skip = 0, limit = 10) {
+    return this.model
+      .find({ isDeleted: false })
+      .skip(skip)
+      .limit(limit)
+      .sort({ sortOrder: 1, createdAt: -1 }) // 👈 Ưu tiên sortOrder
+      .exec();
+  }
+
+  async countAll() {
+    return this.model.countDocuments({ isDeleted: false }).exec();
   }
 
   /**
@@ -28,26 +37,6 @@ export class PostRepository {
    */
   findBySlug(slug: string) {
     return this.model.findOne({ slug, isDeleted: false }).lean();
-  }
-
-  /**
-   * Tìm bài viết theo slug danh mục (main hoặc sub) có phân trang
-   */
-  async findManyByFilter(
-    filter: FilterQuery<PostDocument>,
-    skip = 0,
-    limit = 10,
-  ) {
-    return this.model
-      .find(filter)
-      .sort({ publishedDate: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
-  }
-
-  async countByFilter(filter: FilterQuery<PostDocument>) {
-    return this.model.countDocuments(filter);
   }
 
   /**
@@ -92,5 +81,23 @@ export class PostRepository {
   async existsBySlug(slug: string): Promise<boolean> {
     const result = await this.model.exists({ slug, isDeleted: false });
     return !!result;
+  }
+
+  /**
+   * Tìm kiếm bài viết theo tên (và/hoặc tác giả), có phân trang
+   */
+  async searchByName(name: string, skip = 0, limit = 10) {
+    // Sử dụng text index cho tìm kiếm
+    return this.model
+      .find({ $text: { $search: name }, isDeleted: false })
+      .skip(skip)
+      .limit(limit)
+      .sort({ score: { $meta: 'textScore' }, createdAt: -1 })
+      .select({ score: { $meta: 'textScore' } })
+      .exec();
+  }
+
+  async countSearchByName(name: string) {
+    return this.model.countDocuments({ $text: { $search: name }, isDeleted: false }).exec();
   }
 }

@@ -4,8 +4,8 @@ import { PostController } from './controllers/posts.controller';
 import { PostService } from './services/posts.service';
 import { PostRepository } from './repositories/posts.repository';
 import { Post, PostSchema } from './schemas/post.schema';
-import { PermissionsModule } from '../permissions/permissions.module';
 import { AuthModule } from '../auth/auth.module';
+import { PermissionsModule } from '../permissions/permissions.module';
 
 @Module({
   imports: [
@@ -17,4 +17,4 @@ import { AuthModule } from '../auth/auth.module';
   providers: [PostService, PostRepository],
   exports: [PostService, PostRepository],
 })
-export class PostsModule {}
+export class PostModule {}

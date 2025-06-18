@@ -34,7 +34,7 @@ export class Post {
   @Prop() approvedBy: string;
 
   // 📝 Nội dung
-  @Prop({ required: true }) title: string;
+  @Prop({ required: true }) name: string;
   @Prop() excerpt: string;
   @Prop() postData: string;
   @Prop() coverVideo?: string;
@@ -84,7 +84,7 @@ export const PostSchema = SchemaFactory.createForClass(Post);
 // 📌 Indexes tối ưu hoá
 
 // 🔍 Tìm kiếm văn bản (chỉ có 1 text index cho toàn collection)
-PostSchema.index({ title: 'text', author: 'text' });
+PostSchema.index({ name: 'text', author: 'text' });
 
 // 📂 Truy vấn theo phân loại và trạng thái
 PostSchema.index({
