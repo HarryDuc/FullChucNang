@@ -32,6 +32,14 @@ export class CheckoutService {
   // 🛒 Tạo thanh toán mới
   async create(dto: CreateCheckoutDto): Promise<Checkout> {
     try {
+      console.log('Creating checkout with data:', JSON.stringify(dto, null, 2));
+
+      // Kiểm tra các trường bắt buộc
+      if (!dto.orderId || !dto.userId || !dto.name || !dto.phone || !dto.address || !dto.email) {
+        console.error('Missing required fields in checkout creation:', dto);
+        throw new BadRequestException('Thiếu thông tin bắt buộc cho đơn thanh toán');
+      }
+
       // ✅ Truy vấn đơn hàng để lấy slug và totalPrice
       const order = await this.orderModel
         .findById(dto.orderId)
@@ -60,7 +68,9 @@ export class CheckoutService {
 
       // ✅ Tạo _id trước để dùng cho slug
       const tempId = new this.checkoutModel()._id;
-      const slug = this.generateSlug(dto.name, tempId.toString());
+      const slug = dto.slug || this.generateSlug(dto.name, tempId.toString());
+
+      console.log('Generated slug for checkout:', slug);
 
       // ✅ Tạo đơn thanh toán với slug đã chuẩn bị
       const created = await this.checkoutModel.create({
@@ -68,17 +78,27 @@ export class CheckoutService {
         ...dto,
         slug, // ✅ bắt buộc truyền slug ngay lúc create
         paymentMethod: dto.paymentMethod || 'cash',
-        paymentStatus: 'pending',
-        orderCode: order.slug,
+        paymentStatus: dto.paymentStatus || 'pending',
+        orderCode: dto.orderCode || order.slug,
         paymentMethodInfo,
       });
 
+      console.log('Checkout created successfully:', created._id);
       return created;
     } catch (error) {
       console.error('Error in checkout creation:', error);
+
       if (error instanceof BadRequestException || error instanceof NotFoundException) {
         throw error;
       }
+
+      // Xử lý lỗi Mongoose validation
+      if (error.name === 'ValidationError') {
+        const validationErrors = Object.values(error.errors).map((err: any) => err.message);
+        console.error('Validation errors:', validationErrors);
+        throw new BadRequestException(`Lỗi xác thực dữ liệu: ${validationErrors.join(', ')}`);
+      }
+
       throw new BadRequestException('Không thể tạo đơn thanh toán. Vui lòng thử lại sau.');
     }
   }
@@ -152,5 +172,9 @@ export class CheckoutService {
       throw new NotFoundException('Không tìm thấy đơn để xoá');
     }
     return { message: 'Đơn đã được xoá' };
+  }
+
+  async findByUserId(userId: string): Promise<Checkout[]> {
+    return this.checkoutModel.find({ userId }).exec();
   }
 }

@@ -14,6 +14,12 @@ export interface OrderWithCheckout extends Order {
   checkout?: Checkout;
 }
 
+// Helper function để lấy token xác thực
+const getAuthHeader = () => {
+  const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 export const OrderService = {
   /**
    * Lấy danh sách tất cả đơn hàng kèm thông tin checkout
@@ -21,15 +27,15 @@ export const OrderService = {
   getOrders: async (): Promise<OrderWithCheckout[]> => {
     // Lấy danh sách đơn hàng
     const ordersResponse = await axios.get<Order[]>(ORDER_URL, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
+      headers: getAuthHeader(),
     });
     const orders = ordersResponse.data;
+    console.log("Fetched orders:", orders);
 
     // Lấy danh sách checkout từ checkout service
     try {
       const checkouts = await getAllCheckouts();
+      console.log("Fetched checkouts:", checkouts);
 
       // Kết hợp thông tin đơn hàng và checkout
       const ordersWithCheckout = orders.map((order) => {
@@ -45,6 +51,12 @@ export const OrderService = {
         const orderCheckout = checkouts.find(
           (checkout: any) => checkout.orderId === order._id
         );
+
+        if (orderCheckout) {
+          console.log(`Found checkout for order ${order._id}:`, orderCheckout);
+        } else {
+          console.log(`No checkout found for order ${order._id}`);
+        }
 
         return {
           ...order,
@@ -64,7 +76,9 @@ export const OrderService = {
    * Lấy thông tin chi tiết đơn hàng theo slug kèm thông tin checkout
    */
   getOrderBySlug: async (slug: string): Promise<OrderWithCheckout> => {
-    const response = await axios.get<Order>(`${ORDER_URL}/${slug}`);
+    const response = await axios.get<Order>(`${ORDER_URL}/${slug}`, {
+      headers: getAuthHeader(),
+    });
     const order = response.data;
 
     try {
@@ -74,12 +88,19 @@ export const OrderService = {
         (checkout: any) => checkout.orderId === order._id
       );
 
+      if (orderCheckout) {
+        console.log(`Found checkout for order ${order._id}:`, orderCheckout);
+      } else {
+        console.log(`No checkout found for order ${order._id} (${slug})`);
+      }
+
       return {
         ...order,
         checkout: orderCheckout,
       };
     } catch (error) {
       // Nếu không tìm thấy checkout, vẫn trả về đơn hàng
+      console.error(`Error fetching checkout for order ${slug}:`, error);
       return order;
     }
   },
@@ -88,7 +109,9 @@ export const OrderService = {
    * Tạo mới một đơn hàng
    */
   createOrder: async (orderData: Partial<Order>): Promise<Order> => {
-    const response = await axios.post<Order>(ORDER_URL, orderData);
+    const response = await axios.post<Order>(ORDER_URL, orderData, {
+      headers: getAuthHeader(),
+    });
     return response.data;
   },
 
@@ -99,7 +122,9 @@ export const OrderService = {
     slug: string,
     orderData: Partial<Order>
   ): Promise<Order> => {
-    const response = await axios.put<Order>(`${ORDER_URL}/${slug}`, orderData);
+    const response = await axios.put<Order>(`${ORDER_URL}/${slug}`, orderData, {
+      headers: getAuthHeader(),
+    });
     return response.data;
   },
 
@@ -108,7 +133,10 @@ export const OrderService = {
    */
   deleteOrder: async (slug: string): Promise<{ message: string }> => {
     const response = await axios.delete<{ message: string }>(
-      `${ORDER_URL}/${slug}`
+      `${ORDER_URL}/${slug}`,
+      {
+        headers: getAuthHeader(),
+      }
     );
     return response.data;
   },
@@ -128,13 +156,23 @@ export const OrderService = {
  */
   searchOrderBySlug: async (slug: string): Promise<OrderWithCheckout | null> => {
     try {
-      const response = await axios.get<Order>(`${ORDER_URL}/${slug}`);
+      const response = await axios.get<Order>(`${ORDER_URL}/${slug}`, {
+        headers: getAuthHeader(),
+      });
       const order = response.data;
 
       const checkouts = await getAllCheckouts();
+      console.log("Searching checkouts for order ID:", order._id);
+
       const orderCheckout = checkouts.find(
         (checkout: any) => checkout.orderId === order._id
       );
+
+      if (orderCheckout) {
+        console.log(`Found checkout for order ${slug}:`, orderCheckout);
+      } else {
+        console.log(`No checkout found for order ${slug}`);
+      }
 
       return {
         ...order,

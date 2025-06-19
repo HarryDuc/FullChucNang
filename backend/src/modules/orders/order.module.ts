@@ -6,6 +6,8 @@ import { Order, OrderSchema } from './schemas/order.schema';
 import { Product, ProductSchema } from '../products/schemas/product.schema';
 import { PermissionsModule } from '../permissions/permissions.module';
 import { AuthModule } from '../auth/auth.module';
+import { PayPalModule } from '../paypal/paypal.module';
+import { CheckoutModule } from '../checkouts/checkout.module';
 
 /**
  * OrderModule đăng ký các thành phần cần thiết cho quản lý đơn hàng:
@@ -21,8 +23,11 @@ import { AuthModule } from '../auth/auth.module';
     ]),
     forwardRef(() => AuthModule),
     PermissionsModule,
+    forwardRef(() => PayPalModule),
+    CheckoutModule,
   ],
   controllers: [OrderController],
   providers: [OrderService],
+  exports: [OrderService],
 })
-export class OrderModule {}
+export class OrderModule { }

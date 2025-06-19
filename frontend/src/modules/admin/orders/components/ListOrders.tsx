@@ -162,25 +162,40 @@ const ListOrders = () => {
               updatingPayment === order.checkout.slug ? (
                 <span>Đang cập nhật...</span>
               ) : (
-                <select
-                  value={order.checkout.paymentStatus}
-                  onChange={(e) =>
-                    handlePaymentStatusChange(
-                      order.checkout?.slug || "",
-                      e.target.value as "pending" | "paid" | "failed"
-                    )
-                  }
-                  className={`p-1 rounded border ${getPaymentStatusColor(
-                    order.checkout.paymentStatus
-                  )} cursor-pointer`}
-                >
-                  <option value="pending">Chờ thanh toán</option>
-                  <option value="paid">Đã thanh toán</option>
-                  <option value="failed">Thanh toán thất bại</option>
-                </select>
+                <div>
+                  <select
+                    value={order.checkout.paymentStatus}
+                    onChange={(e) =>
+                      handlePaymentStatusChange(
+                        order.checkout?.slug || "",
+                        e.target.value as "pending" | "paid" | "failed"
+                      )
+                    }
+                    className={`p-1 rounded border ${getPaymentStatusColor(
+                      order.checkout.paymentStatus
+                    )} cursor-pointer`}
+                  >
+                    <option value="pending">Chờ thanh toán</option>
+                    <option value="paid">Đã thanh toán</option>
+                    <option value="failed">Thanh toán thất bại</option>
+                  </select>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {order.checkout.paymentMethod === "cash" && "Tiền mặt"}
+                    {order.checkout.paymentMethod === "bank" && "Chuyển khoản"}
+                    {order.checkout.paymentMethod === "payos" && "PayOS"}
+                    {order.checkout.paymentMethod === "paypal" && "PayPal"}
+                  </div>
+                </div>
               )
             ) : (
-              <span className="text-gray-500">Chưa có thông tin</span>
+              <div>
+                <span className="text-gray-500">
+                  Chưa có thông tin thanh toán
+                </span>
+                <div className="text-xs text-red-500 mt-1">
+                  Thiếu liên kết đơn thanh toán
+                </div>
+              </div>
             )}
           </td>
           <td className="border p-2">

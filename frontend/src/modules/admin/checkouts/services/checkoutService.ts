@@ -4,14 +4,18 @@ export interface Checkout {
   _id: string;
   slug: string;
   userId: string;
+  orderId: string;
   amount: number;
   paymentStatus: "pending" | "paid" | "failed";
   createdAt: string;
   updatedAt: string;
   name: string;
   phone: string;
-  paymentMethod: "cash" | "payos" | "bank";
+  paymentMethod: "cash" | "payos" | "bank" | "paypal";
   address: string;
+  email: string;
+  orderCode: string;
+  paymentMethodInfo?: Record<string, any>;
 }
 
 // 🛒 Tạo thanh toán mới
@@ -28,9 +32,32 @@ export async function createCheckout(data: Partial<Checkout>) {
 
 // 📋 Lấy danh sách thanh toán
 export async function getAllCheckouts() {
-  const response = await fetch(`${API_URL}`);
-  if (!response.ok) throw new Error("Không thể lấy danh sách thanh toán.");
-  return response.json();
+  const token = localStorage.getItem("token");
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json"
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  try {
+    console.log("Fetching all checkouts with headers:", headers);
+    const response = await fetch(`${API_URL}`, { headers });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Error fetching checkouts - Status: ${response.status}, Message:`, errorText);
+      throw new Error(`Không thể lấy danh sách thanh toán. Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Fetched checkouts data:", data);
+    return data;
+  } catch (error) {
+    console.error("Exception during checkout fetch:", error);
+    throw error;
+  }
 }
 
 // 🔍 Lấy chi tiết thanh toán theo slug

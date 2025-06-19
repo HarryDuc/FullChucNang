@@ -4,12 +4,12 @@ import { ConfigModule } from '@nestjs/config';
 import { MulterModule } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { APP_GUARD } from '@nestjs/core';
 
 // Import các module chính
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
-import { PostsModule } from './modules/posts/posts.module';
 import { ProductsModule } from './modules/products/products.module'; // ✅ Module quản lý sản phẩm
 import { ImagesModule } from './modules/images/images.module';
 import { VariantModule } from './modules/variants/variant.module';
@@ -17,6 +17,10 @@ import { OrderModule } from './modules/orders/order.module'; // 🛒 Module qu�
 import { CheckoutModule } from './modules/checkouts/checkout.module'; // 💳 Module quản lý thanh toán
 import { AddressesModule } from './modules/addresses/addresses.module'; // 📍 Module quản lý địa chỉ
 import { CategoryPostModule } from './modules/categories-post/categories-post.module'; // ✅ Module quản lý danh mục bài viết
+import { PostModule } from './modules/posts/posts.module';
+import { PayPalModule } from './modules/paypal/paypal.module';
+import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/common/guards/roles.guard';
 
 // Import MailerModule để xử lý email
 import { MailerModule } from '@nestjs-modules/mailer';
@@ -59,7 +63,7 @@ import { PermissionsModule } from './modules/permissions/permissions.module';
     DatabaseModule,
     AuthModule,
     UsersModule,
-    PostsModule,
+    PostModule,
     ProductsModule, // ✅ Import module quản lý sản phẩm
     ImagesModule, // ✅ Import module xử lý upload file
     // VariantModule, // ✅ Import module quản lý biến thể sản phẩm
@@ -76,7 +80,7 @@ import { PermissionsModule } from './modules/permissions/permissions.module';
     ReviewModule,
     VoucherModule,
     PermissionsModule,
-
+    PayPalModule, // 💰 Import module thanh toán PayPal
 
     // ✅ Cấu hình MailerModule để gửi email
     MailerModule.forRoot({
@@ -107,5 +111,15 @@ import { PermissionsModule } from './modules/permissions/permissions.module';
 
     VerifyModule, // ✅ Import module xác minh tài khoản
   ],
+  // providers: [
+  //   {
+  //     provide: APP_GUARD,
+  //     useClass: JwtAuthGuard,
+  //   },
+  //   {
+  //     provide: APP_GUARD,
+  //     useClass: RolesGuard,
+  //   },
+  // ],
 })
 export class AppModule { }

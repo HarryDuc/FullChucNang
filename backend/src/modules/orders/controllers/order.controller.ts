@@ -16,6 +16,7 @@ import { RolesGuard } from '../../../common/guards/roles.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { PermissionGuard } from 'src/modules/permissions/guards/permission.guard';
 import { RequirePermission } from 'src/common/decorators/permission.decorator';
+import { Public } from 'src/common/decorators/public.decorator';
 
 /**
  * OrderController định nghĩa các endpoint cho thao tác CRUD trên đơn hàng.
@@ -32,6 +33,7 @@ export class OrderController {
    * @returns Order - Đơn hàng đã được tạo.
    */
   @Post()
+  @Public()
   async create(@Body() createOrderDto: CreateOrderDto): Promise<Order> {
     return this.orderService.create(createOrderDto);
   }
@@ -56,6 +58,7 @@ export class OrderController {
    * @returns Order tương ứng.
    */
   @Get(':slug')
+  @Public()
   async findOne(@Param('slug') slug: string): Promise<Order> {
     return this.orderService.findOne(slug);
   }
@@ -108,5 +111,21 @@ export class OrderController {
   @RequirePermission('orders', 'delete')
   async remove(@Param('slug') slug: string): Promise<{ message: string }> {
     return this.orderService.remove(slug);
+  }
+
+  /**
+   * Cập nhật thông tin thanh toán cho đơn hàng.
+   * Endpoint: POST /orders/:slug/update-payment-status
+   * @param slug - Định danh của đơn hàng.
+   * @param paymentInfo - Thông tin thanh toán.
+   * @returns Order đã được cập nhật.
+   */
+  @Post(':slug/update-payment-status')
+  @Public()
+  async updatePaymentStatus(
+    @Param('slug') slug: string,
+    @Body() paymentInfo: any,
+  ): Promise<Order> {
+    return this.orderService.updatePaymentStatus(slug, paymentInfo);
   }
 }

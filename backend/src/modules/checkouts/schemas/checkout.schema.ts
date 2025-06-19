@@ -46,7 +46,7 @@ export class Checkout extends Document {
   @Prop({
     type: String,
     default: 'cash',
-    enum: ['cash', 'payos', 'bank'], // mở rộng thêm sau
+    enum: ['cash', 'payos', 'bank', 'paypal'], // mở rộng thêm sau
   })
   paymentMethod: string;
 

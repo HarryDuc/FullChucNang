@@ -42,6 +42,27 @@ const PaymentMethod = ({
               Chuyển khoản ngân hàng (Bank Transfer)
             </label>
           </div>
+          <div className="flex items-center">
+            <input
+              type="radio"
+              id="paypal"
+              name="paymentMethod"
+              value="paypal"
+              checked={paymentMethod === "paypal"}
+              onChange={() => onPaymentMethodChange("paypal")}
+              className="h-4 w-4 text-blue-900"
+            />
+            <label
+              htmlFor="paypal"
+              className="ml-3 flex items-center text-gray-700"
+            >
+              PayPal{" "}
+              <img src="/paypal-logo.png" alt="PayPal" className="h-6 ml-2" />
+              <span className="text-xs text-gray-500 ml-2">
+                (Thanh toán quốc tế)
+              </span>
+            </label>
+          </div>
         </div>
       </div>
     </div>

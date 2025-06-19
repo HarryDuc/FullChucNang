@@ -10,7 +10,11 @@ import {
   listenCartChange,
 } from "../../../../utils/cartUtils";
 import { OrderService } from "./services/order.service";
-import { createCheckout } from "./services/checkoutService";
+import {
+  createCheckout,
+  updatePaymentStatus,
+} from "./services/checkoutService";
+import { paypalService } from "./services/paypalService";
 import {
   Province,
   District,
@@ -28,6 +32,7 @@ import { UserService } from "../users/services/user.service";
 import { User } from "../users/models/user.model";
 import VoucherInput from "../voucher/components/VoucherInput";
 import { Voucher } from "../voucher/models/voucher.model";
+import PayPalButton from "./components/PayPalButton";
 
 // Interface cho dữ liệu tạo checkout dựa trên DTO trong backend
 interface CreateCheckoutData {
@@ -39,7 +44,7 @@ interface CreateCheckoutData {
   name: string;
   phone: string;
   address: string;
-  paymentMethod: "cash" | "payos" | "bank";
+  paymentMethod: "cash" | "payos" | "bank" | "paypal";
   paymentStatus: "pending" | "paid" | "failed";
   paymentMethodInfo?: Record<string, any>;
 }
@@ -71,6 +76,7 @@ interface FormErrors {
 // Thêm hàm để lấy userId từ token
 const getUserIdFromToken = (): string | null => {
   try {
+    if (typeof window === "undefined") return null;
     const token = localStorage.getItem("token");
     if (!token) return null;
 
@@ -94,6 +100,9 @@ const CheckoutSection = () => {
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(true);
   const [appliedVoucher, setAppliedVoucher] = useState<Voucher | null>(null);
   const [discountAmount, setDiscountAmount] = useState<number>(0);
+  const [showPayPalButton, setShowPayPalButton] = useState<boolean>(false);
+  const [isPayPalProcessing, setIsPayPalProcessing] = useState<boolean>(false);
+  const [payPalOrderRef, setPayPalOrderRef] = useState<string>("");
 
   // Lấy thông tin profile từ API
   useEffect(() => {
@@ -217,6 +226,11 @@ const CheckoutSection = () => {
     loadWards();
   }, [shippingInfo.district]);
 
+  // Update this effect to hide/show PayPal button based on payment method
+  useEffect(() => {
+    setShowPayPalButton(paymentMethod === "paypal");
+  }, [paymentMethod]);
+
   const getSubtotal = () => {
     return getCartTotal(cartItems);
   };
@@ -239,19 +253,17 @@ const CheckoutSection = () => {
       case "fullName":
         return !stringValue ? "Vui lòng nhập họ và tên" : undefined;
       case "phone":
-        return !stringValue
-          ? "Vui lòng nhập số điện thoại"
-          : !/^[0-9]{10,11}$/.test(stringValue)
-          ? "Số điện thoại không hợp lệ"
-          : undefined;
+        if (!stringValue) return "Vui lòng nhập số điện thoại";
+        if (!/^\d{10,11}$/.test(stringValue))
+          return "Số điện thoại phải có 10-11 chữ số";
+        return undefined;
       case "email":
-        return !stringValue
-          ? "Vui lòng nhập email"
-          : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(stringValue)
-          ? "Email không hợp lệ"
-          : undefined;
+        if (!stringValue) return "Vui lòng nhập email";
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(stringValue))
+          return "Email không hợp lệ";
+        return undefined;
       case "address":
-        return !stringValue ? "Vui lòng nhập địa chỉ chi tiết" : undefined;
+        return !stringValue ? "Vui lòng nhập địa chỉ" : undefined;
       case "province":
         return !value ? "Vui lòng chọn tỉnh/thành phố" : undefined;
       case "district":
@@ -408,12 +420,13 @@ const CheckoutSection = () => {
   // Separate mappings for different APIs
   const getCheckoutPaymentMethod = (
     method: string
-  ): "cash" | "payos" | "bank" => {
-    const methodMap: Record<string, "cash" | "payos" | "bank"> = {
+  ): "cash" | "payos" | "bank" | "paypal" => {
+    const methodMap: Record<string, "cash" | "payos" | "bank" | "paypal"> = {
       cod: "cash",
       cash: "cash",
       bankTransfer: "bank",
       bank: "bank",
+      paypal: "paypal",
     };
     return methodMap[method] || "cash";
   };
@@ -423,8 +436,54 @@ const CheckoutSection = () => {
       cod: "COD",
       bankTransfer: "BANK",
       cash: "COD",
+      paypal: "PAYPAL",
     };
     return methodMap[method] || method.toUpperCase();
+  };
+
+  const handlePayPalSuccess = async (paypalOrderId: string) => {
+    try {
+      setIsPayPalProcessing(true);
+      console.log("Processing PayPal payment success for order:", orderSlug);
+
+      // Get auth token
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("No authentication token found");
+        throw new Error("Bạn cần đăng nhập để hoàn tất thanh toán");
+      }
+
+      // Update the order status to paid using the paypalService instead of direct API call
+      console.log("Updating order status with PayPal ID:", paypalOrderId);
+      await paypalService.updateOrderStatus(orderSlug, paypalOrderId);
+
+      // Display success and clear cart
+      console.log("Payment successful, clearing cart");
+      setIsOrderSent(true);
+      clearCart();
+    } catch (error) {
+      console.error("Error processing PayPal payment:", error);
+      alert(
+        "Đã xảy ra lỗi khi xử lý thanh toán PayPal. Vui lòng liên hệ hỗ trợ."
+      );
+    } finally {
+      setIsPayPalProcessing(false);
+    }
+  };
+
+  const handlePayPalError = (error: any) => {
+    console.error("PayPal error:", error);
+    alert(
+      "Đã xảy ra lỗi với thanh toán PayPal. Vui lòng thử lại sau hoặc chọn phương thức thanh toán khác."
+    );
+    setIsPayPalProcessing(false);
+  };
+
+  const handlePayPalCancel = () => {
+    alert(
+      "Bạn đã hủy thanh toán PayPal. Vui lòng thử lại hoặc chọn phương thức thanh toán khác."
+    );
+    setIsPayPalProcessing(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -462,6 +521,11 @@ const CheckoutSection = () => {
       const slug = orderData.slug || "";
       setOrderSlug(slug);
 
+      // Save the order reference for PayPal
+      if (paymentMethod === "paypal") {
+        setPayPalOrderRef(orderData._id || "");
+      }
+
       // Lấy userId từ token
       const userId = getUserIdFromToken();
       if (!userId) {
@@ -474,8 +538,8 @@ const CheckoutSection = () => {
         orderId: orderData._id!,
         userId: userId,
         email: shippingInfo.email,
-        orderCode: orderSlug,
-        slug: `${orderSlug}-payment`,
+        orderCode: orderData.slug || slug,
+        slug: `${orderData.slug || slug}-payment`,
         name: shippingInfo.fullName,
         phone: shippingInfo.phone,
         address: customerAddress,
@@ -506,6 +570,14 @@ const CheckoutSection = () => {
       localStorage.setItem("orderSlug", slug);
       localStorage.setItem("orderInfo", JSON.stringify(orderInfo));
 
+      // For PayPal, we'll show the PayPal button and wait for user to complete payment
+      if (paymentMethod === "paypal") {
+        console.log("PayPal selected, showing PayPal button...");
+        setShowPayPalButton(true);
+        setIsSubmitting(false);
+        return;
+      }
+
       if (paymentMethod === "bankTransfer") {
         console.log(
           "Bank transfer selected, QR URL:",
@@ -529,7 +601,9 @@ const CheckoutSection = () => {
       console.error("Error processing order:", error);
       alert("Đã xảy ra lỗi khi đặt hàng. Vui lòng thử lại sau.");
     } finally {
-      setIsSubmitting(false);
+      if (paymentMethod !== "paypal") {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -571,47 +645,59 @@ const CheckoutSection = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
-              <form onSubmit={handleSubmit} id="checkoutForm">
-                <ShippingForm
-                  shippingInfo={shippingInfo}
-                  errors={errors}
-                  touched={touched}
-                  onFieldChange={handleChange}
-                  onFieldBlur={handleBlur}
-                  onLocationChange={handleLocationChange}
-                  onTouch={(field) =>
-                    setTouched((prev) => ({ ...prev, [field]: true }))
-                  }
-                />
-
-                <PaymentMethod
-                  paymentMethod={paymentMethod}
-                  onPaymentMethodChange={setPaymentMethod}
-                />
-
-                <VoucherInput
-                  productSlug={cartItems[0]?.slug}
-                  userId={getUserIdFromToken() || undefined}
-                  paymentMethod={getVoucherPaymentMethod(paymentMethod)}
-                  totalAmount={getSubtotal()}
-                  onApply={handleVoucherApplied}
-                />
-
-                <div className="lg:hidden mb-8">
-                  <OrderSummary
-                    cartItems={cartItems}
-                    subtotal={getSubtotal()}
-                    shippingFee={getShippingFee()}
-                    discountAmount={discountAmount}
-                    total={getTotal()}
-                    isSubmitting={isSubmitting}
-                    shippingInfo={shippingInfoForSummary}
-                    onSubmit={handleSubmit}
-                    getSubtotal={getSubtotal}
-                    paymentMethod={paymentMethod}
+              {showPayPalButton && payPalOrderRef ? (
+                <div className="bg-white border p-6 mb-8">
+                  <h2 className="text-xl font-semibold mb-4">
+                    Thanh toán qua PayPal
+                  </h2>
+                  <PayPalButton
+                    amount={getTotal()}
+                    orderRef={payPalOrderRef}
+                    onSuccess={handlePayPalSuccess}
+                    onError={handlePayPalError}
+                    onCancel={handlePayPalCancel}
                   />
                 </div>
-              </form>
+              ) : (
+                <form onSubmit={handleSubmit} id="checkoutForm">
+                  <ShippingForm
+                    shippingInfo={shippingInfo}
+                    errors={errors}
+                    touched={touched}
+                    onFieldChange={handleChange}
+                    onFieldBlur={handleBlur}
+                    onLocationChange={handleLocationChange}
+                    onTouch={(field) =>
+                      setTouched((prev) => ({ ...prev, [field]: true }))
+                    }
+                  />
+
+                  <PaymentMethod
+                    paymentMethod={paymentMethod}
+                    onPaymentMethodChange={setPaymentMethod}
+                  />
+
+                  <VoucherInput
+                    productSlug={cartItems[0]?.slug}
+                    userId={getUserIdFromToken() || undefined}
+                    paymentMethod={getVoucherPaymentMethod(paymentMethod)}
+                    totalAmount={getSubtotal()}
+                    onApply={handleVoucherApplied}
+                  />
+
+                  <div className="mt-8">
+                    <button
+                      type="submit"
+                      className={`w-full bg-blue-700 text-white py-3 px-4 rounded-md font-medium hover:bg-blue-800 transition-colors ${
+                        isSubmitting ? "opacity-70 cursor-not-allowed" : ""
+                      }`}
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? "ĐANG XỬ LÝ..." : "HOÀN TẤT ĐƠN HÀNG"}
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
 
             <div className="hidden lg:block">

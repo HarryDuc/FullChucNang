@@ -16,6 +16,7 @@ import { RolesGuard } from '../../../common/guards/roles.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { RequirePermission } from 'src/common/decorators/permission.decorator';
 import { PermissionGuard } from 'src/modules/permissions/guards/permission.guard';
+import { Public } from 'src/common/decorators/public.decorator';
 
 @Controller('checkoutapi') // 👉 Có thể đổi thành 'api/checkouts' nếu theo chuẩn toàn hệ thống
 export class CheckoutController {
@@ -25,6 +26,7 @@ export class CheckoutController {
    * 🛒 Tạo đơn thanh toán mới
    */
   @Post()
+  @Public() // Cho phép tạo checkout mà không cần xác thực
   async create(@Body() dto: CreateCheckoutDto): Promise<Checkout> {
     return this.checkoutService.create(dto);
   }
@@ -44,6 +46,7 @@ export class CheckoutController {
    * 🔍 Lấy chi tiết đơn thanh toán theo slug
    */
   @Get(':slug')
+  @Public() // Cho phép xem chi tiết thanh toán mà không cần xác thực
   async findOne(@Param('slug') slug: string): Promise<Checkout> {
     return this.checkoutService.findOne(slug);
   }
@@ -66,9 +69,7 @@ export class CheckoutController {
    * ✅ Cập nhật trạng thái thanh toán (paid | pending | failed)
    */
   @Put(':slug/payment-status')
-  @UseGuards(JwtAuthGuard, RolesGuard, PermissionGuard)
-  @Roles('admin', 'manager', 'staff')
-  @RequirePermission('checkout', 'update')
+  @Public() // Cho phép cập nhật trạng thái thanh toán mà không cần xác thực
   async updatePaymentStatus(
     @Param('slug') slug: string,
     @Body('paymentStatus') paymentStatus: 'pending' | 'paid' | 'failed',

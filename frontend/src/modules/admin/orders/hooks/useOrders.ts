@@ -13,9 +13,30 @@ export const useOrders = () => {
     setLoading(true);
     setError(null);
     try {
+      console.log("Fetching orders list...");
       const data = await OrderService.getOrders();
+      console.log("Successfully fetched orders:", data.length);
+
+      // Log checkout information
+      const ordersWithCheckout = data.filter(order => order.checkout);
+      const ordersWithoutCheckout = data.filter(order => !order.checkout);
+
+      console.log(`Orders with checkout: ${ordersWithCheckout.length}`);
+      console.log(`Orders without checkout: ${ordersWithoutCheckout.length}`);
+
+      if (ordersWithoutCheckout.length > 0) {
+        console.log("Orders missing checkout info:",
+          ordersWithoutCheckout.map(order => ({
+            id: order._id,
+            slug: order.slug,
+            createdAt: order.createdAt
+          }))
+        );
+      }
+
       setOrders(data);
     } catch (err) {
+      console.error("Error fetching orders:", err);
       setError("Không thể tải đơn hàng");
     } finally {
       setLoading(false);

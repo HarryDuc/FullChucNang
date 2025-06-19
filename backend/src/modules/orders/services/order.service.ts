@@ -205,4 +205,42 @@ export class OrderService {
     }
     return { message: 'Order has been deleted successfully' };
   }
+
+  /**
+   * Cập nhật thông tin thanh toán cho đơn hàng.
+   * @param slug - Định danh của đơn hàng.
+   * @param paymentInfo - Thông tin thanh toán.
+   * @returns Order đã được cập nhật.
+   */
+  async updatePaymentStatus(
+    slug: string,
+    paymentInfo: {
+      paymentMethod: string;
+      // paymentStatus: string;
+      paymentInfo?: any;
+    },
+  ): Promise<Order> {
+    const order = await this.findOne(slug);
+
+    // Cập nhật thông tin thanh toán
+    const updatedOrder = await this.orderModel.findByIdAndUpdate(
+      order._id,
+      {
+        paymentMethod: paymentInfo.paymentMethod,
+        // paymentStatus: paymentInfo.paymentStatus,
+        paymentInfo: paymentInfo.paymentInfo || {},
+        // Nếu thanh toán thành công, cập nhật trạng thái đơn hàng
+        // ...(paymentInfo.paymentStatus === 'paid'
+        //   ? { status: 'completed' }
+        //   : {}),
+      },
+      { new: true },
+    );
+
+    if (!updatedOrder) {
+      throw new Error(`Không thể cập nhật đơn hàng: ${slug}`);
+    }
+
+    return updatedOrder;
+  }
 }
