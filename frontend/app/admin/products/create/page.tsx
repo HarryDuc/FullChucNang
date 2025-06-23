@@ -1,15 +1,8 @@
 import React from "react";
-import CreateProduct from "@/modules/admin/products/components/CreateProduct";
-import LayoutAdmin from "@/modules/admin/common/layouts/AdminLayout";
+import CreateProduct from "@/modules/admin/products/components/CreateProduct"
 
 const CreateProductPage = () => {
-  return (
-    <LayoutAdmin>
-      <div>
-        <CreateProduct />
-      </div>
-    </LayoutAdmin>
-  );
+  return <CreateProduct />
 };
 
 export default CreateProductPage;

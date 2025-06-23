@@ -7,15 +7,22 @@ import { UserPermission, UserPermissionSchema } from './schemas/user-permission.
 import { AuthModule } from '../auth/auth.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { PermissionGuard } from './guards/permission.guard';
+import { CommonModule } from '../../common/common.module';
+import { User, UserSchema } from '../users/schemas/users.schema';
+import { RolePermission, RolePermissionSchema } from '../manager-permissions/schemas/role-permission.schema';
+import { ManagerPermissionsModule } from '../manager-permissions/manager-permissions.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Permission.name, schema: PermissionSchema },
       { name: UserPermission.name, schema: UserPermissionSchema },
+      { name: User.name, schema: UserSchema },
+      { name: RolePermission.name, schema: RolePermissionSchema },
     ]),
     forwardRef(() => AuthModule),
+    forwardRef(() => ManagerPermissionsModule),
+    CommonModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -28,7 +35,7 @@ import { PermissionGuard } from './guards/permission.guard';
     }),
   ],
   controllers: [PermissionsController],
-  providers: [PermissionsService, PermissionGuard],
-  exports: [PermissionsService, PermissionGuard],
+  providers: [PermissionsService, ConfigService],
+  exports: [PermissionsService, MongooseModule],
 })
 export class PermissionsModule { }

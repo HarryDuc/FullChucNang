@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from 'react';
 import { useContactList } from '../hooks/useContactList';
 import { IContactList } from '../services/contact-list.service';

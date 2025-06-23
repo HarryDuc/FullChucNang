@@ -5,7 +5,7 @@ import { User, UserDocument } from '../schemas/users.schema';
 
 @Injectable()
 export class UsersRepository {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) { }
 
   async findById(id: string): Promise<User | null> {
     return this.userModel.findById(id).exec();
@@ -22,7 +22,7 @@ export class UsersRepository {
 
   async update(
     userId: string,
-    updateData: Partial<User>,
+    updateData: Partial<User> | { $unset: { [key: string]: any } },
   ): Promise<User | null> {
     return await this.userModel
       .findByIdAndUpdate(userId, updateData, { new: true })

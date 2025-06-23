@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from "react";
 import { useAdminBanner } from "../hooks/useBanner";
 import { Banner } from "@/modules/client/home/models/banner.model";

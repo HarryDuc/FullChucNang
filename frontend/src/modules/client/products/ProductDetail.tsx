@@ -19,10 +19,10 @@ import { useProductsByMainCategory } from "./hooks/useClientProducts";
 import { ProductService } from "./services/product.service";
 
 interface ProductDetailProps {
-  slug?: string;
+  slug: string;
 }
 
-const ProductDetailSection: React.FC<ProductDetailProps> = ({ slug }) => {
+const ProductDetailSection = ({ slug }: ProductDetailProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [product, setProduct] = useState<Product | null>(null);
@@ -120,7 +120,7 @@ const ProductDetailSection: React.FC<ProductDetailProps> = ({ slug }) => {
           const productData = await ProductService.getOne(slugFromUrl);
 
           // Kiểm tra nếu sản phẩm bị ẩn
-          if (productData.isVisible === true) {
+          if (productData.isVisible === false) {
             router.replace("/not_found");
             return;
           }
@@ -148,7 +148,7 @@ const ProductDetailSection: React.FC<ProductDetailProps> = ({ slug }) => {
 
           // Kiểm tra nếu sản phẩm bị ẩn
           if (productData.isVisible === false) {
-            router.replace("/404");
+            router.replace("/not_found");
             return;
           }
 
@@ -382,7 +382,7 @@ const ProductDetailSection: React.FC<ProductDetailProps> = ({ slug }) => {
 
       const selectedProductData: CartItem = selectedVariant
         ? {
-            _id: product._id || product.id,
+            _id: product._id || product.id || "",
             name: product.name,
             slug: product.slug,
             variant: selectedVariant.variantName,
@@ -399,7 +399,7 @@ const ProductDetailSection: React.FC<ProductDetailProps> = ({ slug }) => {
             sku: selectedVariant.sku || product.sku,
           }
         : {
-            _id: product._id || product.id,
+            _id: product._id || product.id || "",
             name: product.name,
             slug: product.slug,
             currentPrice: product.basePrice || 0,

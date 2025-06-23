@@ -29,9 +29,9 @@ export const apiRoutes = {
         GET_BY_SLUG: (slug: string) => `/productapi/${slug}`,
     },
     PERMISSIONS: {
-        BASE: '/permissions',
-        USER: (userId: string) => `/permissions/user/${userId}`,
-        INITIALIZE: '/permissions/initialize',
+        BASE: '/permissionsapi',
+        USER: (userId: string) => `/permissionsapi/user/${userId}`,
+        INITIALIZE: '/permissionsapi/initialize',
     },
 };
 

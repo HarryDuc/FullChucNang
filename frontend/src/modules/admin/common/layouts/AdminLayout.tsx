@@ -37,8 +37,6 @@ const LayoutAdmin = ({ children }: LayoutAdminProps) => {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
-      <AdminGuard>
       <aside
         className={`${
           sidebarCollapsed ? "w-20" : "w-64"
@@ -73,7 +71,6 @@ const LayoutAdmin = ({ children }: LayoutAdminProps) => {
             </div>
           </main>
         </div>
-      </AdminGuard>
     </div>
   );
 };

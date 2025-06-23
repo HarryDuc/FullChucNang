@@ -126,7 +126,7 @@ const PostList: React.FC = () => {
                 <td className="p-3 border">
                   <div className="flex gap-2">
                     <a
-                      href={`/posts/${post.slug}`}
+                      href={`/${post.slug}`}
                       target="_blank"
                       rel="noopener noreferrer"
                     >

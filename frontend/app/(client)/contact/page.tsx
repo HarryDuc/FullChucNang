@@ -3,8 +3,6 @@ import Contact from "@/modules/client/pages/Contact"; // Đường dẫn đúng 
 
 export default function ContactPage() {
     return (
-        <ClientLayout>
             <Contact />
-        </ClientLayout>
     );
 }

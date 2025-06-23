@@ -4,10 +4,6 @@ import CategoryProductLayout from "@/modules/client/common/layouts/CategoryProdu
 
 export default function ServicesPage() {
     return (
-        <CategoryProductLayout>
-            <Suspense fallback={<p className="p-4">Đang tải tìm kiếm...</p>}>
-                <SearchPage />
-            </Suspense>
-        </CategoryProductLayout>
+        <SearchPage />
     );
 }

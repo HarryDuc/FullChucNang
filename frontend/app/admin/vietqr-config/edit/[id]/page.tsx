@@ -5,8 +5,7 @@ import { useEffect, useState } from "react";
 import { VietQRConfigForm } from "@/modules/admin/vietqr-config/components/VietQRConfigForm";
 import { useVietQRConfigs } from "@/modules/admin/vietqr-config/hooks/useVietQRConfigs";
 import { VietQRConfig } from "@/modules/admin/vietqr-config/models/vietqr-config";
-import { vietQRConfigService } from "@/modules/admin/vietqr-config/services/vietqr-config.service";
-import LayoutAdmin from "@/modules/admin/common/layouts/AdminLayout";
+import { vietQRConfigService } from "@/modules/admin/vietqr-config/services/vietqr-config.service"
 
 interface Props {
   params: {
@@ -55,26 +54,21 @@ export default async function EditVietQRConfigPage({ params }: Props) {
 
   if (loading) {
     return (
-      <LayoutAdmin>
         <div className="flex justify-center items-center min-h-[200px]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
-      </LayoutAdmin>
     );
   }
 
   if (!config) {
     return (
-      <LayoutAdmin>
         <div className="text-center py-8">
           <h2 className="text-xl text-gray-600">Không tìm thấy cấu hình</h2>
         </div>
-      </LayoutAdmin>
     );
   }
 
   return (
-    <LayoutAdmin>
       <div className="p-6">
         <h1 className="text-2xl font-semibold text-gray-900 mb-6">
           Chỉnh sửa cấu hình VietQR
@@ -85,6 +79,5 @@ export default async function EditVietQRConfigPage({ params }: Props) {
           onCancel={() => router.push("/admin/vietqr-config")}
         />
       </div>
-    </LayoutAdmin>
   );
 }

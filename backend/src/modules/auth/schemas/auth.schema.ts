@@ -1,7 +1,7 @@
 // 📁 src/modules/auth/schemas/auth.schema.ts
 
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 /**
  * 🛠️ **Schema cho Bảng Auth trong MongoDB**
@@ -25,6 +25,13 @@ export class Auth extends Document {
     default: 'user',
   })
   role: string;
+
+  /**
+   * 🆕 **RoleId tham chiếu đến Role tùy chỉnh**
+   * Khi có roleId, điều này sẽ được ưu tiên thay vì sử dụng trường role chuẩn
+   */
+  @Prop({ type: Types.ObjectId, ref: 'Role' })
+  roleId?: Types.ObjectId;
 
   /**
    * **Trạng thái người dùng**

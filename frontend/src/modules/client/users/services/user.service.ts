@@ -187,69 +187,69 @@ export const UserService = {
     }
   },
 
-  // 📌 Lấy danh sách địa chỉ của người dùng
-  getUserAddresses: async (): Promise<UserAddress[]> => {
-    try {
-      const response = await fetch(`${USER_API}/addresses`, fetchOptions('GET'));
-      return handleResponse(response);
-    } catch (error) {
-      console.error("Lỗi khi lấy danh sách địa chỉ:", error);
-      throw error;
-    }
-  },
+  // // 📌 Lấy danh sách địa chỉ của người dùng
+  // getUserAddresses: async (): Promise<UserAddress[]> => {
+  //   try {
+  //     const response = await fetch(`${USER_API}/addresses`, fetchOptions('GET'));
+  //     return handleResponse(response);
+  //   } catch (error) {
+  //     console.error("Lỗi khi lấy danh sách địa chỉ:", error);
+  //     throw error;
+  //   }
+  // },
 
   // 📌 Thêm địa chỉ mới
-  addAddress: async (address: Omit<UserAddress, 'id'>): Promise<UserAddress> => {
-    try {
-      const response = await fetch(`${USER_API}/addresses`, fetchOptions('POST', address));
-      return handleResponse(response);
-    } catch (error) {
-      console.error("Lỗi khi thêm địa chỉ mới:", error);
-      throw error;
-    }
-  },
+  // addAddress: async (address: Omit<UserAddress, 'id'>): Promise<UserAddress> => {
+  //   try {
+  //     const response = await fetch(`${USER_API}/addresses`, fetchOptions('POST', address));
+  //     return handleResponse(response);
+  //   } catch (error) {
+  //     console.error("Lỗi khi thêm địa chỉ mới:", error);
+  //     throw error;
+  //   }
+  // },
 
-  // 📌 Cập nhật địa chỉ
-  updateAddress: async (id: string, address: Partial<UserAddress>): Promise<UserAddress> => {
-    try {
-      const response = await fetch(
-        `${USER_API}/addresses/${id}`,
-        fetchOptions('PUT', address)
-      );
-      return handleResponse(response);
-    } catch (error) {
-      console.error(`Lỗi khi cập nhật địa chỉ ${id}:`, error);
-      throw error;
-    }
-  },
+  // // 📌 Cập nhật địa chỉ
+  // updateAddress: async (id: string, address: Partial<UserAddress>): Promise<UserAddress> => {
+  //   try {
+  //     const response = await fetch(
+  //       `${USER_API}/addresses/${id}`,
+  //       fetchOptions('PUT', address)
+  //     );
+  //     return handleResponse(response);
+  //   } catch (error) {
+  //     console.error(`Lỗi khi cập nhật địa chỉ ${id}:`, error);
+  //     throw error;
+  //   }
+  // },
 
   // 📌 Xóa địa chỉ
-  deleteAddress: async (id: string): Promise<void> => {
-    try {
-      const response = await fetch(
-        `${USER_API}/addresses/${id}`,
-        fetchOptions('DELETE')
-      );
-      await handleResponse(response);
-    } catch (error) {
-      console.error(`Lỗi khi xóa địa chỉ ${id}:`, error);
-      throw error;
-    }
-  },
+  // deleteAddress: async (id: string): Promise<void> => {
+  //   try {
+  //     const response = await fetch(
+  //       `${USER_API}/addresses/${id}`,
+  //       fetchOptions('DELETE')
+  //     );
+  //     await handleResponse(response);
+  //   } catch (error) {
+  //     console.error(`Lỗi khi xóa địa chỉ ${id}:`, error);
+  //     throw error;
+  //   }
+  // },
 
-  // 📌 Đặt địa chỉ mặc định
-  setDefaultAddress: async (id: string): Promise<UserAddress> => {
-    try {
-      const response = await fetch(
-        `${USER_API}/addresses/${id}/default`,
-        fetchOptions('PUT')
-      );
-      return handleResponse(response);
-    } catch (error) {
-      console.error(`Lỗi khi đặt địa chỉ ${id} làm mặc định:`, error);
-      throw error;
-    }
-  },
+  // // 📌 Đặt địa chỉ mặc định
+  // setDefaultAddress: async (id: string): Promise<UserAddress> => {
+  //   try {
+  //     const response = await fetch(
+  //       `${USER_API}/addresses/${id}/default`,
+  //       fetchOptions('PUT')
+  //     );
+  //     return handleResponse(response);
+  //   } catch (error) {
+  //     console.error(`Lỗi khi đặt địa chỉ ${id} làm mặc định:`, error);
+  //     throw error;
+  //   }
+  // },
 
   // 📌 Lấy cài đặt người dùng
   getUserSettings: async (): Promise<UserSettings> => {

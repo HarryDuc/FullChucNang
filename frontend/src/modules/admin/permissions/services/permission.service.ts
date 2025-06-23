@@ -16,7 +16,7 @@ export class PermissionService {
   private baseUrl: string;
 
   private constructor() {
-    this.baseUrl = process.env.NEXT_PUBLIC_API_URL + '/permissions';
+    this.baseUrl = process.env.NEXT_PUBLIC_API_URL + '/permissionsapi';
   }
 
   public static getInstance(): PermissionService {
@@ -30,6 +30,7 @@ export class PermissionService {
     const token = localStorage.getItem('token');
     return {
       Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
     };
   }
 
@@ -38,28 +39,34 @@ export class PermissionService {
       await api.post(`${this.baseUrl}/initialize`, {}, {
         headers: this.getHeaders(),
       });
-    } catch (error) {
-      console.error('Error initializing permissions:', error);
+    } catch (error: any) {
+      if (error.response?.status === 409) {
+        return;
+      }
       throw error;
     }
   }
 
   async getAllPermissions(): Promise<Permission[]> {
     try {
-      // First try to initialize permissions
-      try {
-        await this.initializePermissions();
-      } catch (initError) {
-        console.warn('Permission initialization failed, might already be initialized:', initError);
-      }
-
-      // Then get all permissions
       const response = await api.get(`${this.baseUrl}`, {
         headers: this.getHeaders(),
       });
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching permissions:', error);
+
+      if (response.data?.permissions) {
+        return response.data.permissions;
+      }
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+      if (response.data?.data && Array.isArray(response.data.data)) {
+        return response.data.data;
+      }
+
+      console.error('Unexpected response structure:', response.data);
+      throw new Error('Invalid response format from permissions endpoint');
+    } catch (error: any) {
+      console.error('Error fetching permissions:', error.response || error);
       throw error;
     }
   }
@@ -69,9 +76,21 @@ export class PermissionService {
       const response = await api.get(`${this.baseUrl}/user/${userId}`, {
         headers: this.getHeaders(),
       });
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching user permissions:', error);
+
+      if (response.data?.permissions) {
+        return response.data.permissions;
+      }
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+      if (response.data?.data && Array.isArray(response.data.data)) {
+        return response.data.data;
+      }
+
+      console.error('Unexpected response structure:', response.data);
+      throw new Error('Invalid response format from user permissions endpoint');
+    } catch (error: any) {
+      console.error('Error fetching user permissions:', error.response || error);
       throw error;
     }
   }
@@ -80,17 +99,26 @@ export class PermissionService {
     try {
       const response = await api.put(
         `${this.baseUrl}/user/${userId}`,
-        {
-          userId,
-          permissionIds
-        },
+        { permissionIds },
         {
           headers: this.getHeaders(),
         }
       );
-      return response.data;
-    } catch (error) {
-      console.error('Error updating user permissions:', error);
+
+      if (response.data?.permissions) {
+        return response.data.permissions;
+      }
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+      if (response.data?.data && Array.isArray(response.data.data)) {
+        return response.data.data;
+      }
+
+      console.error('Unexpected response structure:', response.data);
+      throw new Error('Invalid response format when updating user permissions');
+    } catch (error: any) {
+      console.error('Error updating user permissions:', error.response || error);
       throw error;
     }
   }
@@ -104,9 +132,47 @@ export class PermissionService {
           headers: this.getHeaders(),
         }
       );
+
+      if (response.data?.permissions) {
+        return response.data.permissions;
+      }
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+      if (response.data?.data && Array.isArray(response.data.data)) {
+        return response.data.data;
+      }
+
+      console.error('Unexpected response structure:', response.data);
+      throw new Error('Invalid response format when assigning all permissions');
+    } catch (error: any) {
+      console.error('Error assigning all permissions:', error.response || error);
+      throw error;
+    }
+  }
+
+  async debugGetAllPermissions(): Promise<any> {
+    try {
+      const response = await api.get(`${this.baseUrl}`, {
+        headers: this.getHeaders(),
+      });
+      console.log('Raw permissions response:', response);
+      console.log('Response data structure:', {
+        hasData: !!response.data,
+        isArray: Array.isArray(response.data),
+        hasPermissions: !!response.data?.permissions,
+        hasDataProperty: !!response.data?.data,
+        type: typeof response.data,
+        keys: response.data ? Object.keys(response.data) : []
+      });
       return response.data;
-    } catch (error) {
-      console.error('Error assigning all permissions to user:', error);
+    } catch (error: any) {
+      console.error('Debug error:', {
+        error,
+        response: error.response,
+        status: error.response?.status,
+        data: error.response?.data
+      });
       throw error;
     }
   }

@@ -7,9 +7,9 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { PermissionGuard } from '../guards/permission.guard';
-import { RequirePermission } from 'src/common/decorators/permission.decorator';
+import { RequirePermission } from '../../../common/decorators/permission.decorator';
 
-@Controller('permissions')
+@Controller('permissionsapi')
 export class PermissionsController {
   constructor(private readonly permissionsService: PermissionsService) { }
 
@@ -17,30 +17,49 @@ export class PermissionsController {
   @UseGuards(JwtAuthGuard, RolesGuard, PermissionGuard)
   @Roles('admin')
   @RequirePermission('permissions', 'read')
-  async getAllPermissions() {
-    return await this.permissionsService.findAll();
+  async findAll() {
+    const permissions = await this.permissionsService.findAll();
+    return {
+      success: true,
+      permissions: permissions.map(p => ({
+        id: (p as any).id || (p as any)._id.toString(),
+        resource: p.resource,
+        action: p.action
+      }))
+    };
   }
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard, PermissionGuard)
   @Roles('admin')
   @RequirePermission('permissions', 'create')
-  async createPermission(@Body() createPermissionDto: CreatePermissionDto) {
-    return await this.permissionsService.create(createPermissionDto);
+  async create(@Body() createPermissionDto: CreatePermissionDto) {
+    const permission = await this.permissionsService.create(createPermissionDto);
+    return {
+      success: true,
+      permission: {
+        id: (permission as any).id || (permission as any)._id.toString(),
+        resource: permission.resource,
+        action: permission.action
+      }
+    };
   }
 
   @Get('user/:userId')
-  @UseGuards(JwtAuthGuard, RolesGuard, PermissionGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   @RequirePermission('permissions', 'read')
   async getUserPermissions(@Param('userId') userId: string) {
-    try {
-      console.log('Getting permissions for user:', userId);
-      return await this.permissionsService.getUserPermissions(userId);
-    } catch (error) {
-      console.error('Error getting user permissions:', error);
-      throw error;
-    }
+    const permissions = await this.permissionsService.getUserPermissions(userId);
+    return {
+      success: true,
+      permissions: permissions.map(p => ({
+        id: p._id.toString(),
+        resource: p.resource,
+        action: p.action,
+        source: p.source
+      }))
+    };
   }
 
   @Put('user/:userId')

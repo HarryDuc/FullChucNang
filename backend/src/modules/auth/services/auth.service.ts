@@ -7,6 +7,7 @@ import {
   InternalServerErrorException,
   Logger,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { UsersService } from '../../users/services/users.service';
 import { RegisterDto, LoginDto } from '../dtos/auth.dto';
@@ -23,6 +24,8 @@ import { Otp, OtpDocument } from '../schemas/otp.schema';
 import { randomBytes } from 'crypto';
 import { PermissionsService } from '../../permissions/services/permissions.service';
 import { Permission } from 'src/modules/permissions/schemas/permission.schema';
+import { Auth } from '../schemas/auth.schema';
+import { Types } from 'mongoose';
 
 // Define permission interface
 interface PermissionInfo {
@@ -41,6 +44,7 @@ export class AuthService {
     private readonly tokenService: TokenService,
     @InjectModel(Token.name) private readonly tokenModel: Model<TokenDocument>,
     @InjectModel(Otp.name) private readonly otpModel: Model<OtpDocument>,
+    @InjectModel(Auth.name) private readonly authModel: Model<Auth>,
     private readonly verifyService: VerifyService,
     private readonly permissionsService: PermissionsService,
   ) { }
@@ -442,5 +446,81 @@ export class AuthService {
       success: true,
       message: 'Đặt lại mật khẩu thành công',
     };
+  }
+
+  /**
+   * Tìm người dùng theo ID
+   * @param userId ID của người dùng cần tìm
+   * @returns Thông tin người dùng
+   */
+  async findUserById(userId: string): Promise<User> {
+    try {
+      const user = await this.usersService.getUserById(userId);
+
+      if (!user) {
+        this.logger.error(`User not found with ID: ${userId}`);
+        throw new NotFoundException(`User with ID ${userId} not found`);
+      }
+
+      return user;
+    } catch (error) {
+      this.logger.error(`Error finding user by ID: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Cập nhật vai trò tùy chỉnh cho người dùng
+   * @param userId ID của người dùng
+   * @param roleId ID của vai trò tùy chỉnh
+   * @returns Thông tin người dùng sau khi cập nhật
+   */
+  async assignCustomRoleToUser(userId: string, roleId: string): Promise<User> {
+    try {
+      this.logger.log(`Assigning custom role ${roleId} to user ${userId}`);
+
+      const user = await this.usersService.getUserById(userId);
+      if (!user) {
+        this.logger.error(`User not found with ID: ${userId}`);
+        throw new NotFoundException(`User with ID ${userId} not found`);
+      }
+
+      // Update user with the custom role
+      await this.usersService.updateUser(userId, {
+        roleId: new Types.ObjectId(roleId)
+      });
+
+      return await this.usersService.getUserById(userId);
+    } catch (error) {
+      this.logger.error(`Error assigning custom role to user: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Xóa vai trò tùy chỉnh khỏi người dùng
+   * @param userId ID của người dùng
+   * @returns Thông tin người dùng sau khi cập nhật
+   */
+  async removeCustomRoleFromUser(userId: string): Promise<User> {
+    try {
+      this.logger.log(`Removing custom role from user ${userId}`);
+
+      const user = await this.usersService.getUserById(userId);
+      if (!user) {
+        this.logger.error(`User not found with ID: ${userId}`);
+        throw new NotFoundException(`User with ID ${userId} not found`);
+      }
+
+      // Remove the custom role using $unset
+      await this.usersService.updateUser(userId, {
+        $unset: { roleId: "" }
+      });
+
+      return await this.usersService.getUserById(userId);
+    } catch (error) {
+      this.logger.error(`Error removing custom role from user: ${error.message}`);
+      throw error;
+    }
   }
 }

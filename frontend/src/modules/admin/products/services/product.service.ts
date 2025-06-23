@@ -25,7 +25,7 @@ const fetchOptions = (method: string, data?: any) => ({
   method,
   headers: {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+    Authorization: `Bearer ${localStorage.getItem("token")}`,
   },
   body: data ? JSON.stringify(data) : undefined,
 });
@@ -187,6 +187,9 @@ export const ProductService = {
       const response = await fetch(IMAGE_UPLOAD_API, {
         method: "POST",
         body: formData,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       });
 
       const result = await handleResponse(response);

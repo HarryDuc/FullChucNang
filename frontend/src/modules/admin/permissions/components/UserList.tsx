@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import api from "@/common/utils/api";
+import { useUserRoles } from "../../manager-permissions";
 
 interface User {
   id: string;
@@ -22,6 +23,7 @@ export const UserList: React.FC<UserListProps> = ({
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { userRole, loading: userRoleLoading, getUserRole } = useUserRoles();
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -35,7 +37,28 @@ export const UserList: React.FC<UserListProps> = ({
             },
           }
         );
-        setUsers(response.data);
+        // Lọc ra những user không phải admin
+        const nonAdminUsers = response.data.filter(
+          (user: User) => user.role !== "admin"
+        );
+
+        // Fetch role for each user
+        const usersWithRoles = await Promise.all(
+          nonAdminUsers.map(async (user: User) => {
+            try {
+              const userRoleData = await getUserRole(user.id);
+              return {
+                ...user,
+                role: userRoleData?.customRole?.name || userRoleData?.standardRole || user.role
+              };
+            } catch (err) {
+              console.error(`Failed to fetch role for user ${user.id}:`, err);
+              return user;
+            }
+          })
+        );
+
+        setUsers(usersWithRoles);
         setError(null);
       } catch (err) {
         setError("Failed to fetch users");
@@ -45,7 +68,7 @@ export const UserList: React.FC<UserListProps> = ({
     };
 
     fetchUsers();
-  }, []);
+  }, [getUserRole]);
 
   if (loading) {
     return (
@@ -69,7 +92,7 @@ export const UserList: React.FC<UserListProps> = ({
   return (
     <div className="bg-white rounded-lg shadow-md">
       <div className="p-4">
-        <h2 className="text-xl font-semibold mb-4">Users</h2>
+        <h2 className="text-xl font-semibold mb-4">Người dùng</h2>
         <div className="space-y-2">
           {users.map((user) => (
             <div

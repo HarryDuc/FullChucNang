@@ -8,6 +8,7 @@ import { Checkout, CheckoutSchema } from '../checkouts/schemas/checkout.schema';
 import { Product, ProductSchema } from '../products/schemas/product.schema';
 import { PermissionsModule } from '../permissions/permissions.module';
 import { AuthModule } from '../auth/auth.module';
+import { CommonModule } from 'src/common/common.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { AuthModule } from '../auth/auth.module';
     ]),
     PermissionsModule,
     forwardRef(() => AuthModule),
+    CommonModule,
   ],
   controllers: [ReviewController],
   providers: [ReviewService],

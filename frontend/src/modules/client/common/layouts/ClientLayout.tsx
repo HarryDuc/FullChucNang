@@ -15,12 +15,13 @@ const ClientLayout = ({ children }: LayoutProps) => {
       <Menu />
 
       {/* 📌 Nội dung chính */}
-      <main className="flex-grow container py-4 px-4 mx-auto bg-[#f5f5fa]">{children}</main>
+      <main className="flex-grow container py-4 px-4 mx-auto bg-[#f5f5fa]">
+        {children}
+      </main>
 
       {/* 📌 Footer */}
       <Footer />
       <ContactButtons />
-
     </div>
   );
 };

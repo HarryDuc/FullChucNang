@@ -5,12 +5,41 @@ import { Permission, PermissionDocument } from '../schemas/permission.schema';
 import { UserPermission, UserPermissionDocument } from '../schemas/user-permission.schema';
 import { CreatePermissionDto } from '../dtos/create-permission.dto';
 import { UpdateUserPermissionsDto } from '../dtos/update-user-permissions.dto';
+import { RolePermission } from '../../manager-permissions/schemas/role-permission.schema';
+import { User } from '../../users/schemas/users.schema';
+
+export interface PermissionWithSource {
+  _id: Types.ObjectId;
+  source: 'direct' | 'role';
+  resource: string;
+  action: string;
+}
+
+interface PopulatedPermission {
+  _id: Types.ObjectId;
+  resource: string;
+  action: string;
+}
+
+interface PopulatedUserPermission {
+  _id: Types.ObjectId;
+  userId: Types.ObjectId;
+  permissionId: PopulatedPermission;
+}
+
+interface PopulatedRolePermission {
+  _id: Types.ObjectId;
+  roleId: Types.ObjectId;
+  permissionId: PopulatedPermission;
+}
 
 @Injectable()
 export class PermissionsService {
   constructor(
     @InjectModel(Permission.name) private permissionModel: Model<PermissionDocument>,
     @InjectModel(UserPermission.name) private userPermissionModel: Model<UserPermissionDocument>,
+    @InjectModel(RolePermission.name) private rolePermissionModel: Model<RolePermission>,
+    @InjectModel(User.name) private userModel: Model<User>,
   ) { }
 
   async findAll(): Promise<Permission[]> {
@@ -22,16 +51,55 @@ export class PermissionsService {
     return createdPermission.save();
   }
 
-  async getUserPermissions(userId: string): Promise<UserPermission[]> {
+  async getUserPermissions(userId: string): Promise<PermissionWithSource[]> {
     try {
       const objectId = new Types.ObjectId(userId);
       console.log('Getting permissions for userId:', objectId.toString());
-      const permissions = await this.userPermissionModel
+
+      // Get user's direct permissions
+      const userPermissions = await this.userPermissionModel
         .find({ userId: objectId })
-        .populate('permissionId')
+        .populate<{ permissionId: PopulatedPermission }>('permissionId')
+        .lean<PopulatedUserPermission[]>()
         .exec();
-      // console.log('Found permissions:', permissions);
-      return permissions;
+
+      // Get user's role and role permissions
+      const user = await this.userModel.findById(objectId).lean().exec();
+      console.log('Found user:', user);
+
+      let rolePermissions: PopulatedRolePermission[] = [];
+      if (user?.roleId) {
+        rolePermissions = await this.rolePermissionModel
+          .find({ roleId: user.roleId })
+          .populate<{ permissionId: PopulatedPermission }>('permissionId')
+          .lean<PopulatedRolePermission[]>()
+          .exec();
+        console.log('Found role permissions:', rolePermissions);
+      }
+
+      // Combine and deduplicate permissions
+      const allPermissions = [
+        ...userPermissions.map(up => ({
+          _id: up.permissionId._id,
+          resource: up.permissionId.resource,
+          action: up.permissionId.action,
+          source: 'direct' as const
+        })),
+        ...rolePermissions.map(rp => ({
+          _id: rp.permissionId._id,
+          resource: rp.permissionId.resource,
+          action: rp.permissionId.action,
+          source: 'role' as const
+        }))
+      ];
+
+      // Remove duplicates based on permission ID
+      const uniquePermissions = allPermissions.filter((permission, index, self) =>
+        index === self.findIndex((p) => p._id.toString() === permission._id.toString())
+      );
+
+      console.log('Combined unique permissions:', uniquePermissions);
+      return uniquePermissions;
     } catch (error) {
       console.error('Error getting user permissions:', error);
       throw error;
@@ -40,13 +108,15 @@ export class PermissionsService {
 
   async checkUserPermission(userId: string, resource: string, action: string): Promise<boolean> {
     try {
-      const userPermissions = await this.getUserPermissions(userId);
+      const allPermissions = await this.getUserPermissions(userId);
 
-      // Check if the user has the required permission
-      return userPermissions.some(userPerm => {
-        const permission = userPerm.permissionId as unknown as Permission;
-        return permission.resource === resource && permission.action === action;
-      });
+      // Check if any permission matches the required resource and action
+      const hasPermission = allPermissions.some(permission =>
+        permission.resource === resource && permission.action === action
+      );
+
+      console.log(`Checking permission for ${resource}:${action} - Result: ${hasPermission}`);
+      return hasPermission;
     } catch (error) {
       console.error('Error checking user permission:', error);
       return false;
@@ -154,6 +224,12 @@ export class PermissionsService {
       { resource: 'permissions', action: 'read' },
       { resource: 'permissions', action: 'update' },
       { resource: 'permissions', action: 'delete' },
+
+      // Manager Permissions
+      { resource: 'manager-permissions', action: 'create' },
+      { resource: 'manager-permissions', action: 'read' },
+      { resource: 'manager-permissions', action: 'update' },
+      { resource: 'manager-permissions', action: 'delete' },
 
       // Posts Permissions
       { resource: 'posts', action: 'create' },

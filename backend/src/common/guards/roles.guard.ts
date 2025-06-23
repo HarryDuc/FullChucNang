@@ -1,13 +1,18 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, forwardRef, Inject } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { PermissionsService } from '../../modules/permissions/services/permissions.service';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Auth } from '../../modules/auth/schemas/auth.schema';
+import { getModelToken } from '@nestjs/mongoose';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private permissionsService: PermissionsService,
+    @Inject(getModelToken(Auth.name)) private authModel: Model<Auth>,
   ) { }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -16,47 +21,40 @@ export class RolesGuard implements CanActivate {
       context.getClass(),
     ]);
 
-    // Nếu không có quy định về role, cho phép truy cập
-    if (!requiredRoles || requiredRoles.length === 0) {
-      return true;
-    }
-
     const { user } = context.switchToHttp().getRequest();
     if (!user) {
       return false;
     }
 
-    // Kiểm tra xem người dùng có role được yêu cầu hay không
-    const hasRequiredRole = requiredRoles.some(role => user.role === role);
-    if (hasRequiredRole) {
+    // If user has admin role, allow access
+    if (user.role === 'admin') {
       return true;
     }
 
-    // Nếu không có role được yêu cầu, kiểm tra xem người dùng có quyền cụ thể không
-    try {
-      // Lấy resource và action từ route handler (path và method)
-      const request = context.switchToHttp().getRequest();
-      const path = request.route.path;
-      const method = request.method;
+    // Get resource and action from route handler
+    const request = context.switchToHttp().getRequest();
+    const path = request.route.path;
+    const method = request.method;
 
-      // Xác định resource và action từ path và method
-      const resourceAction = this.mapPathMethodToResourceAction(path, method);
-
-      if (resourceAction) {
-        // Kiểm tra xem người dùng có quyền tương ứng không
-        const hasPermission = await this.permissionsService.checkUserPermission(
-          user.userId,
-          resourceAction.resource,
-          resourceAction.action
-        );
-
-        return hasPermission;
-      }
-    } catch (error) {
-      console.error('Error checking user permissions:', error);
+    // Map path and method to resource and action
+    const resourceAction = this.mapPathMethodToResourceAction(path, method);
+    if (!resourceAction) {
+      return false;
     }
 
-    return false;
+    try {
+      // Always check permissions regardless of role type
+      const hasPermission = await this.permissionsService.checkUserPermission(
+        user.userId,
+        resourceAction.resource,
+        resourceAction.action
+      );
+
+      return hasPermission;
+    } catch (error) {
+      console.error('Error checking user permissions:', error);
+      return false;
+    }
   }
 
   /**

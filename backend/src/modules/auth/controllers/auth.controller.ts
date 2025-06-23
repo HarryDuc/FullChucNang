@@ -26,6 +26,7 @@ import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { RequestPasswordResetDto, ResetPasswordWithTokenDto, ResetPasswordWithOtpDto, VerifyOtpDto } from '../dtos/password-reset.dto';
 import { PermissionsService } from '../../permissions/services/permissions.service';
+import { Document } from 'mongoose';
 
 // Interface để định nghĩa kiểu dữ liệu của req.user
 interface RequestWithUser extends Request {
@@ -155,8 +156,6 @@ export class AuthController {
     const userId = req.user?.userId;
     const role = req.user?.role;
 
-    // this.logger.log(`🔒 Đang lấy quyền cho người dùng với ID: ${userId}, role: ${role}`);
-
     try {
       // Nếu người dùng là admin, trả về danh sách tất cả các quyền
       if (role === 'admin') {
@@ -164,7 +163,7 @@ export class AuthController {
         return {
           role: 'admin',
           permissions: allPermissions.map(p => ({
-            id: (p as any)._id.toString(),
+            id: (p as any as Document).id,
             resource: p.resource,
             action: p.action
           })),
@@ -172,16 +171,14 @@ export class AuthController {
         };
       }
 
-      // Đối với người dùng khác, lấy quyền từ bảng user_permissions
+      // Đối với người dùng khác, lấy quyền từ bảng user_permissions và role_permissions
       const userPermissions = await this.permissionsService.getUserPermissions(userId);
-      const permissions = userPermissions.map(up => {
-        const permission = up.permissionId as any;
-        return {
-          id: permission._id.toString(),
-          resource: permission.resource,
-          action: permission.action
-        };
-      });
+      const permissions = userPermissions.map(permission => ({
+        id: permission._id.toString(),
+        resource: permission.resource,
+        action: permission.action,
+        source: permission.source
+      }));
 
       this.logger.log(`✅ Lấy ${permissions.length} quyền thành công cho người dùng ${userId}`);
 
@@ -304,5 +301,27 @@ export class AuthController {
   @Post('reset-password/otp')
   async resetPasswordWithOtp(@Body() dto: ResetPasswordWithOtpDto) {
     return this.authService.resetPasswordWithOtp(dto);
+  }
+
+  @Get('check-permission')
+  @UseGuards(JwtAuthGuard)
+  async checkPermission(@Request() req) {
+    try {
+      const userId = req.user.id;
+      const userPermissions = await this.permissionsService.getUserPermissions(userId);
+
+      const permissions = userPermissions.map(up => ({
+        resource: up.resource,
+        action: up.action,
+        source: up.source
+      }));
+
+      return {
+        success: true,
+        permissions,
+      };
+    } catch (error) {
+      throw new UnauthorizedException('Error checking permissions');
+    }
   }
 }

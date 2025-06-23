@@ -120,12 +120,22 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
       },
     },
     {
-      href: "/admin/permission",
+      href: "/admin/permissions",
       icon: <MdOutlineSecurity />,
       label: "Permission",
       group: "Management",
       requiredPermission: {
         resource: "permissions",
+        action: "read",
+      },
+    },
+    {
+      href: "/admin/manager-permissions",
+      icon: <MdOutlineSecurity />,
+      label: "Manager Permissions",
+      group: "Management",
+      requiredPermission: {
+        resource: "manager-permissions",
         action: "read",
       },
     },

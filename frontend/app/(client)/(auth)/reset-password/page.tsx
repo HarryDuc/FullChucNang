@@ -1,5 +1,5 @@
 import ClientLayout from "@/modules/client/common/layouts/ClientLayout";
-import ResetPassword from "../../../src/modules/auth/reset-password/ResetPassword";
+import ResetPassword from "../../../../src/modules/auth/reset-password/ResetPassword";
 
 export default function Page() {
   return (

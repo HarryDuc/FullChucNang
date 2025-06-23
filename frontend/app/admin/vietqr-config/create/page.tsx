@@ -4,14 +4,12 @@ import { useRouter } from "next/navigation";
 import { VietQRConfigForm } from "@/modules/admin/vietqr-config/components/VietQRConfigForm";
 import { useVietQRConfigs } from "@/modules/admin/vietqr-config/hooks/useVietQRConfigs";
 import { CreateVietQRConfigDto } from "@/modules/admin/vietqr-config/models/vietqr-config";
-import LayoutAdmin from "@/modules/admin/common/layouts/AdminLayout";
 
 export default function CreateVietQRConfigPage() {
   const router = useRouter();
   const { createConfig } = useVietQRConfigs();
 
   return (
-    <LayoutAdmin>
       <VietQRConfigForm
         onSubmit={async (values) => {
           const createDto: CreateVietQRConfigDto = {
@@ -27,6 +25,5 @@ export default function CreateVietQRConfigPage() {
         }}
         onCancel={() => router.push("/admin/vietqr-config")}
       />
-    </LayoutAdmin>
   );
 }

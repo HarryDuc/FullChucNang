@@ -12,11 +12,9 @@ interface PageProps {
 export default async function Page({ params }: PageProps) {
   const { slug } = await params;
   return (
-      <ClientLayout>
       <PageContent
         slug={slug}
         className="bg-white rounded-lg shadow-md p-6"
       />
-      </ClientLayout>
   );
 }

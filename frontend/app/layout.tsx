@@ -20,13 +20,13 @@ export default function RootLayout({
         <Favicon />
       </head>
       <body className="">
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense>
           <QueryProvider>
             <ScriptLayout>
               <AuthProvider>
                 <TokenHandler />
                 <ToastContainer
-                  position="top-right"
+                  position="bottom-right"
                   autoClose={3000}
                   hideProgressBar={false}
                   newestOnTop

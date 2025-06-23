@@ -18,6 +18,9 @@ export class User {
   @Prop({ default: 'user' })
   role: string; // Các role: 'user', 'admin', 'staff', 'manager', 'technical'
 
+  @Prop({ type: Types.ObjectId, ref: 'Role' })
+  roleId?: Types.ObjectId; // 👈 ID của vai trò tùy chỉnh
+
   @Prop({ default: 'active' })
   status: string; // Trạng thái người dùng: 'active', 'offline', 'banned'
 
@@ -27,7 +30,7 @@ export class User {
   @Prop()
   avatar?: string; // URL avatar (tùy chọn)
 
-  @Prop() 
+  @Prop()
   phone?: string; // Số điện thoại (tùy chọn)
 
   @Prop()

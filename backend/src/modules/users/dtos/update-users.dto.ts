@@ -1,4 +1,5 @@
-import { IsString, IsEmail, IsOptional, IsEnum, IsUrl, Matches } from 'class-validator';
+import { IsString, IsEmail, IsOptional, IsEnum, IsUrl, Matches, IsMongoId } from 'class-validator';
+import { Types } from 'mongoose';
 
 // 📄 DTO cho cập nhật thông tin người dùng
 export class UpdateUsersDto {
@@ -27,6 +28,10 @@ export class UpdateUsersDto {
     message: 'Role không hợp lệ',
   })
   role?: string;
+
+  @IsOptional()
+  @IsMongoId()
+  roleId?: Types.ObjectId;
 
   @IsOptional()
   @IsString()

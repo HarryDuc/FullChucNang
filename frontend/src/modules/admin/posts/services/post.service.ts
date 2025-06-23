@@ -4,7 +4,7 @@ import { Category } from "../models/post.model";
 const BASE_API = process.env.NEXT_PUBLIC_API_URL!;
 const POST_API = `${BASE_API}/postapi`;
 const IMAGE_UPLOAD_API = `${BASE_API}/images/upload`;
-const CATEGORY_POST_API = `${BASE_API}/categories-post`;
+const CATEGORY_POST_API = `${BASE_API}/categories-postapi`;
 
 // 🔧 Hàm xử lý phản hồi trả về từ API
 const handleResponse = async (response: Response) => {

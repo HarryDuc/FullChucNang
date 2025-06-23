@@ -12,8 +12,6 @@ interface LayoutProps {
 const ProductLayout = ({ children }: LayoutProps) => {
   return (
     <div className="flex flex-col min-h-screen">
-      {/* 🏠 Header */}
-      <Menu />
 
       {/* 📌 Nội dung chính: chia 2 cột */}
       <main className="flex-grow container mx-auto px-4 py-6">
@@ -29,9 +27,6 @@ const ProductLayout = ({ children }: LayoutProps) => {
           </section>
         </div>
       </main>
-
-      {/* 📌 Footer */}
-      <Footer />
     </div>
   );
 };

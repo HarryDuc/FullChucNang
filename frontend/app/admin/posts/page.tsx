@@ -1,10 +1,7 @@
-import ListPost from "@/modules/admin/posts/components/PostList";
-import LayoutAdmin from "@/modules/admin/common/layouts/AdminLayout";
+import PostList from "@/modules/admin/posts/components/PostListAdminPage";
 
 export default function CategoriesProductPage() {
   return (
-    <LayoutAdmin>
-      <ListPost />
-    </LayoutAdmin>
+      <PostList />
   );
 }

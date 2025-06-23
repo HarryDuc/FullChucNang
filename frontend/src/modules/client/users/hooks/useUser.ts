@@ -106,8 +106,8 @@ export const useUser = () => {
     setError(null);
 
     try {
-      const addressList = await UserService.getUserAddresses();
-      setAddresses(addressList);
+      // const addressList = await UserService.getUserAddresses();
+      // setAddresses(addressList);
     } catch (err: any) {
       setError(err.message || "Không thể lấy danh sách địa chỉ");
       console.error("Lỗi khi lấy danh sách địa chỉ:", err);
@@ -117,44 +117,44 @@ export const useUser = () => {
   }, [isAuthenticated]);
 
   // 📌 Thêm địa chỉ mới
-  const addAddress = useCallback(async (address: Omit<UserAddress, 'id'>) => {
-    if (!isAuthenticated) return null;
+  // const addAddress = useCallback(async (address: Omit<UserAddress, 'id'>) => {
+  //   if (!isAuthenticated) return null;
 
-    setIsUpdating(true);
-    setError(null);
+  //   setIsUpdating(true);
+  //   setError(null);
 
-    try {
-      const newAddress = await UserService.addAddress(address);
-      setAddresses(prev => [...prev, newAddress]);
-      return newAddress;
-    } catch (err: any) {
-      setError(err.message || "Không thể thêm địa chỉ mới");
-      console.error("Lỗi khi thêm địa chỉ mới:", err);
-      return null;
-    } finally {
-      setIsUpdating(false);
-    }
-  }, [isAuthenticated]);
+  //   try {
+  //     // const newAddress = await UserService.addAddress(address);
+  //     setAddresses(prev => [...prev, newAddress]);
+  //     return newAddress;
+  //   } catch (err: any) {
+  //     setError(err.message || "Không thể thêm địa chỉ mới");
+  //     console.error("Lỗi khi thêm địa chỉ mới:", err);
+  //     return null;
+  //   } finally {
+  //     setIsUpdating(false);
+  //   }
+  // }, [isAuthenticated]);
 
   // 📌 Cập nhật địa chỉ
-  const updateAddress = useCallback(async (id: string, address: Partial<UserAddress>) => {
-    if (!isAuthenticated) return null;
+  // const updateAddress = useCallback(async (id: string, address: Partial<UserAddress>) => {
+  //   if (!isAuthenticated) return null;
 
-    setIsUpdating(true);
-    setError(null);
+  //   setIsUpdating(true);
+  //   setError(null);
 
-    try {
-      const updatedAddress = await UserService.updateAddress(id, address);
-      setAddresses(prev => prev.map(addr => addr.id === id ? updatedAddress : addr));
-      return updatedAddress;
-    } catch (err: any) {
-      setError(err.message || "Không thể cập nhật địa chỉ");
-      console.error(`Lỗi khi cập nhật địa chỉ ${id}:`, err);
-      return null;
-    } finally {
-      setIsUpdating(false);
-    }
-  }, [isAuthenticated]);
+  //   try {
+  //     // const updatedAddress = await UserService.updateAddress(id, address);
+  //     setAddresses(prev => prev.map(addr => addr.id === id ? updatedAddress : addr));
+  //     return updatedAddress;
+  //   } catch (err: any) {
+  //     setError(err.message || "Không thể cập nhật địa chỉ");
+  //     console.error(`Lỗi khi cập nhật địa chỉ ${id}:`, err);
+  //     return null;
+  //   } finally {
+  //     setIsUpdating(false);
+  //   }
+  // }, [isAuthenticated]);
 
   // 📌 Xóa địa chỉ
   const deleteAddress = useCallback(async (id: string) => {
@@ -164,7 +164,7 @@ export const useUser = () => {
     setError(null);
 
     try {
-      await UserService.deleteAddress(id);
+      // await UserService.deleteAddress(id);
       setAddresses(prev => prev.filter(addr => addr.id !== id));
       return true;
     } catch (err: any) {
@@ -184,7 +184,7 @@ export const useUser = () => {
     setError(null);
 
     try {
-      await UserService.setDefaultAddress(id);
+      // await UserService.setDefaultAddress(id);
       setAddresses(prev => prev.map(addr => ({
         ...addr,
         isDefault: addr.id === id
@@ -258,8 +258,8 @@ export const useUser = () => {
     changePassword,
     uploadAvatar,
     fetchAddresses,
-    addAddress,
-    updateAddress,
+    // addAddress,
+    // updateAddress,
     deleteAddress,
     setDefaultAddress,
     fetchUserSettings,

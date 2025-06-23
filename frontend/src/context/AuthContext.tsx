@@ -468,8 +468,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       derivedResource: resource,
       derivedAction: action,
       pathParts,
+      userRole: user.role,
     });
 
+    // Kiểm tra quyền dựa trên resource và action
     return hasPermission(resource, action);
   };
 

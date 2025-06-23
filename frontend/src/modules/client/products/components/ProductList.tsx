@@ -85,10 +85,6 @@ function ProductCard({ product }: { product: Product }) {
   const { name, thumbnail, discountPrice, currentPrice, slug, _id, sku } =
     product;
   const price = discountPrice || currentPrice || 0;
-  const discountPercent =
-    currentPrice && discountPrice
-      ? Math.round(((currentPrice - discountPrice) / currentPrice) * 100)
-      : 0;
 
   const handleAddToCart = () => {
     const productData: CartItem = {

@@ -16,12 +16,15 @@ import { VerifyModule } from '../verify/verify.module';
 import { Otp, OtpSchema } from './schemas/otp.schema';
 import { PermissionsModule } from '../permissions/permissions.module';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { ManagerPermissionsModule } from '../manager-permissions/manager-permissions.module';
+import { Auth, AuthSchema } from './schemas/auth.schema';
 
 @Module({
   imports: [
     forwardRef(() => UsersModule),
     forwardRef(() => VerifyModule),
     forwardRef(() => PermissionsModule), // Sử dụng forwardRef để tránh circular dependency
+    forwardRef(() => ManagerPermissionsModule), // Add ManagerPermissionsModule with forwardRef
     TokenModule,
     PassportModule,
     JwtModule.registerAsync({
@@ -37,6 +40,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: Otp.name, schema: OtpSchema },
+      { name: Auth.name, schema: AuthSchema },
     ]),
   ],
   controllers: [AuthController],

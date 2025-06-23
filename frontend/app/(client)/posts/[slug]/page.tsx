@@ -5,9 +5,7 @@ export default async function CategoryPageWrapper({ params, }: { params: { slug:
   const { slug } = await params;
 
   return (
-    <ClientLayout>
       <PostDetailClientPage slug={slug} />
-    </ClientLayout>
   );
 
 }

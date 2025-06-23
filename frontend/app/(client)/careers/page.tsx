@@ -3,8 +3,6 @@ import Careers from "@/modules/client/pages/Careers"; // Đường dẫn đúng 
 
 export default function CareersPage() {
     return (
-        <ClientLayout>
             <Careers />
-        </ClientLayout>
     );
 }

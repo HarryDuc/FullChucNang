@@ -1,10 +1,10 @@
 import ProductDetailSection from "../products/ProductDetail";
 
 interface ProductDetailProps {
-  slug?: string;
+  slug: string;
 }
 
-const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
+const ProductDetail = ({ slug }: ProductDetailProps) => {
   return <ProductDetailSection slug={slug} />;
 };
 

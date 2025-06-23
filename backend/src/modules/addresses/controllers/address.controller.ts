@@ -4,7 +4,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CreateAddressDto, UpdateAddressDto } from '../dtos/address.dto';
 import { Roles } from 'src/common/decorators/roles.decorator';
 
-@Controller('users/addresses')
+@Controller('addressesapi')
 @UseGuards(JwtAuthGuard)
 export class AddressController {
   private readonly logger = new Logger(AddressController.name);
