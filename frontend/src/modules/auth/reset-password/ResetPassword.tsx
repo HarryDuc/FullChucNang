@@ -1,5 +1,6 @@
-"use client";
-import { useState, useEffect } from "react";
+"use client"
+
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { usePasswordReset } from "../common/hooks/usePasswordReset";
 import { MdLock } from "react-icons/md";
@@ -37,7 +38,7 @@ const ResetPassword = () => {
       // Chuyển về trang đăng nhập
       window.location.href = "/login";
     } catch (err) {
-      // Error đã được xử lý trong hook
+      console.log(err);
     }
   };
 

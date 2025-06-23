@@ -7,7 +7,7 @@ import {
   useSearchPosts,
   useManagerPosts,
 } from "../hooks/useManagerPosts";
-import { Post, PostStatus } from "../../posts/models/post.model";
+import {  PostStatus } from "../../posts/models/post.model";
 import { FaSearch, FaEye, FaEyeSlash } from "react-icons/fa";
 import { PaginatedPosts } from "../services/manager-posts.service";
 

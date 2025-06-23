@@ -1,5 +1,5 @@
-import { Post } from "@/modules/client/post/models/post.model";
-import { User, UserAddress, UserSettings } from "../models/user.model";
+import { Post } from "../../posts/models/post.model";
+import { User, UserSettings } from "../models/user.model";
 
 const BASE_API = process.env.NEXT_PUBLIC_API_URL!;
 const USER_API = `${BASE_API}/users`;

@@ -31,7 +31,6 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   subtotal,
   shippingFee,
   discountAmount,
-  total,
   isSubmitting,
   shippingInfo,
   onSubmit,

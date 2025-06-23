@@ -14,7 +14,6 @@ import {
 export const ScriptManager: FC = () => {
   const { data: scripts, isLoading } = useScripts();
   const createScript = useCreateScript();
-  const updateScript = useUpdateScript();
   const deleteScript = useDeleteScript();
   const toggleActive = useToggleScriptActive();
 

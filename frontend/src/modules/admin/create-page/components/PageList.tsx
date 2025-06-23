@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect } from "react";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
 import { usePage } from "../hooks/usePage";

@@ -65,18 +65,6 @@ const getStatusLabel = (
   }
 };
 
-// Loading Skeleton Component
-const LoadingSkeleton = () => (
-  <div className="animate-pulse">
-    <div className="h-12 bg-gray-200 rounded mb-4"></div>
-    <div className="space-y-3">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <div key={i} className="h-16 bg-gray-200 rounded"></div>
-      ))}
-    </div>
-  </div>
-);
-
 const PostList: React.FC = () => {
   const activeTab = useState<"all" | "my">("all");
   const {
@@ -84,12 +72,10 @@ const PostList: React.FC = () => {
     hardDeleteMutation,
     updateVisibilityMutation,
     updateStatusMutation,
-    page: allPostsPage,
     setPage: setAllPostsPage,
     includeHidden,
     setIncludeHidden,
     statusFilter,
-    setStatusFilter,
   } = usePosts();
   const { user, hasPermission } = useAuth();
   const {
@@ -231,34 +217,13 @@ const PostList: React.FC = () => {
           alert(`Đã ${isVisible ? "hiện" : "ẩn"} bài viết`);
         },
         onError: (error) => {
+          console.log(error);
           alert("Có lỗi xảy ra khi cập nhật trạng thái hiển thị bài viết");
         },
       }
     );
   };
 
-  // Xử lý toggle hiển thị bài viết
-  const handleToggleVisibility = async (
-    slug: string,
-    currentVisibility: boolean
-  ) => {
-    if (!canPublish) {
-      alert("Bạn không có quyền thay đổi trạng thái hiển thị bài viết");
-      return;
-    }
-
-    try {
-      await updateVisibilityMutation.mutateAsync({
-        slug,
-        isVisible: !currentVisibility,
-      });
-
-      // Cập nhật cache để hiển thị thay đổi ngay lập tức
-      refreshData();
-    } catch (error) {
-      console.error("Lỗi khi thay đổi trạng thái hiển thị:", error);
-    }
-  };
 
   // Xử lý cập nhật trạng thái phê duyệt
   const handleUpdateStatus = async (slug: string, newStatus: PostStatus) => {

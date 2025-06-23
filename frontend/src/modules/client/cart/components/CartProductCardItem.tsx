@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { CartItem } from '../../../../../utils/cartUtils';
-import { FC } from 'react';
+import { FC } from 'react'
 
 type CartProductCardItemProps = {
   item: CartItem;

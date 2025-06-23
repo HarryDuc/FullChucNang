@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useAdminBanner } from "../hooks/useBanner";
 import { Banner } from "@/modules/client/home/models/banner.model";
 import { BannerForm } from "./BannerForm";
+import Image from "next/image";
 
 export const BannerList: React.FC = () => {
   const [selectedBanner, setSelectedBanner] = useState<Banner | null>(null);
@@ -84,10 +85,12 @@ export const BannerList: React.FC = () => {
             {banners.map((banner) => (
               <tr key={banner._id} className="hover:bg-gray-50">
                 <td className="px-6 py-4">
-                  <img
+                  <Image
                     src={banner.imagePath}
                     alt={banner.title || "Banner"}
                     className="w-24 h-16 object-cover rounded"
+                    width={96}
+                    height={64}
                   />
                 </td>
                 <td className="px-6 py-4">{banner.title || "---"}</td>

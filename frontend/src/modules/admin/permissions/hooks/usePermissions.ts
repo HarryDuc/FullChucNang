@@ -1,10 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/context/AuthContext';
 import { PermissionService, Permission, UserPermission } from '../services/permission.service';
 import { toast } from 'react-hot-toast';
 
 export const usePermissions = (userId?: string) => {
-  const { user } = useAuth();
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [userPermissions, setUserPermissions] = useState<UserPermission[]>([]);
   const [loading, setLoading] = useState(false);

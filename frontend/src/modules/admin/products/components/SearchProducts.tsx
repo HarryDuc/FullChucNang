@@ -9,7 +9,7 @@ interface SearchProductsProps {
 }
 
 const SearchProducts = ({
-  onSearch = (term: string) => {},
+  onSearch = () => {},
   isSearching = false,
   placeholder = "Nhập tên sản phẩm cần tìm...",
 }: SearchProductsProps) => {

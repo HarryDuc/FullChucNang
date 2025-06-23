@@ -4,16 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {
-  Phone,
-  Mail,
   ArrowRight,
-  CheckCircle,
-  LayoutDashboard,
-  Settings,
-  Users,
-  Heart,
   MessageSquare,
-  ChevronDown,
 } from "lucide-react";
 import { useContactForm } from "../hooks/useContactForm";
 
@@ -21,7 +13,7 @@ const CustormDesign = () => {
   const leftSectionRef = useRef<HTMLDivElement>(null);
   const rightSectionRef = useRef<HTMLDivElement>(null);
   const templatesSectionRef = useRef<HTMLDivElement>(null);
-  const [activeTemplate, setActiveTemplate] = useState(0);
+  const [, setActiveTemplate] = useState(0);
   const { handleSubmit, isLoading } = useContactForm();
   const [formData, setFormData] = useState({
     fullName: "",

@@ -11,11 +11,10 @@ import {
   Post,
 } from "../models/post.model";
 import PostCategoryTree from "./CategoryPostTree";
-import SunEditor from "suneditor-react";
-import "suneditor/dist/css/suneditor.min.css";
 import { usePosts } from "@/modules/admin/posts/hooks/usePosts";
 import SunEditer from "../../common/components/SunEditer";
 import { useAuth } from "@/context/AuthContext";
+import Image from "next/image";
 
 /** Loại bỏ domain từ HTML, chỉ giữ phần relative */
 const removeDomain = (html: string): string =>
@@ -53,7 +52,7 @@ const PostForm: React.FC<Props> = ({ initialData, isEdit = false }) => {
   const [slug, setSlug] = useState(
     isEdit && initialData?.slug ? initialData.slug : ""
   );
-  const [formData, setFormData] = useState<Partial<Post>>({
+  const [, setFormData] = useState<Partial<Post>>({
     name: "",
     excerpt: "",
     postData: "",
@@ -215,26 +214,6 @@ const PostForm: React.FC<Props> = ({ initialData, isEdit = false }) => {
     }
   };
 
-  const getStatusLabel = (status: PostStatus): { label: string; color: string } => {
-    switch (status) {
-      case PostStatus.Draft:
-        return { label: "Nháp", color: "bg-gray-200 text-gray-800" };
-      case PostStatus.Pending:
-        return { label: "Chờ duyệt", color: "bg-yellow-200 text-yellow-800" };
-      case PostStatus.Approved:
-        return { label: "Đã duyệt", color: "bg-green-200 text-green-800" };
-      case PostStatus.Rejected:
-        return { label: "Từ chối", color: "bg-red-200 text-red-800" };
-      default:
-        return { label: "Không xác định", color: "bg-gray-200 text-gray-800" };
-    }
-  };
-  const handleStatusChange = (newStatus: PostStatus) => {
-    setFormData((prev) => ({ ...prev, status: newStatus }));
-  };
-  const handleVisibilityChange = () => {
-    setFormData((prev) => ({ ...prev, isVisible: !prev.isVisible }));
-  };
   return (
     <form onSubmit={handleSubmit} className="p-4 rounded-lg bg-white shadow">
       <div className="flex flex-col md:flex-row gap-6">
@@ -266,100 +245,10 @@ const PostForm: React.FC<Props> = ({ initialData, isEdit = false }) => {
             </div>
           )}
 
-          {/* Excerpt */}
-          {/* <div>
-            <label className="block font-medium mb-1">Mô tả ngắn</label>
-            <SunEditer postData={excerpt} setPostData={setExcerpt} /> */}
-          {/* <SunEditor
-              height="300px"
-              setContents={excerpt}
-              onChange={(c) => setExcerpt(c)}
-              setOptions={{
-                buttonList: [
-                  [
-                    "undo",
-                    "redo",
-                    "bold",
-                    "italic",
-                    "underline",
-                    "strike",
-                    "subscript",
-                    "superscript",
-                    "font",
-                    "fontSize",
-                    "formatBlock",
-                    "paragraphStyle",
-                    "blockquote",
-                    "align",
-                    "list",
-                    "lineHeight",
-                    "horizontalRule",
-                    "table",
-                    "link",
-                    "image",
-                    "video",
-                    "audio",
-                    "fullScreen",
-                    "showBlocks",
-                    "codeView",
-                    "preview",
-                    "print",
-                    "removeFormat",
-                  ],
-                ],
-                defaultStyle: "z-index: 10; position: relative;",
-              }}
-            /> */}
-          {/* </div> */}
-
           {/* Nội dung */}
           <div>
             <label className="block font-medium mb-1">Nội dung</label>
             <SunEditer postData={postData} setPostData={setPostData} />
-            {/* <SunEditor
-              height="500px"
-              setContents={postData}
-              onChange={(c) => setPostData(c)}
-              setOptions={{
-                buttonList: [
-                  [
-                    // Đưa các nút hay dùng lên đầu
-                    "bold",
-                    "italic",
-                    "underline",
-                    "strike",
-                    "font",
-                    "fontSize",
-                    "formatBlock",
-                    "paragraphStyle",
-                    "align",
-                    "list",
-                    "lineHeight",
-                    "undo",
-                    "redo",
-                    "blockquote",
-                    "horizontalRule",
-                    "table",
-                    "link",
-                    "image",
-                    "video",
-                    "audio",
-                    "subscript",
-                    "superscript",
-                    "fullScreen",
-                    "showBlocks",
-                    "codeView",
-                    "preview",
-                    "print",
-                    "removeFormat",
-                  ],
-                ],
-                defaultStyle: "position: relative;",
-                // Ghim toolbar lên top, không bị cuộn theo nội dung
-                stickyToolbar: 80,
-                // Nếu muốn toolbar luôn hiển thị khi cuộn, có thể dùng stickyToolbar: true
-              }}
-            /> */}
           </div>
 
           {/* Ngày giờ */}
@@ -393,16 +282,20 @@ const PostForm: React.FC<Props> = ({ initialData, isEdit = false }) => {
               onChange={handleThumbnailChange}
             />
             {thumbnailFile ? (
-              <img
+              <Image
                 src={URL.createObjectURL(thumbnailFile)}
                 alt="preview"
                 className="w-24 h-24 mt-2 rounded shadow"
+                width={96}
+                height={96}
               />
             ) : initialThumbnail ? (
-              <img
+              <Image
                 src={`${process.env.NEXT_PUBLIC_API_URL}${initialThumbnail}`}
                 alt="preview"
                 className="w-24 h-24 mt-2 rounded shadow"
+                width={96}
+                height={96}
               />
             ) : null}
           </div>

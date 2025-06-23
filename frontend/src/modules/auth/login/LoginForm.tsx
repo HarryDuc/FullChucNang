@@ -12,6 +12,7 @@ import {
 } from "../common/services/authService";
 import { useSearchParams } from "next/navigation";
 import { useUser } from "@/modules/client/users/hooks/useUser";
+import Image from "next/image";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -101,7 +102,13 @@ const LoginForm = () => {
             type="button"
             className="w-full mb-4 py-3 px-4 flex items-center justify-center gap-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
-            <img src="/google-icon.svg" alt="Google" className="w-5 h-5" />
+            <Image
+              src="/google-icon.svg"
+              alt="Google"
+              className="w-5 h-5"
+              width={20}
+              height={20}
+            />
             <span>Đăng nhập bằng Google</span>
           </button>
 

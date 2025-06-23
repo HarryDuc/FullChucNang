@@ -59,6 +59,7 @@ export const VietQRConfigForm: React.FC<VietQRConfigFormProps> = ({
           setError("Không thể tải danh sách ngân hàng");
         }
       } catch (err) {
+        console.log(err);
         setError("Có lỗi xảy ra khi tải danh sách ngân hàng");
       } finally {
         setLoading(false);

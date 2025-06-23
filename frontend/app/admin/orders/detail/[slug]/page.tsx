@@ -1,4 +1,4 @@
-"use client";
+
 import DetailOrders from "@/modules/admin/orders/components/DetailOrders";
 
 export default async function CategoriesProductPage({

@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import api from "@/common/utils/api";
-import { useUserRoles } from "../../manager-permissions";
+import api from "@/common/utils/api"
+import { useUserRoles } from "../../manager-permissions/hooks/useUserRoles";
 
 interface User {
   id: string;
@@ -23,7 +23,7 @@ export const UserList: React.FC<UserListProps> = ({
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { userRole, loading: userRoleLoading, getUserRole } = useUserRoles();
+  const { getUserRole } = useUserRoles();
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -61,6 +61,7 @@ export const UserList: React.FC<UserListProps> = ({
         setUsers(usersWithRoles);
         setError(null);
       } catch (err) {
+        console.log(err);
         setError("Failed to fetch users");
       } finally {
         setLoading(false);

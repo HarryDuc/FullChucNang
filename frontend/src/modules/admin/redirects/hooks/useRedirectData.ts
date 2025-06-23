@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { toast } from 'react-toastify';
+import { toast } from 'react-hot-toast';
 import { RedirectService } from '../services/redirect.service';
 import { Redirect } from '../models/redirect.model';
 
@@ -97,8 +97,8 @@ export const useRedirectData = () => {
 
   const handleFilter = (newFilters: Filters) => {
     setFilters(newFilters);
-    setPagination(prev => ({ 
-      ...prev, 
+    setPagination(prev => ({
+      ...prev,
       current: 1,
       total: filteredRedirects.length
     }));
@@ -144,4 +144,4 @@ export const useRedirectData = () => {
     checkRedirect,
     refresh
   };
-}; 
+};

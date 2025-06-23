@@ -10,7 +10,6 @@ const PermissionsWithRoles: React.FC<PermissionsWithRolesProps> = ({
   userId,
 }) => {
   const {
-    permissions,
     userPermissions,
     loading,
     updateUserPermissions,

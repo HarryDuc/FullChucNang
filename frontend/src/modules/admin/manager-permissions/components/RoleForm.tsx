@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect, useMemo } from "react";
 import { useRoles } from "../hooks/useRoles";
 import { usePermissions } from "../../permissions/hooks/usePermissions";

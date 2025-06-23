@@ -36,7 +36,7 @@ const LayoutAdmin = ({ children }: LayoutAdminProps) => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex bg-gray-100">
       <aside
         className={`${
           sidebarCollapsed ? "w-20" : "w-64"
@@ -52,7 +52,7 @@ const LayoutAdmin = ({ children }: LayoutAdminProps) => {
         } transition-all duration-300`}
       >
         {/* Top Navigation */}
-        <header className="h-20 bg-white shadow-sm fixed top-0 right-0 left-0 z-20 ml-[inherit]">
+        <header className="h-16 bg-white shadow-sm fixed top-0 right-0 left-0 z-20 ml-[inherit]">
           <AdminMenu />
         </header>
 

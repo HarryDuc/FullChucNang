@@ -1,12 +1,12 @@
 import { checkRedirect } from "@/common/components/CheckRedirect";
-import ProductLayout from "@/modules/client/common/layouts/ProductLayout";
 import ProductPage from "@/modules/client/pages/Products";
+import { redirect } from "next/navigation";
 
 export default async function CategoryPageWrapper({params,}: {params: { slug: string }}) {
   const {slug} = await params;
-  const redirect = await checkRedirect(`/danh-muc/${slug}`);
-  if (redirect) {
-    return redirect(redirect.newPath);
+  const redirectData = await checkRedirect(`/danh-muc/${slug}`);
+  if (redirectData) {
+    return redirect(redirectData.newPath);
   }
   return (
     <ProductPage slug={slug} />

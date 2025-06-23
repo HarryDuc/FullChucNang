@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import { UserList } from "@/modules/admin/permissions/components/UserList";
 import { PermissionManager } from "@/modules/admin/permissions/components/PermissionManager";

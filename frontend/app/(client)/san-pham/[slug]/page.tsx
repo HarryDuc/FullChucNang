@@ -1,5 +1,6 @@
 import ProductDetail from "@/modules/client/pages/ProductDetail";
 import { checkRedirect } from "@/common/components/CheckRedirect";
+import { redirect } from 'next/navigation';
 
 interface ProductPageProps {
   params: {
@@ -9,9 +10,9 @@ interface ProductPageProps {
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const {slug} = await params;
-  const redirect = await checkRedirect(`/san-pham/${slug}`);
-  if (redirect) {
-    return redirect(redirect.newPath);
+  const redirectData = await checkRedirect(`/san-pham/${slug}`);
+  if (redirectData) {
+    redirect(redirectData.newPath);
   }
   return (
       <ProductDetail slug={slug} />

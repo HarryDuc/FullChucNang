@@ -2,7 +2,6 @@
 
 import type React from "react";
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import toast from "react-hot-toast";
 import {
   addToCart as addToCartUtil,
@@ -260,8 +259,6 @@ const CategorySection: React.FC = () => {
               <img
                 src={category.bannerImage || "/placeholder.svg"}
                 alt={`Banner ${category.title}`}
-                width={600}
-                height={180}
                 className="rounded-xl border border-gray-200 shadow-sm object-cover w-full max-w-2xl h-40 mb-4"
                 loading="lazy"
               />

@@ -14,14 +14,13 @@ import { LocationPickerProps } from "../models/types";
 import Dropdown from "./Dropdown";
 import SearchInput from "./SearchInput";
 import LocationList from "./LocationList";
-import { findBestMatch, getLocationName } from "../utils/utils";
+import { getLocationName } from "../utils/utils";
 
 const LocationPicker = ({
   value,
   onChange,
   errors,
   onTouch,
-  onStreetInfo,
 }: LocationPickerProps) => {
   // State cho dữ liệu từ API
   const [provinces, setProvinces] = useState<Province[]>([]);

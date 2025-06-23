@@ -1,7 +1,8 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
 import type { Product, ProductVariant } from "./models/product.model";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import {
   type CartItem,
@@ -24,7 +25,6 @@ interface ProductDetailProps {
 
 const ProductDetailSection = ({ slug }: ProductDetailProps) => {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,10 +43,10 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
   const [discountPrice, setDiscountPrice] = useState<number | undefined>(
     undefined
   );
-  const [metaDescription, setMetaDescription] = useState<string>("");
+  const [, setMetaDescription] = useState<string>("");
 
   // Get related products using the hook
-  const { products: relatedProducts, loading: relatedLoading } =
+  const { products: relatedProducts } =
     useProductsByMainCategory(product?.category?.main || null, 1);
 
   // Listen for cart changes
@@ -84,22 +84,6 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
     router.replace(`/san-pham/${product?.slug}?${params.toString()}`, {
       scroll: false,
     });
-  };
-
-  // Hàm tìm variant dựa trên SKU hoặc tên variant
-  const findVariantFromUrl = (product: Product) => {
-    if (!product.variants) return null;
-
-    const skuFromUrl = searchParams.get("sku");
-    const variantFromUrl = searchParams.get("variant");
-
-    return (
-      product.variants.find(
-        (variant) =>
-          (skuFromUrl && variant.sku === skuFromUrl) ||
-          (variantFromUrl && variant.variantName === variantFromUrl)
-      ) || null
-    );
   };
 
   // Fetch product data
@@ -588,8 +572,6 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
         {/* Related Products Section */}
         <RelatedProducts
           relatedProducts={relatedProducts}
-          calculateDiscount={calculateDiscount}
-          formatPrice={formatPrice}
         />
       </div>
     </>

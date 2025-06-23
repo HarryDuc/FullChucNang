@@ -1,7 +1,7 @@
 import axios from "axios";
 import { API_URL } from "@/config/config";
 import { apiRoutes } from "@/config/apiRoutes";
-import { Post } from "@/modules/posts/types/postTypes";
+import { Post } from "../models/post.model";
 
 // ✅ Tạo instance của Axios để gọi API
 const api = axios.create({
@@ -17,11 +17,11 @@ const api = axios.create({
  * @returns Bài viết đã tạo
  */
 export const createPost = async (data: { title: string; content: string; author: string; thumbnail?: string[] }): Promise<Post> => {
-    console.log(`📤 Gửi yêu cầu tạo bài viết đến: ${API_URL}${apiRoutes.CREATE_POST}`);
+    console.log(`📤 Gửi yêu cầu tạo bài viết đến: ${API_URL}${apiRoutes.POSTS.CREATE}`);
     console.log("📦 Dữ liệu gửi lên:", data);
 
     try {
-        const response = await api.post(apiRoutes.CREATE_POST, data);
+        const response = await api.post(apiRoutes.POSTS.CREATE, data);
         console.log("✅ Phản hồi từ server:", response.data);
         return response.data;
     } catch (error: any) {
@@ -37,7 +37,7 @@ export const createPost = async (data: { title: string; content: string; author:
 export const getPosts = async (): Promise<Post[]> => {
     try {
         console.log("📤 Gửi yêu cầu lấy danh sách bài viết");
-        const response = await api.get(apiRoutes.POSTS);
+        const response = await api.get(apiRoutes.POSTS.BASE);
         console.log("✅ Nhận danh sách bài viết:", response.data);
         return response.data;
     } catch (error: any) {
@@ -54,7 +54,7 @@ export const getPosts = async (): Promise<Post[]> => {
 export const getPostById = async (id: string): Promise<Post> => {
     try {
         console.log(`📤 Gửi yêu cầu lấy bài viết ID: ${id}`);
-        const response = await api.get(apiRoutes.GET_POST_BY_ID(id));
+        const response = await api.get(apiRoutes.POSTS.GET_BY_SLUG(id));
         console.log("✅ Nhận bài viết:", response.data);
         return response.data;
     } catch (error: any) {
@@ -74,7 +74,7 @@ export const updatePost = async (id: string, data: { title: string; content: str
     console.log("📦 Dữ liệu cập nhật:", data);
 
     try {
-        const response = await api.put(apiRoutes.UPDATE_POST(id), data);
+        const response = await api.put(apiRoutes.POSTS.UPDATE(id), data);
         console.log("✅ Bài viết đã cập nhật:", response.data);
         return response.data;
     } catch (error: any) {
@@ -91,7 +91,7 @@ export const deletePost = async (id: string): Promise<void> => {
     console.log(`📤 Gửi yêu cầu xóa bài viết ID: ${id}`);
 
     try {
-        await api.delete(apiRoutes.DELETE_POST(id));
+        await api.delete(apiRoutes.POSTS.DELETE(id));
         console.log(`✅ Xóa bài viết ID ${id} thành công`);
     } catch (error: any) {
         console.error(`❌ Lỗi khi xóa bài viết ID ${id}:`, error.response?.data || error.message);

@@ -1,10 +1,10 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useProducts } from "../hooks/useProducts";
 import SearchProducts from "./SearchProducts";
 import ProductFilters from "./ProductFilters";
 import { ProductService } from "../services/product.service";
+import Image from "next/image";
 
 interface FilterOption {
   id: string;
@@ -67,8 +67,6 @@ const defaultFilters: Filters = {
 const ListProducts = () => {
   const {
     products,
-    isLoading,
-    error,
     deleteProduct,
     currentPage,
     totalPages,
@@ -79,7 +77,7 @@ const ListProducts = () => {
   const [currentSearchTerm, setCurrentSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [searchError, setSearchError] = useState(null);
+  const [, setSearchError] = useState(null);
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [searchCurrentPage, setSearchCurrentPage] = useState(1);
   const [searchTotalPages, setSearchTotalPages] = useState(1);
@@ -130,10 +128,12 @@ const ListProducts = () => {
     switch (columnId) {
       case "thumbnail":
         return value ? (
-          <img
+          <Image
             src={value}
             alt="Thumbnail"
             className="w-16 h-16 object-cover rounded"
+            width={64}
+            height={64}
           />
         ) : (
           "Không có ảnh"

@@ -12,6 +12,7 @@ export const useContactForm = () => {
       toast.success('Gửi thông tin thành công! Chúng tôi sẽ liên hệ với bạn sớm nhất.');
       return true;
     } catch (error) {
+      console.log(error);
       toast.error('Có lỗi xảy ra. Vui lòng thử lại sau!');
       return false;
     } finally {

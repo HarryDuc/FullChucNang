@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 interface PaymentMethodProps {
   paymentMethod: string;
   onPaymentMethodChange: (method: string) => void;
@@ -57,7 +59,13 @@ const PaymentMethod = ({
               className="ml-3 flex items-center text-gray-700"
             >
               PayPal{" "}
-              <img src="/paypal-logo.png" alt="PayPal" className="h-6 ml-2" />
+              <Image
+                src="/paypal-logo.png"
+                alt="PayPal"
+                className="h-6 ml-2"
+                width={24}
+                height={24}
+              />
               <span className="text-xs text-gray-500 ml-2">
                 (Thanh toán quốc tế)
               </span>

@@ -1,7 +1,5 @@
 
-import React from "react";
 import { PageContent } from "@/modules/client/create-page/components/PageContent";
-import ClientLayout from "@/modules/client/common/layouts/ClientLayout";
 
 interface PageProps {
   params: {

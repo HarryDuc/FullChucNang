@@ -40,7 +40,7 @@ interface RecentOrder {
 
 // 🏠 Component trang Account
 const Account = () => {
-  const { user: authUser, logout, isAuthenticated } = useAuth();
+  const { logout, isAuthenticated } = useAuth();
   const { user, isLoading, error } = useAccount();
 
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);

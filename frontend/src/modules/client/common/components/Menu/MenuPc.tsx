@@ -13,6 +13,7 @@ import SearchComponent from "./SearchComponent";
 import { listenCartChange } from "../../../../../../utils/cartUtils";
 import InfoBar from "./InfoBar";
 import { useInfoWebsite } from "@/modules/client/common/hooks/useInfoWebsite";
+import Image from "next/image";
 
 interface CartItem {
   _id: string;
@@ -137,9 +138,7 @@ const MenuPC = () => {
               <img
                 src={contact?.logo || "/logo.png"}
                 alt="Logo"
-                width={48}
-                height={48}
-                className="mr-2"
+                className="mr-2 w-16 h-16 object-contain"
                 loading="lazy"
               />
             </Link>
@@ -251,11 +250,13 @@ const MenuPC = () => {
                           className="flex items-center gap-3 py-2 border-b"
                         >
                           <div className="w-12 h-12 flex-shrink-0">
-                            <img
+                            <Image
                               src={`${item.image}`}
                               alt={item.name}
                               className="w-full h-full object-cover"
-                            />
+                              width={40}
+                              height={40}
+                              />
                           </div>
                           <div className="flex-1 min-w-0 pr-2">
                             <h5 className="text-sm font-medium text-gray-700">

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { UserService } from "../services/user.service";
 import { User } from "../models/user.model";
+import Image from "next/image";
 
 export default function UserList() {
   const [users, setUsers] = useState<User[]>([]);
@@ -28,6 +29,7 @@ export default function UserList() {
       const data = await UserService.getAllUsers();
       setUsers(data);
     } catch (error) {
+      console.log(error);
       setToastMsg({ type: "error", msg: "Không thể tải danh sách người dùng" });
     } finally {
       setIsLoading(false);
@@ -42,6 +44,7 @@ export default function UserList() {
       setUsers(users.filter((user) => user.id !== userId));
       setToastMsg({ type: "success", msg: "Xóa người dùng thành công" });
     } catch (error) {
+      console.log(error);
       setToastMsg({ type: "error", msg: "Không thể xóa người dùng" });
     }
   };
@@ -55,6 +58,7 @@ export default function UserList() {
       setUserPosts(posts.data);
       setIsPostsDialogOpen(true);
     } catch (error) {
+      console.log(error);
       setToastMsg({
         type: "error",
         msg: "Không thể tải bài viết của người dùng",
@@ -108,6 +112,7 @@ export default function UserList() {
       });
       closeDialog();
     } catch (error) {
+      console.log(error);
       setToastMsg({ type: "error", msg: "Không thể chuyển bài viết" });
     }
   };
@@ -144,6 +149,7 @@ export default function UserList() {
       });
       closeDialog();
     } catch (error) {
+      console.log(error);
       setToastMsg({ type: "error", msg: "Không thể chuyển bài viết" });
     }
   };
@@ -190,10 +196,12 @@ export default function UserList() {
               <tr key={user.id} className="hover:bg-gray-50">
                 <td className="py-2 px-4 border-b">
                   {user.avatar ? (
-                    <img
+                    <Image
                       src={user.avatar}
                       alt="avatar"
                       className="w-10 h-10 rounded-full object-cover"
+                      width={40}
+                      height={40}
                     />
                   ) : (
                     <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-lg font-semibold text-gray-700">

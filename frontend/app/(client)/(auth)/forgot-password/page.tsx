@@ -1,4 +1,3 @@
-import ClientLayout from "@/modules/client/common/layouts/ClientLayout";
 import ForgotPassword from "../../../../src/modules/auth/forgot-password/ForgotPassword";
 
 export default function Page() {

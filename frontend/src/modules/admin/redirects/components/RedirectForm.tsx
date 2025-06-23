@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Redirect } from "../models/redirect.model";
 import { RedirectService } from "../services/redirect.service";
 
 interface RedirectFormProps {
@@ -62,12 +61,12 @@ const RedirectForm: React.FC<RedirectFormProps> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    
+
     if (name === 'type') {
       // Xử lý type để đảm bảo đúng định dạng
-      setFormData(prev => ({ 
-        ...prev, 
-        [name]: value as 'product' | 'post' | 'category' | 'page' | 'other' 
+      setFormData(prev => ({
+        ...prev,
+        [name]: value as 'product' | 'post' | 'category' | 'page' | 'other'
       }));
     } else if (name === 'statusCode') {
       // Chuyển đổi statusCode thành số
@@ -75,7 +74,7 @@ const RedirectForm: React.FC<RedirectFormProps> = ({
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
-    
+
     // Clear error when field is edited
     if (errors[name]) {
       setErrors(prev => {
@@ -93,32 +92,32 @@ const RedirectForm: React.FC<RedirectFormProps> = ({
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.oldPath) {
       newErrors.oldPath = "Vui lòng nhập đường dẫn cũ";
     }
-    
+
     if (!formData.newPath) {
       newErrors.newPath = "Vui lòng nhập đường dẫn mới";
     }
-    
+
     if (!formData.type) {
       newErrors.type = "Vui lòng chọn loại redirect";
     }
-    
+
     if (!formData.statusCode) {
       newErrors.statusCode = "Vui lòng chọn mã trạng thái";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validate()) return;
-    
+
     try {
       setLoading(true);
       setMessage(null);
@@ -166,7 +165,7 @@ const RedirectForm: React.FC<RedirectFormProps> = ({
           {message.text}
         </div>
       )}
-      
+
       <div className="space-y-2">
         <label htmlFor="oldPath" className="block text-sm font-medium text-gray-700">
           Đường dẫn cũ <span className="text-red-500">*</span>
@@ -290,4 +289,4 @@ const RedirectForm: React.FC<RedirectFormProps> = ({
   );
 };
 
-export default RedirectForm; 
+export default RedirectForm;

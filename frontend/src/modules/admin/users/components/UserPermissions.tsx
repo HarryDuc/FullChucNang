@@ -8,7 +8,6 @@ interface UserPermissionsProps {
 }
 
 export const UserPermissions = ({
-  userId,
   initialPermissions = [],
   onPermissionsChange,
 }: UserPermissionsProps) => {

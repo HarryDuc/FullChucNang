@@ -2,12 +2,12 @@ import React, { useState } from "react";
 import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
 import {
   useProductReviews,
-  useProductRating,
   useCreateReview,
 } from "../hooks/useReviews";
 import { toast } from "react-hot-toast";
 import { useUser } from "../../users/hooks/useUser";
 import { useAuth } from "@/context/AuthContext";
+import Link from "next/link";
 
 interface ProductTabsProps {
   activeTab: string;
@@ -272,9 +272,9 @@ const ProductTabs: React.FC<ProductTabsProps> = ({
               <div className="mt-8 p-4 bg-gray-50 rounded-lg">
                 <p className="text-gray-600">
                   Vui lòng{" "}
-                  <a href="/login" className="text-blue-600 hover:underline">
+                  <Link href="/login" className="text-blue-600 hover:underline">
                     đăng nhập
-                  </a>{" "}
+                  </Link>{" "}
                   để đánh giá sản phẩm.
                 </p>
               </div>

@@ -1,5 +1,3 @@
-"use client";
-
 import { useBanner } from "../hooks/useBanner";
 
 // Component hiển thị gallery ảnh theo tỷ lệ 2:1
@@ -27,7 +25,7 @@ const ImageGallery = () => {
         {banners[0] && (
           <img
             src={banners[0].imagePath}
-            alt={banners[0].title}
+            alt={banners[0].title || ""}
             className="w-full h-[390px] object-cover"
             loading="lazy"
           />

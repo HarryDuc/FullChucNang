@@ -38,7 +38,7 @@ const AdminMenu = () => {
   };
 
   return (
-    <div className="h-[73px] px-4 flex items-center justify-between bg-[#231d02]">
+    <div className="h-[72px] px-4 flex items-center justify-between bg-[#231d02]">
       {/* Left section */}
       <div className="flex items-center gap-3"></div>
 

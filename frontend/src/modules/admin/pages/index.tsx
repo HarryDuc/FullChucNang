@@ -1,11 +1,7 @@
 "use client";
-import AdminLayout from "../common/layouts/AdminLayout";
 import { useEffect, useState } from "react";
 import {
   MdShoppingBag,
-  MdCategory,
-  MdStyle,
-  MdTrendingUp,
   MdPeople,
   MdAttachMoney,
   MdShoppingCart,
@@ -23,7 +19,7 @@ import {
   Legend,
   ArcElement,
 } from "chart.js";
-import { Line, Doughnut } from "react-chartjs-2";
+import { Line } from "react-chartjs-2";
 
 // Register ChartJS components
 ChartJS.register(

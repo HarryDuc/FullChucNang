@@ -41,7 +41,7 @@ export const useCreateReview = () => {
     onSuccess: () => {
       toast.success('Review submitted successfully');
     },
-    onError: (error: AxiosError) => {
+    onError: (error: AxiosError<{ message: string }>) => {
       if (error.response?.status === 400) {
         const errorMessage = error.response.data?.message || 'You can only review products you have purchased, received and paid for';
         console.error('Review validation error:', error.response.data);

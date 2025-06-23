@@ -5,7 +5,6 @@ import { useVouchers, useVoucherMutation } from "../hooks/useVouchers";
 import {
   Voucher,
   VoucherType,
-  PaymentMethod,
   DiscountType,
 } from "../models/voucher.model";
 import VoucherForm from "./VoucherForm";

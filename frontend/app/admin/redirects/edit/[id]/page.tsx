@@ -1,7 +1,5 @@
 "use client";
 
-import React from "react";
-import LayoutAdmin from "@/modules/admin/common/layouts/AdminLayout";
 import RedirectForm from "@/modules/admin/redirects/components/RedirectForm";
 import { useRouter } from "next/navigation";
 
@@ -14,7 +12,6 @@ const EditRedirectPage = ({ params }: { params: { id: string } }) => {
   };
 
   return (
-    <LayoutAdmin>
       <div className="bg-white p-6 rounded-lg shadow">
         <div className="flex items-center mb-6">
           <button
@@ -40,15 +37,14 @@ const EditRedirectPage = ({ params }: { params: { id: string } }) => {
         </div>
 
         <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <RedirectForm 
+          <RedirectForm
             redirectId={id}
-            onSuccess={handleSuccess} 
-            onCancel={() => router.push("/admin/redirects")} 
+            onSuccess={handleSuccess}
+            onCancel={() => router.push("/admin/redirects")}
           />
         </div>
       </div>
-    </LayoutAdmin>
   );
 };
 
-export default EditRedirectPage; 
+export default EditRedirectPage;

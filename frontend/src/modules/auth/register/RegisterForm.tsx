@@ -2,14 +2,14 @@
 import { useState } from "react"
 import type React from "react"
 
-import { useAuth } from "../common/hooks/useAuth"
-import { checkEmailAPI } from "../common/services/authService"
+import { useAuth } from "@/modules/auth/common/hooks/useAuth"
+import { checkEmailAPI } from "@/modules/auth/common/services/authService"
 import validator from "validator"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
 const RegisterForm = () => {
-  const { register, loading, error } = useAuth()
+  const { register, loading } = useAuth()
   const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -111,7 +111,7 @@ const RegisterForm = () => {
     e.preventDefault()
     if (!validateForm()) return
     try {
-      const result = await register(email, password, fullName)
+       await register(email, password, fullName)
       // if (result) {
       //   // Lưu email vào localStorage
       //   localStorage.setItem("verificationEmail", email)

@@ -8,8 +8,6 @@ import {
 
 interface RelatedProductsProps {
   relatedProducts: any[];
-  calculateDiscount: (currentPrice?: number, discountPrice?: number) => number;
-  formatPrice: (price?: number) => string;
 }
 const handleAddToCart = (product: any) => {
   const productData: CartItem = {
@@ -38,7 +36,7 @@ const handleAddToCart = (product: any) => {
     { duration: 1500 }
   );
 };
-const RelatedProducts: React.FC<RelatedProductsProps> = ({ relatedProducts, calculateDiscount, formatPrice }) => (
+const RelatedProducts: React.FC<RelatedProductsProps> = ({ relatedProducts }) => (
   <section className="relative pb-8 px-2" aria-labelledby="related-products-heading">
     <h3 id="related-products-heading" className="text-2xl ml-5 text-gray-700 font-bold mb-6">Sản phẩm tương tự</h3>
     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">

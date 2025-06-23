@@ -1,4 +1,3 @@
-"use client";
 
 import { CategoriesService } from '@/modules/admin/categories-product/services/categories-product.service';
 import { CategoriesProduct } from '@/modules/admin/categories-product/types/categories-product.types';

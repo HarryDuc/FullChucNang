@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { paypalService } from "../../../../src/modules/client/checkout/services/paypalService";
+import {  useSearchParams } from "next/navigation";
+import { paypalService } from "@/modules/client/checkout/services/paypalService";
 import Link from "next/link";
 
 export default function PayPalSuccessPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -20,7 +20,7 @@ export default function CheckoutVoucher({
   onApplyVoucher,
 }: CheckoutVoucherProps) {
   const [showAvailableVouchers, setShowAvailableVouchers] = useState(false);
-  const [selectedVoucherCode, setSelectedVoucherCode] = useState("");
+  const [, setSelectedVoucherCode] = useState("");
 
   const handleSelectVoucher = (code: string) => {
     setSelectedVoucherCode(code);
@@ -36,7 +36,7 @@ export default function CheckoutVoucher({
         userId={userId}
         paymentMethod={paymentMethod}
         totalAmount={totalAmount}
-        onApply={onApplyVoucher}
+        onApply={() => onApplyVoucher}
       />
 
       <div className="mt-4">

@@ -30,9 +30,9 @@ const MenuMobile = () => {
   const [isProductsOpen, setIsProductsOpen] = useState(false);
   const [isStyleOpen, setIsStyleOpen] = useState(false);
   const [isDecorationOpen, setIsDecorationOpen] = useState(false);
-  const [isGuideOpen, setIsGuideOpen] = useState(false);
-  const [isLifestyleOpen, setIsLifestyleOpen] = useState(false);
-  const { isAuthenticated, user, logout } = useAuth();
+  const [, setIsGuideOpen] = useState(false);
+  const [, setIsLifestyleOpen] = useState(false);
+  const { isAuthenticated, logout } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const { contact } = useInfoWebsite();
   // Remove unused state "isOpen" and "setIsOpen"
@@ -131,10 +131,8 @@ const MenuMobile = () => {
             <div className="flex items-center">
               <Link href="/" className="logo">
                 <img
-                  src={contact?.logo}
+                  src={contact?.logo || ""}
                   alt="Logo"
-                  width={48}
-                  height={48}
                   loading="lazy"
                 />
               </Link>
@@ -195,10 +193,8 @@ const MenuMobile = () => {
         <div className="p-4 flex items-center justify-between border-b border-gray-200">
           <div className="flex items-center">
             <img
-              src={contact?.logo}
+              src={contact?.logo || ""}
               alt="Logo"
-              width={40}
-              height={40}
               className="mr-2"
             />
             <div>

@@ -8,7 +8,6 @@ import ProductCardShopeeStyle from "../../common/components/ProductCard";
 import {
   type CartItem,
   addToCart as addToCartUtil,
-  formatPrice as formatPriceUtil,
 } from "../../../../../utils/cartUtils";
 import toast from "react-hot-toast";
 interface DisplayProduct {

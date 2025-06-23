@@ -1,9 +1,6 @@
-"use client";
 
-import InfoBar from "./Menu/InfoBar";
 import MenuMobile from "./Menu/MenuMobile";
 import MenuPC from "./Menu/MenuPc";
-import TopBar from "./Menu/TopBar";
 
 
 const Menu = () => {

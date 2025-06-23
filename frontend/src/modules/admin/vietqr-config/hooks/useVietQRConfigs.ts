@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import {
@@ -19,6 +21,7 @@ export const useVietQRConfigs = () => {
       const data = await vietQRConfigService.getAll();
       setConfigs(data);
     } catch (err) {
+      console.log(err);
       const errorMessage = 'Không thể tải danh sách cấu hình VietQR';
       setError(errorMessage);
       toast.error(errorMessage);
@@ -35,6 +38,7 @@ export const useVietQRConfigs = () => {
       toast.success('Tạo cấu hình VietQR thành công');
       await fetchConfigs();
     } catch (err) {
+      console.log(err);
       const errorMessage = 'Không thể tạo cấu hình VietQR';
       setError(errorMessage);
       toast.error(errorMessage);
@@ -51,6 +55,7 @@ export const useVietQRConfigs = () => {
       toast.success('Cập nhật cấu hình VietQR thành công');
       await fetchConfigs();
     } catch (err) {
+      console.log(err);
       const errorMessage = 'Không thể cập nhật cấu hình VietQR';
       setError(errorMessage);
       toast.error(errorMessage);
@@ -67,6 +72,7 @@ export const useVietQRConfigs = () => {
       toast.success('Kích hoạt cấu hình VietQR thành công');
       await fetchConfigs();
     } catch (err) {
+      console.log(err);
       const errorMessage = 'Không thể kích hoạt cấu hình VietQR';
       setError(errorMessage);
       toast.error(errorMessage);

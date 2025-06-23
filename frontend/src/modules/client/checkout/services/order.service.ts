@@ -92,6 +92,7 @@ export const OrderService = {
       };
     } catch (error) {
       // Nếu không tìm thấy checkout, vẫn trả về đơn hàng
+      console.log(error);
       return order;
     }
   },

@@ -5,12 +5,11 @@ import { useRedirectData } from "../hooks/useRedirectData";
 import { Redirect } from "../models/redirect.model";
 import RedirectForm from "./RedirectForm";
 import RedirectFilters from "./RedirectFilters";
-import { toast } from 'react-toastify';
+import { toast } from 'react-hot-toast';
 
 const ListRedirects: React.FC = () => {
   const {
     redirects,
-    loading,
     pagination,
     handleTableChange,
     handleFilter,
@@ -58,7 +57,7 @@ const ListRedirects: React.FC = () => {
 
   const handleTestRedirect = async () => {
     if (!testPath) {
-      toast.warning("Vui lòng nhập đường dẫn để kiểm tra");
+      toast.error("Vui lòng nhập đường dẫn để kiểm tra");
       return;
     }
 
@@ -69,7 +68,7 @@ const ListRedirects: React.FC = () => {
       const result = await checkRedirect(path);
       setTestResult(result);
       if (!result) {
-        toast.info("Không tìm thấy redirect cho đường dẫn này");
+        toast.error("Không tìm thấy redirect cho đường dẫn này");
       }
     } catch (error) {
       toast.error("Lỗi khi kiểm tra redirect");
@@ -362,7 +361,7 @@ const ListRedirects: React.FC = () => {
                         Tìm thấy redirect
                       </span>
                     </div>
-                    
+
                     <div className="font-medium">Chuyển hướng đến:</div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm">{testResult.newPath}</span>
@@ -375,14 +374,14 @@ const ListRedirects: React.FC = () => {
                         </svg>
                       </button>
                     </div>
-                    
+
                     <div className="font-medium">Loại:</div>
                     <div>
                       <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(testResult.type)}`}>
                         {testResult.type}
                       </span>
                     </div>
-                    
+
                     <div className="font-medium">Mã trạng thái:</div>
                     <div>
                       <span className={`px-2 py-1 text-xs rounded-full ${
@@ -440,7 +439,7 @@ const ListRedirects: React.FC = () => {
                 </svg>
               </button>
             </div>
-            
+
             <RedirectForm
               redirectId={currentRedirectId}
               onSuccess={handleSuccess}
@@ -454,4 +453,4 @@ const ListRedirects: React.FC = () => {
   );
 };
 
-export default ListRedirects; 
+export default ListRedirects;

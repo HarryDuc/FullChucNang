@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { PageService, IPage, ICreatePageDto } from '../services/page.service';
+import { PageService, IPage } from '../services/page.service';
 import { toast } from 'react-hot-toast';
 
 interface UsePageReturn {

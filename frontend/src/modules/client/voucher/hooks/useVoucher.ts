@@ -110,6 +110,7 @@ export const useVoucher = (initialTotalAmount: number = 0) => {
       setFinalPrice(result.finalPrice);
       return true;
     } catch (error) {
+      console.log(error);
       return false;
     }
   };

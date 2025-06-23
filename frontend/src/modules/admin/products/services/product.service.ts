@@ -139,6 +139,7 @@ export const ProductService = {
           const errorJson = JSON.parse(errorText);
           throw new Error(errorJson.message || "Lỗi khi tạo sản phẩm");
         } catch (e) {
+          console.log(e);
           throw new Error(`Lỗi khi tạo sản phẩm: ${errorText}`);
         }
       }

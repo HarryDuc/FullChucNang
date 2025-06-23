@@ -49,6 +49,7 @@ export const useOrders = () => {
       const createdOrder = await OrderService.createOrder(newOrder);
       setOrders((prevOrders) => [...prevOrders, createdOrder]);
     } catch (err) {
+      console.log(err);
       setError("Không thể tạo đơn hàng");
     }
   };
@@ -64,6 +65,7 @@ export const useOrders = () => {
       );
       return updated;
     } catch (err) {
+      console.log(err);
       setError("Không thể cập nhật đơn hàng");
       throw err;
     }
@@ -75,6 +77,7 @@ export const useOrders = () => {
       const updated = await updateOrder(slug, { status });
       return updated;
     } catch (err) {
+      console.log(err);
       setError("Không thể cập nhật trạng thái đơn hàng");
       throw err;
     }
@@ -109,6 +112,7 @@ export const useOrders = () => {
 
       return updatedCheckout;
     } catch (err) {
+      console.log(err);
       setError("Không thể cập nhật trạng thái thanh toán");
       throw err;
     }

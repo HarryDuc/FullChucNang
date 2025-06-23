@@ -8,11 +8,11 @@ import {
   VariantAttribute,
   ProductVariant,
   StockInfo,
-  SeoInfo,
 } from "../models/product.model";
 import { useProducts } from "../hooks/useProducts";
 import CategoryTree, { Category } from "./CategoryTree";
 import { VariantOptions } from "./VariantOptions";
+import Image from "next/image";
 
 interface ProductFormProps {
   initialData?: Product;
@@ -27,7 +27,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   onSubmit,
   onCancel,
 }): React.ReactElement => {
-  const router = useRouter();
   const { categories, uploadImage } = useProducts();
 
   // Basic Information
@@ -85,16 +84,16 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   );
 
   // SEO
-  const [seoTitle, setSeoTitle] = useState(initialData?.seo?.title || "");
-  const [seoDescription, setSeoDescription] = useState(
+  const [seoTitle] = useState(initialData?.seo?.title || "");
+  const [seoDescription] = useState(
     initialData?.seo?.description || ""
   );
-  const [seoKeywords, setSeoKeywords] = useState(
+  const [seoKeywords] = useState(
     initialData?.seo?.keywords?.join(", ") || ""
   );
 
   // Stock Info
-  const [stockInfo, setStockInfo] = useState<StockInfo>(
+  const [stockInfo] = useState<StockInfo>(
     initialData?.stockInfo || {
       totalStock: 0,
       lowStockThreshold: 10,
@@ -183,6 +182,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       setIsUploadingImages(false);
       return imageUrl || "";
     } catch (error) {
+      console.log(error);
       setIsUploadingImages(false);
       setErrorMsg("Lỗi khi tải ảnh lên");
       return "";
@@ -327,6 +327,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     } catch (error: any) {
       console.error("Form submission error:", error);
       setIsSubmitting(false);
+      console.log(error);
       if (error.response) {
         console.error("Error response:", await error.response.text());
       }
@@ -464,10 +465,12 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               className="w-full"
             />
             {thumbnail && (
-              <img
+              <Image
                 src={thumbnail}
                 alt="Thumbnail"
                 className="mt-2 w-32 h-32 object-cover"
+                width={128}
+                height={128}
               />
             )}
           </div>
@@ -489,10 +492,12 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             <div className="grid grid-cols-4 gap-2 mt-2">
               {gallery.map((url, index) => (
                 <div key={index} className="relative">
-                  <img
+                  <Image
                     src={url}
                     alt={`Gallery ${index + 1}`}
                     className="w-full h-24 object-cover"
+                    width={96}
+                    height={96}
                   />
                   <button
                     type="button"

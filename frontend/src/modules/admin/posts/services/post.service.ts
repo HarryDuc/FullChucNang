@@ -1,4 +1,4 @@
-import { Post, PostStatus, UpdateStatusDto, UpdateVisibilityDto } from "../models/post.model";
+import { Post, PostStatus } from "../models/post.model";
 import { Category } from "../models/post.model";
 
 const BASE_API = process.env.NEXT_PUBLIC_API_URL!;

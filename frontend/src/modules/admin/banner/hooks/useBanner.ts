@@ -1,3 +1,5 @@
+"use client";
+
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AdminBannerService, CreateBannerDto, UpdateBannerDto } from '../services/banner.service';
 import { Banner } from '@/modules/client/home/models/banner.model';

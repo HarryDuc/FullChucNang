@@ -13,7 +13,7 @@ interface SearchComponentProps {
 const SearchComponent = ({ isMobile = false }: SearchComponentProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [isLoadingProducts, setIsLoadingProducts] = useState<boolean>(false);
+  const [, setIsLoadingProducts] = useState<boolean>(false);
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isFocused, setIsFocused] = useState(false);

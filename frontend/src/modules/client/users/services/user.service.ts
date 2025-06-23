@@ -1,7 +1,6 @@
-import { User, UserAddress, UserSettings } from "../models/user.model";
+import { User, UserSettings } from "../models/user.model";
 
 const BASE_API = process.env.NEXT_PUBLIC_API_URL!;
-const USER_API = `${BASE_API}/users`;
 const AUTH_API = `${BASE_API}/auth`;
 const IMAGE_UPLOAD_API = `${BASE_API}/images/upload`;
 

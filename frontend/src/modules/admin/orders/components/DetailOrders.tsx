@@ -61,10 +61,6 @@ const DetailOrders = ({ slug }: DetailOrdersProps) => {
 
     try {
       setUpdatingPayment(true);
-      const updatedCheckout = await OrderService.updatePaymentStatus(
-        order.checkout.slug,
-        newStatus
-      );
       setOrder({
         ...order,
         checkout: {

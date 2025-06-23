@@ -1,5 +1,3 @@
-import api from '../utils/api';
-
 export interface Province {
   code: number;
   name: string;
@@ -152,4 +150,4 @@ export const getFullAddress = async (
     console.error('Lỗi khi lấy dữ liệu địa chỉ đầy đủ:', error);
     throw error;
   }
-}; 
+};

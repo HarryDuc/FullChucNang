@@ -1,4 +1,3 @@
-"use client";
 
 import Head from "next/head";
 import { useState } from "react";
@@ -14,7 +13,7 @@ const ContactSection = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [submitError, setSubmitError] = useState(false);
+  const [submitError] = useState(false);
 
   const handleChange = (
     e: React.ChangeEvent<

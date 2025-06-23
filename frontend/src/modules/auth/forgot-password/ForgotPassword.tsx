@@ -1,12 +1,14 @@
-"use client";
+"use client"
+
 import { useState } from "react";
 import { usePasswordReset } from "../common/hooks/usePasswordReset";
 import { MdEmail } from "react-icons/md";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const ForgotPassword = () => {
   const router = useRouter();
-  const { loading, error, success, requestPasswordReset } = usePasswordReset();
+  const { loading, error, requestPasswordReset } = usePasswordReset();
   const [email, setEmail] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -17,7 +19,7 @@ const ForgotPassword = () => {
       // Chuyển hướng đến trang nhập OTP với email đã nhập
       router.push(`/reset-password?email=${encodeURIComponent(email)}`);
     } catch (err) {
-      // Error đã được xử lý trong hook
+      console.log(err);
     }
   };
 
@@ -70,9 +72,9 @@ const ForgotPassword = () => {
           </div>
 
           <div className="text-center">
-            <a href="/login" className="text-blue-600 hover:text-blue-800">
+            <Link href="/login" className="text-blue-600 hover:text-blue-800">
               Quay lại đăng nhập
-            </a>
+            </Link>
           </div>
         </form>
       </div>

@@ -1,4 +1,3 @@
-import React from "react";
 import { PageList } from "@/modules/admin/create-page/components/PageList";
 
 

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useVoucher } from "../hooks/useVoucher";
-import { formatCurrency } from "../../../../../utils/format";
 import { formatPrice } from "../../../../../utils/cartUtils";
 import { Voucher } from "../models/voucher.model";
 

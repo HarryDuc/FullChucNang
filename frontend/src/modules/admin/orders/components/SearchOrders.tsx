@@ -18,7 +18,7 @@ const SearchOrders = ({
 }: SearchOrdersProps) => {
   const [slug, setSlug] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
 
   const handleSearch = async () => {
     // Nếu ô tìm kiếm trống, gọi hàm để hiển thị lại tất cả đơn hàng
@@ -42,6 +42,7 @@ const SearchOrders = ({
         onSearchNotFound(); // Ẩn toàn bộ danh sách
       }
     } catch (err) {
+      console.log(err);
       setError("Đã xảy ra lỗi khi tìm kiếm đơn hàng.");
       onSearchNotFound(); // Ẩn toàn bộ danh sách trong trường hợp lỗi
     } finally {

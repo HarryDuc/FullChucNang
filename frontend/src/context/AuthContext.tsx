@@ -28,6 +28,8 @@ interface User {
   email: string;
   role: UserRole;
   permissions: Permission[];
+  fullName?: string;
+  avatar?: string;
 }
 
 interface AuthContextType {
@@ -197,11 +199,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         userId: string;
         email: string;
         role: UserRole;
+        fullName?: string;
+        avatar?: string;
         exp: number;
       }>(tokenToVerify);
       console.log("✅ Token decoded successfully:", {
         userId: decodedToken.userId,
         role: decodedToken.role,
+        fullName: decodedToken.fullName,
       });
 
       // Check if token is expired
@@ -222,6 +227,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         id: decodedToken.userId,
         email: decodedToken.email,
         role: decodedToken.role,
+        fullName: decodedToken.fullName,
+        avatar: decodedToken.avatar,
         permissions: [], // Will be populated by fetchUserPermissions
       };
 
@@ -240,23 +247,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const hasAdminPermissions = (userPermissions: Permission[]): boolean => {
-    // Check if user has any admin-level permissions
-    return userPermissions.some(
-      (permission) =>
-        ["users", "permissions"].includes(permission.resource) &&
-        [
-          "create",
-          "update",
-          "delete",
-          "list",
-          "assign",
-          "manage-permissions",
-          "read",
-        ].includes(permission.action)
-    );
-  };
-
   const login = async (newToken: string) => {
     try {
       console.log("🔑 Processing login with new token...");
@@ -267,6 +257,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         userId: string;
         email: string;
         role: UserRole;
+        fullName?: string;
+        avatar?: string;
       }>(newToken);
 
       // Set basic user info
@@ -274,6 +266,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         id: decodedToken.userId,
         email: decodedToken.email,
         role: decodedToken.role,
+        fullName: decodedToken.fullName,
+        avatar: decodedToken.avatar,
         permissions: [],
       });
 

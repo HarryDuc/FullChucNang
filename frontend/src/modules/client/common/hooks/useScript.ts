@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ScriptService, IScript, CreateScriptDto, UpdateScriptDto, ScriptPosition } from '../services/script.service';
+import { ScriptService, CreateScriptDto, UpdateScriptDto, ScriptPosition } from '../services/script.service';
 
 export const SCRIPT_KEYS = {
   all: ['scripts'] as const,

@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { FaArrowLeft, FaUser, FaKey } from "react-icons/fa";
+import { FaUser } from "react-icons/fa";
 import PageHeader from "@/modules/client/account/components/PageHeader";
 import toast from "react-hot-toast";
 import { useUser } from "@/modules/client/users/hooks/useUser";
@@ -17,19 +15,12 @@ interface UserProfileData {
   status: string;
 }
 
-interface PasswordData {
-  current: string;
-  new: string;
-  confirm: string;
-}
-
 const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState<"profile" | "password">("profile");
   const { isAuthenticated } = useAuth();
   const {
     user,
     updateUserInfo,
-    changePassword,
     isLoading: userLoading,
     isUpdating,
     fetchUserInfo,
@@ -45,18 +36,7 @@ const ProfilePage = () => {
   });
   const [editData, setEditData] = useState<UserProfileData>(profileData);
   const [isEditing, setIsEditing] = useState(false);
-
-  const [passwords, setPasswords] = useState<PasswordData>({
-    current: "",
-    new: "",
-    confirm: "",
-  });
   const [errors, setErrors] = useState<{ [k: string]: string }>({});
-  const [showPwd, setShowPwd] = useState({
-    current: false,
-    new: false,
-    confirm: false,
-  });
 
   // Add useEffect to fetch user data when component mounts and when auth state changes
   useEffect(() => {
@@ -85,11 +65,9 @@ const ProfilePage = () => {
     if (profileData.avatar) {
       return (
         <div className="w-24 h-24 rounded-full overflow-hidden">
-          <Image
+          <img
             src={profileData.avatar}
             alt="Avatar"
-            width={96}
-            height={96}
             className="object-cover"
           />
         </div>

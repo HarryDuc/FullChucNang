@@ -1,8 +1,4 @@
-"use client";
-
 import { ReactNode } from "react";
-import Menu from "@/modules/client/common/components/Menu";
-import Footer from "@/modules/client/common/components/Footer";
 import Sidebar from "../../products/components/Sidebar";
 
 interface LayoutProps {

@@ -1,5 +1,3 @@
-"use client"
-
 import Link from "next/link";
 
 const categories = [
@@ -97,9 +95,7 @@ const Category_Home = () => {
                 >
                   <img
                     src={category.icon}
-                    alt={`Icon cho ${category.label}`}
-                    width={40}
-                    height={40}
+                    alt={`Icon cho ${category.label || ""}`}
                     loading="lazy"
                     className="object-contain"
                   />
