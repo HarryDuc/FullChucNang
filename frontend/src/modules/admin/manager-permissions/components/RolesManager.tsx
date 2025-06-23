@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState } from "react";
 import RolesList from "./RolesList";
 import RoleForm from "./RoleForm";

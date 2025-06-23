@@ -3,9 +3,7 @@ import ForgotPassword from "../../../../src/modules/auth/forgot-password/ForgotP
 
 export default function Page() {
   return (
-    <ClientLayout>
       <ForgotPassword />
-    </ClientLayout>
   );
 }
 

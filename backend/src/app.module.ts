@@ -1,5 +1,5 @@
 import { CategoriesProductModule } from './modules/categories-product/categories-product.module';
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MulterModule } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -35,6 +35,8 @@ import { CreatePageModule } from './modules/create-page/create-page.module';
 import { ReviewModule } from './modules/reviews/review.module';
 import { VoucherModule } from './modules/vouchers/voucher.module';
 import { PermissionsModule } from './modules/permissions/permissions.module';
+import { RedirectMiddleware } from './modules/redirects/middlewares/redirect.middleware'; // ✅ Middleware xử lý redirect
+import { RedirectsModule } from './modules/redirects/redirects.module';
 
 @Module({
   imports: [
@@ -81,6 +83,7 @@ import { PermissionsModule } from './modules/permissions/permissions.module';
     VoucherModule,
     PermissionsModule,
     PayPalModule, // 💰 Import module thanh toán PayPal
+    RedirectsModule, // ✅ Import module quản lý redirect URLs
 
     // ✅ Cấu hình MailerModule để gửi email
     MailerModule.forRoot({
@@ -122,4 +125,13 @@ import { PermissionsModule } from './modules/permissions/permissions.module';
   //   },
   // ],
 })
-export class AppModule { }
+export class AppModule {   /**
+  * Cấu hình middleware xử lý redirect URL
+  * Middleware này sẽ chạy trước tất cả các route để kiểm tra xem URL có cần redirect không
+  */
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(RedirectMiddleware)
+      .forRoutes({ path: '*', method: RequestMethod.GET }); // Áp dụng cho tất cả các GET request
+  }
+}

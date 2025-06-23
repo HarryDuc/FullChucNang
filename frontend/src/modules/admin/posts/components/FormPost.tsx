@@ -7,12 +7,15 @@ import {
   UpdatePostDto,
   Category,
   CategoryInfo,
+  PostStatus,
+  Post,
 } from "../models/post.model";
 import PostCategoryTree from "./CategoryPostTree";
 import SunEditor from "suneditor-react";
 import "suneditor/dist/css/suneditor.min.css";
 import { usePosts } from "@/modules/admin/posts/hooks/usePosts";
 import SunEditer from "../../common/components/SunEditer";
+import { useAuth } from "@/context/AuthContext";
 
 /** Loại bỏ domain từ HTML, chỉ giữ phần relative */
 const removeDomain = (html: string): string =>
@@ -35,6 +38,7 @@ const PostForm: React.FC<Props> = ({ initialData, isEdit = false }) => {
     createMutation,
     updateMutation,
   } = usePosts();
+  const { user } = useAuth();
   const router = useRouter();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,7 +53,17 @@ const PostForm: React.FC<Props> = ({ initialData, isEdit = false }) => {
   const [slug, setSlug] = useState(
     isEdit && initialData?.slug ? initialData.slug : ""
   );
-
+  const [formData, setFormData] = useState<Partial<Post>>({
+    name: "",
+    excerpt: "",
+    postData: "",
+    author: user?.fullName || "",
+    thumbnail: [],
+    publishedDate: new Date().toISOString(),
+    category: { main: [], sub: [] },
+    status: PostStatus.Draft,
+    isVisible: true,
+  });
   // load excerpt & postData ban đầu
   useEffect(() => {
     if (initialData?.excerpt) {
@@ -135,9 +149,17 @@ const PostForm: React.FC<Props> = ({ initialData, isEdit = false }) => {
     if (thumbnailFile) {
       try {
         const { url } = await uploadImageMutation.mutateAsync(thumbnailFile);
-        thumbnailUrls = [new URL(url, window.location.origin).pathname];
-      } catch {
-        alert("❌ Upload ảnh thất bại");
+        console.log("url", url);
+        if (!url) {
+          throw new Error("URL ảnh không hợp lệ");
+        }
+        // Không cần chuyển đổi URL vì imageUrl đã là đường dẫn tương đối
+        thumbnailUrls = [url];
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Upload ảnh thất bại";
+        alert(`❌ ${errorMessage}`);
+        console.error("Chi tiết lỗi upload:", error);
         setIsSubmitting(false);
         return;
       }
@@ -159,7 +181,7 @@ const PostForm: React.FC<Props> = ({ initialData, isEdit = false }) => {
       name: name.trim(),
       excerpt: removeDomain(excerpt),
       postData: removeDomain(postData),
-      author: "Admin",
+      author: user?.fullName || user?.email || "Admin",
       thumbnail: thumbnailUrls,
       publishedDate: publishedISO,
       category: categoryInfo,
@@ -193,6 +215,26 @@ const PostForm: React.FC<Props> = ({ initialData, isEdit = false }) => {
     }
   };
 
+  const getStatusLabel = (status: PostStatus): { label: string; color: string } => {
+    switch (status) {
+      case PostStatus.Draft:
+        return { label: "Nháp", color: "bg-gray-200 text-gray-800" };
+      case PostStatus.Pending:
+        return { label: "Chờ duyệt", color: "bg-yellow-200 text-yellow-800" };
+      case PostStatus.Approved:
+        return { label: "Đã duyệt", color: "bg-green-200 text-green-800" };
+      case PostStatus.Rejected:
+        return { label: "Từ chối", color: "bg-red-200 text-red-800" };
+      default:
+        return { label: "Không xác định", color: "bg-gray-200 text-gray-800" };
+    }
+  };
+  const handleStatusChange = (newStatus: PostStatus) => {
+    setFormData((prev) => ({ ...prev, status: newStatus }));
+  };
+  const handleVisibilityChange = () => {
+    setFormData((prev) => ({ ...prev, isVisible: !prev.isVisible }));
+  };
   return (
     <form onSubmit={handleSubmit} className="p-4 rounded-lg bg-white shadow">
       <div className="flex flex-col md:flex-row gap-6">
@@ -225,9 +267,10 @@ const PostForm: React.FC<Props> = ({ initialData, isEdit = false }) => {
           )}
 
           {/* Excerpt */}
-          <div>
+          {/* <div>
             <label className="block font-medium mb-1">Mô tả ngắn</label>
-            <SunEditor
+            <SunEditer postData={excerpt} setPostData={setExcerpt} /> */}
+          {/* <SunEditor
               height="300px"
               setContents={excerpt}
               onChange={(c) => setExcerpt(c)}
@@ -256,7 +299,6 @@ const PostForm: React.FC<Props> = ({ initialData, isEdit = false }) => {
                     "image",
                     "video",
                     "audio",
-                    "imageGallery",
                     "fullScreen",
                     "showBlocks",
                     "codeView",
@@ -267,43 +309,43 @@ const PostForm: React.FC<Props> = ({ initialData, isEdit = false }) => {
                 ],
                 defaultStyle: "z-index: 10; position: relative;",
               }}
-            />
-          </div>
+            /> */}
+          {/* </div> */}
 
           {/* Nội dung */}
           <div>
             <label className="block font-medium mb-1">Nội dung</label>
-
-            <SunEditor
+            <SunEditer postData={postData} setPostData={setPostData} />
+            {/* <SunEditor
               height="500px"
               setContents={postData}
               onChange={(c) => setPostData(c)}
               setOptions={{
                 buttonList: [
                   [
-                    "undo",
-                    "redo",
+                    // Đưa các nút hay dùng lên đầu
                     "bold",
                     "italic",
                     "underline",
                     "strike",
-                    "subscript",
-                    "superscript",
                     "font",
                     "fontSize",
                     "formatBlock",
                     "paragraphStyle",
-                    "blockquote",
                     "align",
                     "list",
                     "lineHeight",
+                    "undo",
+                    "redo",
+                    "blockquote",
                     "horizontalRule",
                     "table",
                     "link",
                     "image",
                     "video",
                     "audio",
-                    "imageGallery",
+                    "subscript",
+                    "superscript",
                     "fullScreen",
                     "showBlocks",
                     "codeView",
@@ -313,8 +355,11 @@ const PostForm: React.FC<Props> = ({ initialData, isEdit = false }) => {
                   ],
                 ],
                 defaultStyle: "position: relative;",
+                // Ghim toolbar lên top, không bị cuộn theo nội dung
+                stickyToolbar: 80,
+                // Nếu muốn toolbar luôn hiển thị khi cuộn, có thể dùng stickyToolbar: true
               }}
-            />
+            /> */}
           </div>
 
           {/* Ngày giờ */}
@@ -376,21 +421,60 @@ const PostForm: React.FC<Props> = ({ initialData, isEdit = false }) => {
           )}
         </div>
       </div>
+      {/* <div className="mb-6">
+        <label className="block mb-2 text-sm font-medium text-gray-700">
+          Trạng thái phê duyệt
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {Object.values(PostStatus).map((status) => {
+            const { label, color } = getStatusLabel(status);
+            return (
+              <button
+                key={status}
+                type="button"
+                onClick={() => handleStatusChange(status)}
+                className={`px-4 py-2 rounded-lg transition-colors duration-200 ${
+                  formData.status === status
+                    ? `${color} font-medium`
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      </div> */}
 
-      {/* Actions */}
-      <div className="mt-6 flex justify-end gap-4">
+      {/* Trạng thái hiển thị */}
+      {/* <div className="mb-6">
+        <label className="flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            checked={formData.isVisible}
+            onChange={handleVisibilityChange}
+            className="sr-only peer"
+          />
+          <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          <span className="ms-3 text-sm font-medium text-gray-700">
+            {formData.isVisible ? "Hiển thị" : "Ẩn"}
+          </span>
+        </label>
+      </div> */}
+      {/* Actions - Ghim nút vào góc phải dưới */}
+      <div className="fixed bottom-6 right-6 z-50 flex gap-4">
         <button
           type="button"
           onClick={() => router.push("/admin/posts")}
           disabled={isSubmitting}
-          className="px-4 py-2 bg-gray-300 rounded"
+          className="px-4 py-2 bg-gray-300 rounded shadow-lg"
         >
           Hủy
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className={`px-6 py-2 rounded text-white ${
+          className={`px-6 py-2 rounded text-white shadow-lg ${
             isSubmitting ? "bg-blue-400" : "bg-blue-600"
           }`}
         >

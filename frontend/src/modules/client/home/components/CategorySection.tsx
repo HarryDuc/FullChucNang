@@ -213,7 +213,7 @@ const CategorySection: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto my-8">
+      <div className="mx-auto my-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
           {[...Array(4)].map((_, categoryIndex) => (
             <div key={categoryIndex} className="animate-pulse">

@@ -5,5 +5,5 @@ export default function CategoryLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <ProductLayout>{children}</ProductLayout>;
+  return (<ProductLayout>{children}</ProductLayout>);
 }

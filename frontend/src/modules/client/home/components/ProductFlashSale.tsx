@@ -51,8 +51,9 @@ const ProductFlashSale = () => {
       _id: product._id || product.id || "",
       name: product.name,
       slug: product.slug,
-      currentPrice: product.currentPrice,
-      discountPrice: product.discountPrice,
+      basePrice: product.basePrice || 0,
+      currentPrice: product.currentPrice || 0,
+      discountPrice: product.discountPrice || 0,
       price: product.discountPrice || product.currentPrice || 0,
       quantity: 1,
       image: getImageUrl(product.thumbnail),
@@ -107,7 +108,7 @@ const ProductFlashSale = () => {
               slug={product.slug}
               name={product.name}
               imageUrl={getImageUrl(product.thumbnail)}
-              currentPrice={product.currentPrice}
+              currentPrice={product.basePrice}
               discountPrice={product.discountPrice}
               onAddToCart={() => handleAddToCart(product)}
             />

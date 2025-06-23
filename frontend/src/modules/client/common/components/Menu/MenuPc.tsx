@@ -28,8 +28,7 @@ interface CartItem {
 }
 
 const MenuPC = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const { contact } = useInfoWebsite();
+  const { contact, loading } = useInfoWebsite();
   // Giỏ hàng
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -63,10 +62,6 @@ const MenuPC = () => {
     setCartItems(updated);
   };
 
-  // Chờ xác thực
-  useEffect(() => {
-    setIsLoading(false);
-  }, [isAuthenticated]);
 
   // Lắng nghe thay đổi localStorage cho giỏ hàng
   useEffect(() => {
@@ -127,7 +122,6 @@ const MenuPC = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
-  if (isLoading) return null;
   return (
     <nav className="w-full bg-white hidden md:flex">
       {/* Main content using grid */}
@@ -141,7 +135,7 @@ const MenuPC = () => {
               aria-label="Trang chủ Decor & More"
             >
               <img
-                src={contact?.logo}
+                src={contact?.logo || "/logo.png"}
                 alt="Logo"
                 width={48}
                 height={48}

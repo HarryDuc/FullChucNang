@@ -1,21 +1,22 @@
-"use client"
+"use client";
 
-import { useEffect } from 'react';
-import { useContact } from '../hooks/useContact';
-import { Trash2 } from 'lucide-react';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { formatDate } from '@/utils/format';
+import { useEffect } from "react";
+import { useContact } from "../hooks/useContact";
+import { Trash2 } from "lucide-react";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { formatDate } from "../../../../../utils/format";
 
 const ContactList = () => {
-  const { contacts, isLoading, error, fetchContacts, deleteContact } = useContact();
+  const { contacts, isLoading, error, fetchContacts, deleteContact } =
+    useContact();
 
   useEffect(() => {
     fetchContacts();
   }, [fetchContacts]);
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa liên hệ này?')) {
+    if (window.confirm("Bạn có chắc chắn muốn xóa liên hệ này?")) {
       await deleteContact(id);
     }
   };
@@ -29,17 +30,15 @@ const ContactList = () => {
   }
 
   if (error) {
-    return (
-      <div className="text-center text-red-500 py-8">
-        {error}
-      </div>
-    );
+    return <div className="text-center text-red-500 py-8">{error}</div>;
   }
 
   return (
     <div className="container mx-auto p-6">
       <ToastContainer />
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">Danh sách liên hệ</h1>
+      <h1 className="text-2xl font-bold text-gray-800 mb-6">
+        Danh sách liên hệ
+      </h1>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
@@ -81,7 +80,7 @@ const ContactList = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {contact.customerEmail || '-'}
+                      {contact.customerEmail || "-"}
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -107,7 +106,10 @@ const ContactList = () => {
               ))}
               {contacts.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                  <td
+                    colSpan={6}
+                    className="px-6 py-4 text-center text-gray-500"
+                  >
                     Không có dữ liệu liên hệ
                   </td>
                 </tr>

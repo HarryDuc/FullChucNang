@@ -10,6 +10,7 @@ import { RoleService } from '../manager-permissions/services/role.service';
 import { Role, RoleSchema } from '../manager-permissions/schemas/role.schema';
 import { RolePermission, RolePermissionSchema } from '../manager-permissions/schemas/role-permission.schema';
 import { Permission, PermissionSchema } from '../permissions/schemas/permission.schema';
+import { RedirectsModule } from '../redirects/redirects.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { Permission, PermissionSchema } from '../permissions/schemas/permission.
     PermissionsModule,
     forwardRef(() => AuthModule),
     CommonModule,
+    forwardRef(() => RedirectsModule),
   ],
   controllers: [ProductController], // ✅ Đăng ký controller
   providers: [ProductService, RoleService], // ✅ Đăng ký service và repository

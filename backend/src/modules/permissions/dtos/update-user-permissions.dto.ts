@@ -1,10 +1,11 @@
-import { IsArray, IsString } from 'class-validator';
+import { IsArray, IsMongoId, IsNotEmpty } from 'class-validator';
 
 export class UpdateUserPermissionsDto {
-  @IsString()
+  @IsNotEmpty()
+  @IsMongoId()
   userId: string;
 
   @IsArray()
-  @IsString({ each: true })
+  @IsMongoId({ each: true })
   permissionIds: string[];
 }

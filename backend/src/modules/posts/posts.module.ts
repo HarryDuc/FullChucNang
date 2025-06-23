@@ -12,6 +12,7 @@ import { RolePermission, RolePermissionSchema } from '../manager-permissions/sch
 import { Permission, PermissionSchema } from '../permissions/schemas/permission.schema';
 import { RoleService } from '../manager-permissions/services/role.service';
 import { User, UserSchema } from '../users/schemas/users.schema';
+import { RedirectsModule } from '../redirects/redirects.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { User, UserSchema } from '../users/schemas/users.schema';
     forwardRef(() => AuthModule),
     PermissionsModule,
     CommonModule,
+    forwardRef(() => RedirectsModule),
   ],
   controllers: [PostController],
   providers: [PostService, PostRepository, RoleService],

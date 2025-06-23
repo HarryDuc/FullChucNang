@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import { RoleService, AssignRoleDto } from '../services/role.service';

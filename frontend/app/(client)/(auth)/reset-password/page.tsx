@@ -3,9 +3,7 @@ import ResetPassword from "../../../../src/modules/auth/reset-password/ResetPass
 
 export default function Page() {
   return (
-    <ClientLayout>
       <ResetPassword />
-    </ClientLayout>
   );
 }
 

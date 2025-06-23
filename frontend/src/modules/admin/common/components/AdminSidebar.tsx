@@ -21,6 +21,8 @@ import {
   MdOutlineSpaceDashboard,
   MdOutlineSecurity,
   MdOutlineEmail,
+  MdOutlinePerson,
+  MdOutlineSwapHoriz,
 } from "react-icons/md";
 import { useAuth } from "@/context/AuthContext";
 
@@ -136,6 +138,37 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
       group: "Management",
       requiredPermission: {
         resource: "manager-permissions",
+        action: "read",
+      },
+    },
+
+    {
+      href: "/admin/manager-permissions",
+      icon: <MdOutlineSecurity />,
+      label: "Quản lý quyền hạn",
+      group: "Quản lý",
+      requiredPermission: {
+        resource: "manager-permissions",
+        action: "read",
+      },
+    },
+    {
+      href: "/admin/manager-users",
+      icon: <MdOutlinePerson />,
+      label: "Quản lý người dùng",
+      group: "Quản lý",
+      requiredPermission: {
+        resource: "manager-users",
+        action: "read",
+      },
+    },
+    {
+      href: "/admin/redirects",
+      icon: <MdOutlineSwapHoriz />,
+      label: "Redirects",
+      group: "SEO",
+      requiredPermission: {
+        resource: "redirects",
         action: "read",
       },
     },

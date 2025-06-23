@@ -139,6 +139,8 @@ export class AuthService {
         user._id.toString(),
         user.email,
         user.role,
+        user.fullName,
+        user.avatar
       );
 
       return {
@@ -182,14 +184,18 @@ export class AuthService {
     userId: string,
     email: string,
     role: string,
+    fullName?: string,
+    avatar?: string,
   ): Promise<string> {
     try {
       // ✅ Tối ưu: Không lưu permissions vào JWT token
-      // Chỉ lưu thông tin cần thiết: userId, email, role
+      // Chỉ lưu thông tin cần thiết: userId, email, role, fullName, avatar
       const payload = {
         userId,
         email,
-        role
+        role,
+        fullName,
+        avatar
       };
 
       // ✅ Sign JWT với payload tối giản
@@ -216,7 +222,7 @@ export class AuthService {
     emails?: { value: string }[];
     email?: string;
     id?: string;
-    displayName?: string;
+    fullName?: string;
     photos?: { value: string }[];
   }): Promise<{ user: User; token: string }> {
     if (!profile || typeof profile !== 'object') {
@@ -239,8 +245,8 @@ export class AuthService {
         throw new BadRequestException('Không tìm thấy Google ID');
       }
 
-      // 📛 Lấy tên đầy đủ
-      const fullName: string = profile.displayName ?? '';
+      // 📛 Lấy tên đầy đủ từ Google profile
+      const fullName: string = profile.fullName ?? '';
 
       // 🖼️ Lấy ảnh đại diện
       const avatar: string = profile.photos?.[0]?.value ?? '';
@@ -293,6 +299,8 @@ export class AuthService {
         currentUser._id.toString(),
         currentUser.email,
         currentUser.role,
+        currentUser.fullName,
+        currentUser.avatar
       );
 
       return { user: currentUser, token };

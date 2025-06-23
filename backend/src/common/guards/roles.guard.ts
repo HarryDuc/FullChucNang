@@ -66,8 +66,10 @@ export class RolesGuard implements CanActivate {
     if (pathSegments.length === 0) return null;
 
     let resource = pathSegments[0];
-    // Xóa "api" nếu có
-    resource = resource.replace(/api$/i, '');
+    // Xử lý resource name
+    if (resource.endsWith('api')) {
+      resource = resource.slice(0, -3) + 's'; // Remove 'api' and add 's' for plural form
+    }
 
     // Mapping từ HTTP method sang action
     let action: string;

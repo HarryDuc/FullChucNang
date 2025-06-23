@@ -2,6 +2,8 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -16,11 +18,14 @@ import {
 } from '../dtos/product.dto';
 import { removeVietnameseTones } from '../../../common/utils/slug.utils';
 import { normalizeForSearch } from '../../../common/utils/normalizeForSearch';
-
+import { RedirectsService } from '../../redirects/services/redirects.service';
+import { FRONTEND_ROUTES } from '../../../config/routes.config';
 @Injectable()
 export class ProductService {
   constructor(
     @InjectModel(Product.name) private productModel: Model<Product>,
+    @Inject(forwardRef(() => RedirectsService))
+    private readonly redirectsService: RedirectsService,
   ) { }
 
   /**
@@ -522,30 +527,106 @@ export class ProductService {
    * @returns Sản phẩm đã cập nhật.
    * @throws BadRequestException nếu slug mới trống hoặc đã tồn tại.
    */
+  // async updateSlug(
+  //   slug: string,
+  //   updateDto: UpdateProductSlugDto,
+  // ): Promise<Product> {
+  //   const { newSlug } = updateDto;
+  //   if (!newSlug) {
+  //     throw new BadRequestException('Slug mới không được để trống.');
+  //   }
+
+  //   const duplicate = await this.productModel.findOne({ slug: newSlug });
+  //   if (duplicate) {
+  //     throw new BadRequestException(
+  //       'Slug đã tồn tại, vui lòng chọn slug khác.',
+  //     );
+  //   }
+
+  //   const product = await this.findOne(slug);
+  //   if (newSlug === slug) {
+  //     return product;
+  //   }
+  //   product.slug = newSlug;
+  //   return (product as ProductDocument).save();
+  // }
+  /**
+   * Cập nhật slug của sản phẩm đồng thời tạo redirect từ slug cũ sang slug mới
+   */
   async updateSlug(
     slug: string,
     updateDto: UpdateProductSlugDto,
   ): Promise<Product> {
-    const { newSlug } = updateDto;
-    if (!newSlug) {
-      throw new BadRequestException('Slug mới không được để trống.');
-    }
+    const product = await this.productModel.findOne({ slug }).exec();
 
-    const duplicate = await this.productModel.findOne({ slug: newSlug });
-    if (duplicate) {
-      throw new BadRequestException(
-        'Slug đã tồn tại, vui lòng chọn slug khác.',
+    if (!product) {
+      throw new NotFoundException(
+        `Không tìm thấy sản phẩm với slug ${slug}`,
       );
     }
 
-    const product = await this.findOne(slug);
-    if (newSlug === slug) {
-      return product;
-    }
-    product.slug = newSlug;
-    return (product as ProductDocument).save();
-  }
+    const { newSlug } = updateDto;
+    const oldSlug = product.slug;
 
+    // Kiểm tra xem slug mới có hợp lệ không
+    if (!newSlug || newSlug.trim() === '') {
+      throw new BadRequestException('Slug mới không được để trống!');
+    }
+
+    // Kiểm tra xem slug mới đã tồn tại chưa
+    const existingProduct = await this.productModel
+      .findOne({ slug: newSlug })
+      .exec();
+    if (existingProduct) {
+      throw new BadRequestException(
+        `Slug "${newSlug}" đã được sử dụng bởi sản phẩm khác!`,
+      );
+    }
+
+    try {
+      // Cập nhật slug mới
+      const updatedProduct = await this.productModel
+        .findOneAndUpdate(
+          { slug: oldSlug },
+          { $set: { slug: newSlug } },
+          { new: true },
+        )
+        .exec();
+
+      // Kiểm tra xem sản phẩm có được cập nhật thành công không
+      if (!updatedProduct) {
+        throw new NotFoundException(`Không thể cập nhật sản phẩm với slug ${oldSlug}`);
+      }
+
+      // Nếu RedirectsService được import, tạo redirect từ slug cũ sang slug mới
+      if (this.redirectsService) {
+        try {
+          // Sử dụng cấu hình đường dẫn từ routes.config thay vì hard-coding
+          const oldPath = FRONTEND_ROUTES.PRODUCTS.DETAIL(oldSlug);
+          const newPath = FRONTEND_ROUTES.PRODUCTS.DETAIL(newSlug);
+
+          // Tạo redirect trong hệ thống
+          await this.redirectsService.create({
+            oldPath,
+            newPath,
+            type: 'product',
+            isActive: true,
+            statusCode: 301,
+          });
+
+          console.log(`Đã tạo redirect từ ${oldPath} sang ${newPath}`);
+        } catch (redirectError) {
+          console.error('Lỗi khi tạo redirect:', redirectError);
+        }
+      }
+
+      return updatedProduct;
+    } catch (error) {
+      throw new BadRequestException(
+        `Lỗi khi cập nhật slug: ${error.message}`,
+      );
+    }
+  }
   /**
    * Tìm kiếm sản phẩm theo tên (có phân trang).
    * @param searchTerm Từ khóa tìm kiếm.

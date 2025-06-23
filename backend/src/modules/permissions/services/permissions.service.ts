@@ -125,11 +125,30 @@ export class PermissionsService {
 
   async updateUserPermissions(updateDto: UpdateUserPermissionsDto): Promise<UserPermission[]> {
     try {
+      if (!updateDto.userId || !Array.isArray(updateDto.permissionIds)) {
+        throw new Error('Invalid input: userId is required and permissionIds must be an array');
+      }
+
       const userId = new Types.ObjectId(updateDto.userId);
-      const permissionIds = updateDto.permissionIds.map(id => new Types.ObjectId(id));
+      const permissionIds = updateDto.permissionIds.map(id => {
+        try {
+          return new Types.ObjectId(id);
+        } catch (error) {
+          throw new Error(`Invalid permission ID format: ${id}`);
+        }
+      });
 
       console.log('Updating permissions for user:', userId.toString());
       console.log('New permission IDs:', permissionIds.map(id => id.toString()));
+
+      // Validate that all permission IDs exist
+      const existingPermissions = await this.permissionModel.find({
+        _id: { $in: permissionIds }
+      }).exec();
+
+      if (existingPermissions.length !== permissionIds.length) {
+        throw new Error('Some permission IDs do not exist');
+      }
 
       // Delete all existing permissions for the user
       await this.userPermissionModel.deleteMany({ userId });
@@ -155,69 +174,31 @@ export class PermissionsService {
       return updatedPermissions;
     } catch (error) {
       console.error('Error updating user permissions:', error);
+      if (error.message.includes('Invalid input') || error.message.includes('Invalid permission ID format')) {
+        throw new Error(`Bad Request: ${error.message}`);
+      }
       throw error;
     }
   }
 
   async initializeDefaultPermissions(): Promise<void> {
     const defaultPermissions = [
-      // Banner Permissions
-      { resource: 'banner', action: 'create' },
-      { resource: 'banner', action: 'read' },
-      { resource: 'banner', action: 'update' },
-      { resource: 'banner', action: 'delete' },
-      { resource: 'banner', action: 'activate' },
+      { resource: 'categories-posts', action: 'create' },
+      { resource: 'categories-posts', action: 'read' },
+      { resource: 'categories-posts', action: 'update' },
+      { resource: 'categories-posts', action: 'delete' },
 
-      // Categories Post Permissions
-      { resource: 'categories-post', action: 'create' },
-      { resource: 'categories-post', action: 'read' },
-      { resource: 'categories-post', action: 'update' },
-      { resource: 'categories-post', action: 'delete' },
-      { resource: 'categories-post', action: 'list' },
-      { resource: 'categories-post', action: 'publish' },
-      { resource: 'categories-post', action: 'unpublish' },
-
-      // Categories Product Permissions
-      { resource: 'categories-product', action: 'create' },
-      { resource: 'categories-product', action: 'read' },
-      { resource: 'categories-product', action: 'update' },
-      { resource: 'categories-product', action: 'delete' },
-
-      // Checkout Permissions
-      { resource: 'checkout', action: 'create' },
-      { resource: 'checkout', action: 'read' },
-      { resource: 'checkout', action: 'update' },
-      { resource: 'checkout', action: 'delete' },
-
-      // Contact Permissions
-      { resource: 'contact', action: 'create' },
-      { resource: 'contact', action: 'read' },
-      { resource: 'contact', action: 'list' },
-      { resource: 'contact', action: 'delete' },
-
-      // Pages Permissions
-      { resource: 'pages', action: 'create' },
-      { resource: 'pages', action: 'read' },
-      { resource: 'pages', action: 'update' },
-      { resource: 'pages', action: 'delete' },
+      { resource: 'posts', action: 'create' },
+      { resource: 'posts', action: 'read' },
+      { resource: 'posts', action: 'update' },
+      { resource: 'posts', action: 'delete' },
+      { resource: 'posts', action: 'approve' },
+      { resource: 'posts', action: 'publish' },
 
       // Images Permissions
       { resource: 'images', action: 'create' },
       { resource: 'images', action: 'read' },
       { resource: 'images', action: 'delete' },
-
-      // Info Website Permissions
-      { resource: 'info-website', action: 'create' },
-      { resource: 'info-website', action: 'read' },
-      { resource: 'info-website', action: 'update' },
-      { resource: 'info-website', action: 'delete' },
-      { resource: 'info-website', action: 'activate' },
-
-      // Orders Permissions
-      { resource: 'orders', action: 'create' },
-      { resource: 'orders', action: 'read' },
-      { resource: 'orders', action: 'update' },
-      { resource: 'orders', action: 'delete' },
 
       // Permissions for Permissions Management
       { resource: 'permissions', action: 'create' },
@@ -225,66 +206,11 @@ export class PermissionsService {
       { resource: 'permissions', action: 'update' },
       { resource: 'permissions', action: 'delete' },
 
-      // Manager Permissions
+      // Manager Permissions Module
       { resource: 'manager-permissions', action: 'create' },
       { resource: 'manager-permissions', action: 'read' },
       { resource: 'manager-permissions', action: 'update' },
       { resource: 'manager-permissions', action: 'delete' },
-
-      // Posts Permissions
-      { resource: 'posts', action: 'create' },
-      { resource: 'posts', action: 'read' },
-      { resource: 'posts', action: 'update' },
-      { resource: 'posts', action: 'delete' },
-      { resource: 'posts', action: 'list' },
-      { resource: 'posts', action: 'publish' },
-      { resource: 'posts', action: 'unpublish' },
-      { resource: 'posts', action: 'feature' },
-      { resource: 'posts', action: 'unfeature' },
-      { resource: 'posts', action: 'approve' },
-      { resource: 'posts', action: 'reject' },
-      { resource: 'posts', action: 'export' },
-
-      // Products Permissions
-      { resource: 'products', action: 'create' },
-      { resource: 'products', action: 'read' },
-      { resource: 'products', action: 'update' },
-      { resource: 'products', action: 'delete' },
-
-      // Reviews Permissions (no specific permissions in controller but assuming standard CRUD)
-      { resource: 'reviews', action: 'create' },
-      { resource: 'reviews', action: 'read' },
-      { resource: 'reviews', action: 'update' },
-      { resource: 'reviews', action: 'delete' },
-
-      // Script Permissions
-      { resource: 'script', action: 'create' },
-      { resource: 'script', action: 'read' },
-      { resource: 'script', action: 'update' },
-      { resource: 'script', action: 'delete' },
-
-      // Users Permissions
-      { resource: 'users', action: 'create' },
-      { resource: 'users', action: 'read' },
-      { resource: 'users', action: 'update' },
-      { resource: 'users', action: 'delete' },
-      { resource: 'users', action: 'list' },
-      { resource: 'users', action: 'activate' },
-      { resource: 'users', action: 'deactivate' },
-      { resource: 'users', action: 'change-role' },
-      { resource: 'users', action: 'reset-password' },
-
-      // VietQR Config Permissions
-      { resource: 'vietqr-config', action: 'create' },
-      { resource: 'vietqr-config', action: 'read' },
-      { resource: 'vietqr-config', action: 'update' },
-      { resource: 'vietqr-config', action: 'delete' },
-
-      // Vouchers Permissions
-      { resource: 'vouchers', action: 'create' },
-      { resource: 'vouchers', action: 'read' },
-      { resource: 'vouchers', action: 'update' },
-      { resource: 'vouchers', action: 'delete' },
     ];
 
     for (const permission of defaultPermissions) {

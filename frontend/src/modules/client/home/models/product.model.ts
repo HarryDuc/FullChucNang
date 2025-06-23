@@ -31,6 +31,7 @@ export interface Product {
   description?: string;
   shortDescription?: string; // Mô tả ngắn của sản phẩm
   importPrice?: number;
+  basePrice?: number;
   currentPrice?: number;
   discountPrice?: number;
   thumbnail?: string;

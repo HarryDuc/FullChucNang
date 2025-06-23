@@ -4,7 +4,6 @@ import type React from "react";
 
 import { login } from "@/modules/auth/common/repositories/authRepository";
 import { useAuth } from "@/context/AuthContext";
-import { useUser } from "@/modules/admin/users/users.module";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import {
@@ -12,6 +11,7 @@ import {
   handleGoogleCallback,
 } from "../common/services/authService";
 import { useSearchParams } from "next/navigation";
+import { useUser } from "@/modules/client/users/hooks/useUser";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");

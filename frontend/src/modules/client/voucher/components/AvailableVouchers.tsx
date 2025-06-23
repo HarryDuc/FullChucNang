@@ -1,7 +1,7 @@
 "use client";
 
 import { useValidVouchers } from "../hooks/useVoucher";
-import { formatCurrency, formatDate } from "@/utils/format";
+import { formatCurrency, formatDate } from "../../../../../utils/format";
 import { DiscountType } from "../../../admin/voucher/models/voucher.model";
 
 interface AvailableVouchersProps {

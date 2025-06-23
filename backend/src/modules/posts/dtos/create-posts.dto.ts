@@ -57,6 +57,11 @@ export class CreatePostDto {
   @IsString({ message: 'Slug phải là chuỗi.' })
   slug?: string;
 
+  // 👤 User ID
+  @IsOptional()
+  @IsString({ message: 'User ID phải là chuỗi.' })
+  userId?: string;
+
   @IsOptional()
   // @Transform(({ value }) => safeTrim(value))
   @IsString({ message: 'Mô tả ngắn phải là chuỗi.' })
@@ -154,6 +159,10 @@ export class CreatePostDto {
   @IsOptional()
   @IsBoolean({ message: 'Trường isPinned phải là kiểu boolean.' })
   isPinned?: boolean;
+
+  @IsOptional()
+  @IsBoolean({ message: 'Trường isVisible phải là kiểu boolean.' })
+  isVisible?: boolean;
 
   @IsOptional()
   @IsArray({ message: 'Danh sách bài liên quan phải là mảng chuỗi.' })

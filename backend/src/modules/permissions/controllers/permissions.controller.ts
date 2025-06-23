@@ -8,6 +8,8 @@ import { RolesGuard } from '../../../common/guards/roles.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { PermissionGuard } from '../guards/permission.guard';
 import { RequirePermission } from '../../../common/decorators/permission.decorator';
+import { UserPermissionDocument } from '../schemas/user-permission.schema';
+import { Permission } from '../schemas/permission.schema';
 
 @Controller('permissionsapi')
 export class PermissionsController {
@@ -73,13 +75,49 @@ export class PermissionsController {
     try {
       console.log('Updating permissions for user:', userId);
       console.log('With data:', updateDto);
-      return await this.permissionsService.updateUserPermissions({
-        userId,
+
+      // Validate input
+      if (!userId || !updateDto.permissionIds) {
+        throw new Error('Invalid input: userId and permissionIds are required');
+      }
+
+      // Ensure permissionIds is an array
+      if (!Array.isArray(updateDto.permissionIds)) {
+        throw new Error('Invalid input: permissionIds must be an array');
+      }
+
+      // Ensure userId in DTO matches URL parameter
+      const updatedPermissions = await this.permissionsService.updateUserPermissions({
+        userId: userId, // Use userId from URL parameter
         permissionIds: updateDto.permissionIds
       });
+
+      return {
+        success: true,
+        message: 'User permissions updated successfully',
+        permissions: updatedPermissions.map((p: UserPermissionDocument) => {
+          const permissionDoc = p.toObject();
+          return {
+            id: permissionDoc._id.toString(),
+            userId: permissionDoc.userId.toString(),
+            permissionId: permissionDoc.permissionId && typeof permissionDoc.permissionId === 'object'
+              ? {
+                id: permissionDoc.permissionId._id.toString(),
+                resource: permissionDoc.permissionId.resource,
+                action: permissionDoc.permissionId.action
+              }
+              : permissionDoc.permissionId.toString()
+          };
+        })
+      };
     } catch (error) {
       console.error('Error updating user permissions:', error);
-      throw error;
+      // Return a more descriptive error response
+      return {
+        success: false,
+        message: error.message || 'Failed to update user permissions',
+        error: error.message
+      };
     }
   }
 
@@ -88,7 +126,11 @@ export class PermissionsController {
   @Roles('admin')
   @RequirePermission('permissions', 'create')
   async initializeDefaultPermissions() {
-    return await this.permissionsService.initializeDefaultPermissions();
+    await this.permissionsService.initializeDefaultPermissions();
+    return {
+      success: true,
+      message: 'Default permissions initialized successfully'
+    };
   }
 
   @Post('admin/:userId')

@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState, useEffect, useMemo } from "react";
 import { useRoles } from "../hooks/useRoles";
 import { usePermissions } from "../../permissions/hooks/usePermissions";
@@ -146,7 +144,8 @@ const RoleForm: React.FC<RoleFormProps> = ({
 
     try {
       if (mode === "create") {
-        await createRole(formData)
+        await createRole(formData);
+        toast.success("Role created successfully");
       } else if (mode === "edit" && initialRole) {
         await updateRole(initialRole.id, formData);
         toast.success("Role updated successfully");
@@ -192,10 +191,7 @@ const RoleForm: React.FC<RoleFormProps> = ({
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-8 bg-white p-8 rounded-xl shadow-lg max-w-3xl mx-auto"
-    >
+    <form onSubmit={handleSubmit} className="space-y-8 bg-white p-8 rounded-xl shadow-lg max-w-3xl mx-auto">
       <div className="grid grid-cols-1 gap-6">
         <div>
           <label
@@ -236,9 +232,7 @@ const RoleForm: React.FC<RoleFormProps> = ({
       </div>
 
       <div>
-        <h2 className="text-lg font-bold text-gray-900 mb-4">
-          Phân quyền chức năng
-        </h2>
+        <h2 className="text-lg font-bold text-gray-900 mb-4">Phân quyền chức năng</h2>
         <div className="space-y-8">
           {Object.entries(grouped).map(([resource, permissions]) => (
             <div key={resource} className="border rounded-xl p-5 bg-gray-50">
@@ -249,9 +243,7 @@ const RoleForm: React.FC<RoleFormProps> = ({
                 <label className="flex items-center space-x-2">
                   <input
                     type="checkbox"
-                    checked={isResourceFullySelected(
-                      permissions as Permission[]
-                    )}
+                    checked={isResourceFullySelected(permissions as Permission[])}
                     ref={(el) => {
                       if (el) {
                         el.indeterminate = isResourcePartiallySelected(

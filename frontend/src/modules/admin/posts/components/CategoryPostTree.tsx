@@ -5,7 +5,7 @@ import { GoChevronDown, GoChevronRight } from "react-icons/go";
 
 interface PostCategoryTreeProps {
   categories: Category[];
-  selectedCategoryNames: string[];
+  selectedCategoryNames?: string[]; // Make optional with default value
   handleCategoryChange: (category: Category, checked: boolean) => void;
 }
 
@@ -21,7 +21,7 @@ const filterUniqueById = (list: Category[]) => {
 
 const PostCategoryTree: React.FC<PostCategoryTreeProps> = ({
   categories,
-  selectedCategoryNames,
+  selectedCategoryNames = [], // Provide default empty array
   handleCategoryChange,
 }) => {
   // Hàm đệ quy hiển thị node
@@ -33,7 +33,7 @@ const PostCategoryTree: React.FC<PostCategoryTreeProps> = ({
     const children = filterUniqueById(rawChildren); // 🔍 Lọc trùng
 
     const hasChildren = children.length > 0;
-    const isSelected = selectedCategoryNames.includes(category.name);
+    const isSelected = selectedCategoryNames?.includes(category.name) || false; // Add null check
 
     const arrowIcon = hasChildren ? (
       isSelected ? (

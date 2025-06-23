@@ -99,7 +99,7 @@ export class PermissionService {
     try {
       const response = await api.put(
         `${this.baseUrl}/user/${userId}`,
-        { permissionIds },
+        { userId, permissionIds },
         {
           headers: this.getHeaders(),
         }

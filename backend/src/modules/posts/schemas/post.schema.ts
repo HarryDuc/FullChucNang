@@ -29,6 +29,7 @@ export const PostMetaSchema = SchemaFactory.createForClass(PostMeta);
 export class Post {
   // 🆔 Metadata
   @Prop({ required: true, index: true }) slug: string;
+  @Prop({ required: true, index: true }) userId: string;
   @Prop() createdBy: string;
   @Prop() updatedBy: string;
   @Prop() approvedBy: string;
@@ -52,7 +53,7 @@ export class Post {
   @Prop({ type: [String], default: [] }) tags: string[];
 
   // 👤 Tác giả
-  @Prop({ default: 'Admin', index: true }) author: string;
+  @Prop({ index: true }) author: string;
 
   // ⏰ Trạng thái & thời gian
   @Prop({
@@ -71,6 +72,7 @@ export class Post {
   @Prop({ type: [String], default: [] }) relatedPostSlugs: string[];
   @Prop({ default: false }) isFeatured: boolean;
   @Prop({ default: false }) isPinned: boolean;
+  @Prop({ default: true, index: true }) isVisible: boolean;
 
   @Prop({ default: false, index: true }) isDeleted: boolean;
 
@@ -122,3 +124,6 @@ PostSchema.index({ slug: 1, isDeleted: 1 }, { unique: true });
 
 // 🏷️ Tối ưu tìm kiếm tag
 PostSchema.index({ tags: 1 }, { sparse: true });
+
+// 👁️ Index cho trạng thái hiển thị
+PostSchema.index({ isVisible: 1, status: 1, isDeleted: 1 });
