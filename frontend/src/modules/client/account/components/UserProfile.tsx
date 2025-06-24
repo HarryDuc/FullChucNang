@@ -25,11 +25,11 @@ interface UserProfileProps {
 }
 
 // 🧩 Component Thông tin cá nhân
-const UserProfile = ({ 
-  userData, 
-  errors, 
-  isSavingProfile, 
-  handleProfileChange, 
+const UserProfile = ({
+  userData,
+  errors,
+  isSavingProfile,
+  handleProfileChange,
   handleSaveProfile: originalHandleSaveProfile,
   onSaveSuccess,
   onSaveError
@@ -51,7 +51,7 @@ const UserProfile = ({
   // Xử lý sự kiện submit form và hiển thị toast
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       // Kiểm tra lỗi trước khi submit
       if (Object.keys(errors).length > 0) {
@@ -59,9 +59,9 @@ const UserProfile = ({
         toast.error("Vui lòng sửa các lỗi trước khi lưu thông tin");
         return;
       }
-      
+
       await originalHandleSaveProfile(e);
-      
+
       // Chỉ hiển thị toast thành công khi không có callback onSaveSuccess
       if (!onSaveSuccess) {
         toast.success("Cập nhật thông tin cá nhân thành công");
@@ -71,7 +71,7 @@ const UserProfile = ({
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Có lỗi xảy ra khi cập nhật thông tin";
-      
+
       // Chỉ hiển thị toast lỗi khi không có callback onSaveError
       if (!onSaveError) {
         toast.error(errorMessage);
@@ -100,8 +100,8 @@ const UserProfile = ({
               value={userData.fullName}
               onChange={handleProfileChange}
               className={`w-full pl-10 pr-4 py-2.5 border rounded-md text-sm transition-all ${
-                errors.fullName 
-                  ? 'border-red-500 focus:ring-red-200' 
+                errors.fullName
+                  ? 'border-red-500 focus:ring-red-200'
                   : 'border-gray-300 focus:border-blue-400 focus:ring-blue-100'
               } focus:ring-4 outline-none`}
               placeholder="Họ và tên của bạn"
@@ -111,7 +111,7 @@ const UserProfile = ({
             <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>
           )}
         </div>
-        
+
         {/* Email */}
         <div className="col-span-2 md:col-span-1">
           <label className="block text-sm text-gray-700 mb-1 font-medium">
@@ -127,8 +127,8 @@ const UserProfile = ({
               value={userData.email}
               onChange={handleProfileChange}
               className={`w-full pl-10 pr-4 py-2.5 border rounded-md text-sm transition-all ${
-                errors.email 
-                  ? 'border-red-500 focus:ring-red-200' 
+                errors.email
+                  ? 'border-red-500 focus:ring-red-200'
                   : 'border-gray-300 focus:border-blue-400 focus:ring-blue-100'
               } focus:ring-4 outline-none`}
               placeholder="Email của bạn"
@@ -138,7 +138,7 @@ const UserProfile = ({
             <p className="text-red-500 text-xs mt-1">{errors.email}</p>
           )}
         </div>
-        
+
         {/* Số điện thoại */}
         <div>
           <label className="block text-sm text-gray-700 mb-1 font-medium">
@@ -154,8 +154,8 @@ const UserProfile = ({
               value={userData.phone}
               onChange={handleProfileChange}
               className={`w-full pl-10 pr-4 py-2.5 border rounded-md text-sm transition-all ${
-                errors.phone 
-                  ? 'border-red-500 focus:ring-red-200' 
+                errors.phone
+                  ? 'border-red-500 focus:ring-red-200'
                   : 'border-gray-300 focus:border-blue-400 focus:ring-blue-100'
               } focus:ring-4 outline-none`}
               placeholder="Số điện thoại của bạn"
@@ -165,7 +165,7 @@ const UserProfile = ({
             <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
           )}
         </div>
-        
+
         {/* Ngày sinh */}
         <div>
           <label className="block text-sm text-gray-700 mb-1 font-medium">
@@ -184,7 +184,7 @@ const UserProfile = ({
             />
           </div>
         </div>
-        
+
         {/* Giới tính */}
         <div className="col-span-2 md:col-span-1">
           <label className="block text-sm text-gray-700 mb-1 font-medium">
@@ -213,7 +213,7 @@ const UserProfile = ({
           </div>
         </div>
       </div>
-      
+
       <div className="mt-6 flex justify-end">
         <button
           type="submit"
@@ -237,4 +237,4 @@ const UserProfile = ({
   );
 };
 
-export default UserProfile; 
+export default UserProfile;

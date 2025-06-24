@@ -12,9 +12,7 @@ import ProductCardShopeeStyle from "../../common/components/ProductCard";
 // Xử lý ảnh sản phẩm
 const getImageUrl = (thumbnail?: string) => {
   if (!thumbnail) return "/placeholder.svg";
-  return thumbnail.startsWith("http")
-    ? thumbnail
-    : `${thumbnail}`;
+  return thumbnail.startsWith("http") ? thumbnail : `${thumbnail}`;
 };
 
 const ProductFlashSale = () => {
@@ -26,7 +24,8 @@ const ProductFlashSale = () => {
       try {
         setLoading(true);
         const response = await ProductService.getByCategory("flash sale");
-        const discounted = response.data
+        const discounted = response.data;
+        console.log(discounted);
         setProducts(discounted.slice(0, 12));
       } catch (error) {
         console.error("Lỗi khi tải sản phẩm:", error);
@@ -37,12 +36,11 @@ const ProductFlashSale = () => {
     fetchProducts();
   }, []);
 
-
   const handleAddToCart = (product: Product) => {
     if (
       !(
         (product.discountPrice && product.discountPrice > 0) ||
-        (product.currentPrice && product.currentPrice > 0)
+        (product.basePrice && product.basePrice > 0)
       )
     )
       return;
@@ -57,7 +55,7 @@ const ProductFlashSale = () => {
       price: product.discountPrice || product.currentPrice || 0,
       quantity: 1,
       image: getImageUrl(product.thumbnail),
-      sku: product.sku || "",
+      sku: product.sku,
     };
 
     addToCartUtil(item);

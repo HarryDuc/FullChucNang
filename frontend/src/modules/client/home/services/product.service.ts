@@ -22,7 +22,7 @@ const fetchOptions = (method: string, data?: any) => ({
   headers: {
     "Content-Type": "application/json",
     // Nếu API yêu cầu xác thực, bổ sung Authorization header
-    Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+    Authorization: `Bearer ${localStorage.getItem("token")}`,
   },
   body: data ? JSON.stringify(data) : undefined,
 });

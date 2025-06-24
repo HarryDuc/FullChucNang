@@ -1,17 +1,34 @@
+import api from '@/config/api';
 import imageCompression from 'browser-image-compression';
-import api from '../utils/api';
 
 export interface ImageResponse {
-  originalName: string; // ✅ Tên file gốc (giữ nguyên)
-  imageUrl: string; // ✅ Đường dẫn ảnh trên server
-  location: string; // ✅ Full URL của ảnh (SERVER_URL + imageUrl)
-  slug: string; // ✅ Slug duy nhất để quản lý ảnh
-  alt: string; // ✅ Văn bản thay thế (tự động từ originalName)
-  caption?: string; // ✅ Chú thích ảnh
-  description?: string; // ✅ Mô tả ảnh
-  createdAt?: string; // ✅ Ngày tạo
-  updatedAt?: string; // ✅ Ngày cập nhật
+  _id: string;
+  filename: string;
+  path: string;
+  url: string;
+  imageUrl: string;
+  size: number;
+  mimetype: string;
+  slug: string;
+  createdAt: string;
+  updatedAt: string;
+  originalName?: string;
+  alt?: string;
+  caption?: string;
 }
+
+// Biến trạng thái hỗ trợ nén ảnh
+let imageCompressionSupported: boolean | null = null;
+
+const isImageCompressionSupported = (): boolean => {
+  // Đánh giá lại mỗi lần gọi để đảm bảo trạng thái mới nhất
+  imageCompressionSupported =
+    typeof window.File !== "undefined" &&
+    typeof window.Blob !== "undefined" &&
+    typeof window.FileReader !== "undefined" &&
+    !!document.createElement("canvas").getContext;
+  return imageCompressionSupported;
+};
 
 // Cấu hình mặc định cho việc nén ảnh
 const compressionOptions = {
@@ -24,12 +41,18 @@ const compressionOptions = {
   fileType: 'image/jpeg',
 };
 
-
 const imageService = {
   /**
    * Nén ảnh trước khi upload
    */
   compressImage: async (file: File, customOptions?: any): Promise<File> => {
+    // Cập nhật trạng thái hỗ trợ nén ảnh mỗi lần chạy
+    const supported = isImageCompressionSupported();
+    if (!supported) {
+      console.warn("Thiết bị hoặc trình duyệt không hỗ trợ nén ảnh. Trả về file gốc.");
+      return file;
+    }
+
     try {
       // Kiểm tra kích thước và loại file
       const isImage = file.type.startsWith('image/');
@@ -134,6 +157,7 @@ const imageService = {
       const response = await api.post('/images/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         timeout: 30000, // 30 seconds timeout
       });
@@ -202,19 +226,91 @@ const imageService = {
         const response = await api.post('/images/upload-multiple', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
           timeout: 60000, // 60 seconds
         });
 
         // Xử lý kết quả từ server
-        const chunkResults = Array.isArray(response.data) ? response.data : response.data.data;
-
-        if (!Array.isArray(chunkResults)) {
-          console.error("Invalid response format:", chunkResults);
-          throw new Error("Expected array of images but got: " + typeof chunkResults);
+        let chunkResults;
+        if (typeof response.data === 'string') {
+          try {
+            chunkResults = JSON.parse(response.data);
+          } catch (e) {
+            console.error("Failed to parse response string as JSON:", e);
+            throw new Error("Invalid response format from server");
+          }
+        } else {
+          chunkResults = response.data;
         }
 
-        uploadResults.push(...chunkResults);
+        // Đảm bảo chúng ta có một mảng
+        if (!Array.isArray(chunkResults)) {
+          if (chunkResults && typeof chunkResults === 'object' && Array.isArray(chunkResults.data)) {
+            chunkResults = chunkResults.data;
+          } else {
+            console.error("Invalid response format:", chunkResults);
+            throw new Error("Expected array of images but got: " + typeof chunkResults);
+          }
+        }
+
+        // Xử lý từng kết quả
+        const processedChunkResults = chunkResults.map((img: any, index: number) => {
+          // Nếu img là chuỗi, giả định đó là URL
+          if (typeof img === 'string') {
+            const pathOnly = img.replace(/^https?:\/\/[^\/]+/i, '');
+            return {
+              _id: `generated_${index}`,
+              filename: `image_${index}.jpg`,
+              path: pathOnly,
+              url: pathOnly,
+              size: 0,
+              mimetype: 'image/jpeg',
+              slug: `image_${index}`,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            };
+          }
+
+          // Nếu img là null hoặc không phải đối tượng, xử lý lỗi
+          if (!img || typeof img !== 'object') {
+            console.error(`Image response ${index} is invalid:`, img);
+            throw new Error(`Invalid image response at index ${index}`);
+          }
+
+          // Trích xuất URL
+          let url = null;
+          if (img.url) url = img.url;
+          else if (img.path) url = img.path;
+          else if (img.location) url = img.location;
+          else if (img.src) url = img.src;
+          else if (img.data && img.data.url) url = img.data.url;
+
+          if (!url || url === 'undefined') {
+            console.error(`No valid URL found in image response ${index}:`, img);
+            throw new Error(`Missing URL in image response at index ${index}`);
+          }
+
+          // Đảm bảo URL là chuỗi và loại bỏ phần domain
+          const urlString = String(url);
+          const pathOnly = urlString.replace(/^https?:\/\/[^\/]+/i, '');
+
+          // Trả về đối tượng chuẩn hóa
+          return {
+            ...img,
+            url: pathOnly,
+            _id: img._id || `generated_${index}`,
+            filename: img.filename || `image_${index}.jpg`,
+            path: img.path || pathOnly,
+            size: img.size || 0,
+            mimetype: img.mimetype || 'image/jpeg',
+            slug: img.slug || `image_${index}`,
+            createdAt: img.createdAt || new Date().toISOString(),
+            updatedAt: img.updatedAt || new Date().toISOString()
+          };
+        });
+
+        uploadResults.push(...processedChunkResults);
       }
 
       console.log("Tất cả ảnh đã được tải lên thành công:", uploadResults.length);
@@ -229,6 +325,11 @@ const imageService = {
           headers: error.response.headers
         });
       }
+
+      error.imageData = {
+        message: "Lỗi khi xử lý upload ảnh",
+        error: error.message
+      };
 
       throw error;
     }
@@ -248,6 +349,7 @@ const imageService = {
       const response = await api.post('/images/sunEditor', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
 
@@ -274,5 +376,12 @@ const imageService = {
     return response.data;
   },
 };
+
+// In ra trạng thái hỗ trợ nén ảnh khi khởi tạo module
+if (!isImageCompressionSupported()) {
+  console.log("Thiết bị hoặc trình duyệt không hỗ trợ nén ảnh. Hãy cập nhật trình duyệt.");
+} else {
+  console.log("Thiết bị hoặc trình duyệt hỗ trợ nén ảnh.");
+}
 
 export default imageService;

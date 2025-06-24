@@ -46,7 +46,7 @@ export class CreateCheckoutDto {
   // 💳 Phương thức thanh toán
   @IsOptional()
   @IsString()
-  @IsIn(['cash', 'payos', 'bank', 'paypal']) // mở rộng thêm sau
+  @IsIn(['cash', 'payos', 'bank', 'paypal', 'metamask']) // mở rộng thêm sau
   paymentMethod?: string;
 
   // 🧾 Trạng thái thanh toán

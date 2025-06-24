@@ -17,6 +17,7 @@ export const useImages = () => {
 
     try {
       const result = await imageService.uploadImage(file);
+      console.log("result", result);
       return result;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to upload image');

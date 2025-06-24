@@ -79,8 +79,8 @@ const SearchComponent = ({ isMobile = false }: SearchComponentProps) => {
 
     const results = allProducts.filter((product) => {
       const searchableText = [
-        removeVietnameseDiacritics(product.name?.toLowerCase() || ""),
-        removeVietnameseDiacritics(product.slug?.toLowerCase() || ""),
+        removeVietnameseDiacritics(product.name?.toLowerCase()),
+        removeVietnameseDiacritics(product.slug?.toLowerCase()),
         removeVietnameseDiacritics(product.category?.main?.toLowerCase() || ""),
         ...(product.category?.sub?.map((s) =>
           removeVietnameseDiacritics(s.toLowerCase())
@@ -100,7 +100,7 @@ const SearchComponent = ({ isMobile = false }: SearchComponentProps) => {
       .map((product) => {
         let score = 0;
         const name = removeVietnameseDiacritics(
-          product.name?.toLowerCase() || ""
+          product.name?.toLowerCase()
         );
 
         searchTerms.forEach((term) => {

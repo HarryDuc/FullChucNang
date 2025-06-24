@@ -1,7 +1,5 @@
 "use client";
 import React, { useState, useEffect, FormEvent } from "react";
-import { useRouter } from "next/navigation";
-import SunEditor from "suneditor-react";
 import "suneditor/dist/css/suneditor.min.css";
 import {
   Product,
@@ -13,6 +11,7 @@ import { useProducts } from "../hooks/useProducts";
 import CategoryTree, { Category } from "./CategoryTree";
 import { VariantOptions } from "./VariantOptions";
 import Image from "next/image";
+import SunEditerUploadImage from "../../common/components/SunEditer";
 
 interface ProductFormProps {
   initialData?: Product;
@@ -391,14 +390,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           />
         </div>
 
-        <div>
-          <label className="block mb-1">Mô tả chi tiết</label>
-          <SunEditor
-            setContents={description}
-            onChange={setDescription}
-            height="300px"
-          />
-        </div>
+              {/* Mô tả sản phẩm */}
+              <div className="mb-4">
+                <label className="block mb-1 font-medium">Mô tả</label>
+                <SunEditerUploadImage
+                  postData={description}
+                  setPostData={setDescription}
+                />
+              </div>
       </div>
 
       {/* Giá sản phẩm */}

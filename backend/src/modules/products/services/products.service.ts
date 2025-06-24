@@ -91,7 +91,7 @@ export class ProductService {
     const [data, total] = await Promise.all([
       this.productModel
         .find()
-        .select('name slug basePrice thumbnail')
+        .select('name slug basePrice thumbnail ')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)

@@ -12,9 +12,9 @@ import {
 } from "../models/post.model";
 import PostCategoryTree from "./CategoryPostTree";
 import { usePosts } from "@/modules/admin/posts/hooks/usePosts";
-import SunEditer from "../../common/components/SunEditer";
 import { useAuth } from "@/context/AuthContext";
 import Image from "next/image";
+import SunEditerUploadImage from "../../common/components/SunEditer";
 
 /** Loại bỏ domain từ HTML, chỉ giữ phần relative */
 const removeDomain = (html: string): string =>
@@ -248,7 +248,7 @@ const PostForm: React.FC<Props> = ({ initialData, isEdit = false }) => {
           {/* Nội dung */}
           <div>
             <label className="block font-medium mb-1">Nội dung</label>
-            <SunEditer postData={postData} setPostData={setPostData} />
+            <SunEditerUploadImage postData={postData} setPostData={setPostData} />
           </div>
 
           {/* Ngày giờ */}

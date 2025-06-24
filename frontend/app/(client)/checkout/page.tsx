@@ -1,5 +1,4 @@
-import Checkout from "@/modules/client/pages/Checkout";
-import ClientLayout from "@/modules/client/common/layouts/ClientLayout";
+import Checkout from "@/modules/client/pages/Checkout"
 
 export default function CheckoutPage() {
   return (

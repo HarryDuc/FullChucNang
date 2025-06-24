@@ -33,6 +33,7 @@ import { User } from "../users/models/user.model";
 import VoucherInput from "../voucher/components/VoucherInput";
 import { Voucher } from "../voucher/models/voucher.model";
 import PayPalButton from "./components/PayPalButton";
+import MetaMaskButton from "./components/MetaMaskButton";
 
 // Interface cho dữ liệu tạo checkout dựa trên DTO trong backend
 interface CreateCheckoutData {
@@ -44,7 +45,7 @@ interface CreateCheckoutData {
   name: string;
   phone: string;
   address: string;
-  paymentMethod: "cash" | "payos" | "bank" | "paypal";
+  paymentMethod: "cash" | "payos" | "bank" | "paypal" | "metamask";
   paymentStatus: "pending" | "paid" | "failed";
   paymentMethodInfo?: Record<string, any>;
 }
@@ -101,8 +102,12 @@ const CheckoutSection = () => {
   const [appliedVoucher, setAppliedVoucher] = useState<Voucher | null>(null);
   const [discountAmount, setDiscountAmount] = useState<number>(0);
   const [showPayPalButton, setShowPayPalButton] = useState<boolean>(false);
+  const [showMetaMaskButton, setShowMetaMaskButton] = useState<boolean>(false);
   const [isPayPalProcessing, setIsPayPalProcessing] = useState<boolean>(false);
+  const [isMetaMaskProcessing, setIsMetaMaskProcessing] =
+    useState<boolean>(false);
   const [payPalOrderRef, setPayPalOrderRef] = useState<string>("");
+  const [metamaskOrderRef, setMetamaskOrderRef] = useState<string>("");
 
   // Lấy thông tin profile từ API
   useEffect(() => {
@@ -226,9 +231,10 @@ const CheckoutSection = () => {
     loadWards();
   }, [shippingInfo.district]);
 
-  // Update this effect to hide/show PayPal button based on payment method
+  // Update this effect to show/hide payment buttons based on payment method
   useEffect(() => {
     setShowPayPalButton(paymentMethod === "paypal");
+    setShowMetaMaskButton(paymentMethod === "metamask");
   }, [paymentMethod]);
 
   const getSubtotal = () => {
@@ -420,13 +426,17 @@ const CheckoutSection = () => {
   // Separate mappings for different APIs
   const getCheckoutPaymentMethod = (
     method: string
-  ): "cash" | "payos" | "bank" | "paypal" => {
-    const methodMap: Record<string, "cash" | "payos" | "bank" | "paypal"> = {
+  ): "cash" | "payos" | "bank" | "paypal" | "metamask" => {
+    const methodMap: Record<
+      string,
+      "cash" | "payos" | "bank" | "paypal" | "metamask"
+    > = {
       cod: "cash",
       cash: "cash",
       bankTransfer: "bank",
       bank: "bank",
       paypal: "paypal",
+      metamask: "metamask",
     };
     return methodMap[method] || "cash";
   };
@@ -437,6 +447,7 @@ const CheckoutSection = () => {
       bankTransfer: "BANK",
       cash: "COD",
       paypal: "PAYPAL",
+      metamask: "METAMASK",
     };
     return methodMap[method] || method.toUpperCase();
   };
@@ -486,6 +497,50 @@ const CheckoutSection = () => {
     setIsPayPalProcessing(false);
   };
 
+  const handleMetaMaskSuccess = async (transactionHash: string) => {
+    try {
+      setIsMetaMaskProcessing(true);
+      console.log("Processing MetaMask payment success for order:", orderSlug);
+
+      // Get auth token
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("No authentication token found");
+        throw new Error("Bạn cần đăng nhập để hoàn tất thanh toán");
+      }
+
+      // Payment status is already updated by the backend during transaction verification
+      // No need to update it again here
+
+      // Display success and clear cart
+      console.log("Payment successful, clearing cart");
+      setIsOrderSent(true);
+      clearCart();
+    } catch (error) {
+      console.error("Error processing MetaMask payment:", error);
+      alert(
+        "Đã xảy ra lỗi khi xử lý thanh toán MetaMask. Vui lòng liên hệ hỗ trợ."
+      );
+    } finally {
+      setIsMetaMaskProcessing(false);
+    }
+  };
+
+  const handleMetaMaskError = (error: any) => {
+    console.error("MetaMask error:", error);
+    alert(
+      "Đã xảy ra lỗi với thanh toán MetaMask. Vui lòng thử lại sau hoặc chọn phương thức thanh toán khác."
+    );
+    setIsMetaMaskProcessing(false);
+  };
+
+  const handleMetaMaskCancel = () => {
+    alert(
+      "Bạn đã hủy thanh toán MetaMask. Vui lòng thử lại hoặc chọn phương thức thanh toán khác."
+    );
+    setIsMetaMaskProcessing(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -521,9 +576,11 @@ const CheckoutSection = () => {
       const slug = orderData.slug || "";
       setOrderSlug(slug);
 
-      // Save the order reference for PayPal
+      // Save the order reference for PayPal or MetaMask
       if (paymentMethod === "paypal") {
         setPayPalOrderRef(orderData._id || "");
+      } else if (paymentMethod === "metamask") {
+        setMetamaskOrderRef(orderData._id || "");
       }
 
       // Lấy userId từ token
@@ -570,10 +627,17 @@ const CheckoutSection = () => {
       localStorage.setItem("orderSlug", slug);
       localStorage.setItem("orderInfo", JSON.stringify(orderInfo));
 
-      // For PayPal, we'll show the PayPal button and wait for user to complete payment
+      // For PayPal or MetaMask, we'll show the appropriate button and wait for user to complete payment
       if (paymentMethod === "paypal") {
         console.log("PayPal selected, showing PayPal button...");
         setShowPayPalButton(true);
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (paymentMethod === "metamask") {
+        console.log("MetaMask selected, showing MetaMask button...");
+        setShowMetaMaskButton(true);
         setIsSubmitting(false);
         return;
       }
@@ -601,7 +665,7 @@ const CheckoutSection = () => {
       console.error("Error processing order:", error);
       alert("Đã xảy ra lỗi khi đặt hàng. Vui lòng thử lại sau.");
     } finally {
-      if (paymentMethod !== "paypal") {
+      if (paymentMethod !== "paypal" && paymentMethod !== "metamask") {
         setIsSubmitting(false);
       }
     }
@@ -656,6 +720,19 @@ const CheckoutSection = () => {
                     onSuccess={handlePayPalSuccess}
                     onError={handlePayPalError}
                     onCancel={handlePayPalCancel}
+                  />
+                </div>
+              ) : showMetaMaskButton && metamaskOrderRef ? (
+                <div className="bg-white border p-6 mb-8">
+                  <h2 className="text-xl font-semibold mb-4">
+                    Thanh toán qua MetaMask
+                  </h2>
+                  <MetaMaskButton
+                    amount={getTotal()}
+                    orderSlug={orderSlug}
+                    onSuccess={handleMetaMaskSuccess}
+                    onError={handleMetaMaskError}
+                    onCancel={handleMetaMaskCancel}
                   />
                 </div>
               ) : (

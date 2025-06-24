@@ -18,6 +18,9 @@ import { PermissionsModule } from '../permissions/permissions.module';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { ManagerPermissionsModule } from '../manager-permissions/manager-permissions.module';
 import { Auth, AuthSchema } from './schemas/auth.schema';
+import { MetamaskAuthService } from './services/metamask-auth.service';
+import { MetamaskAuthController } from './controllers/metamask-auth.controller';
+import { Wallet, WalletSchema } from './schemas/wallet.schema';
 
 @Module({
   imports: [
@@ -41,10 +44,18 @@ import { Auth, AuthSchema } from './schemas/auth.schema';
       { name: User.name, schema: UserSchema },
       { name: Otp.name, schema: OtpSchema },
       { name: Auth.name, schema: AuthSchema },
+      { name: Wallet.name, schema: WalletSchema }, // Add WalletSchema for MetaMask authentication
     ]),
   ],
-  controllers: [AuthController],
-  providers: [AuthService, TokenService, JwtStrategy, GoogleStrategy, JwtAuthGuard],
-  exports: [AuthService, TokenService, JwtStrategy, JwtModule, JwtAuthGuard],
+  controllers: [AuthController, MetamaskAuthController], // Add MetamaskAuthController
+  providers: [
+    AuthService,
+    TokenService,
+    JwtStrategy,
+    GoogleStrategy,
+    JwtAuthGuard,
+    MetamaskAuthService, // Add MetamaskAuthService
+  ],
+  exports: [AuthService, TokenService, JwtStrategy, JwtModule, JwtAuthGuard, MetamaskAuthService], // Export MetamaskAuthService
 })
 export class AuthModule { }

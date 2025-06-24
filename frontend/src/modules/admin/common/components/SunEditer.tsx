@@ -3,7 +3,6 @@ import "suneditor/dist/css/suneditor.min.css";
 import { FormatTagName } from "suneditor/src/options";
 import { useEffect, useRef, useState } from "react";
 import { useImages } from "@/common/hooks/useImages";
-import { ImageResponse } from "@/common/services/imageService";
 
 // Define the SunEditor response type
 interface SunEditorResponse {
@@ -116,7 +115,7 @@ interface ImageInfo {
   slug: string;
 }
 
-export default function SunEditer({
+export default function SunEditerUploadImage({
   postData,
   setPostData,
 }: {

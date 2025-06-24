@@ -4,6 +4,8 @@ import { CheckoutService } from './services/checkout.service';
 import { CheckoutController } from './controllers/checkout.controller';
 import { Checkout, CheckoutSchema } from './schemas/checkout.schema';
 import { BankTransferService } from './services/bank-transfer.service';
+import { MetamaskPaymentService } from './services/metamask-payment.service';
+import { MetamaskPaymentController } from './controllers/metamask-payment.controller';
 import { Order, OrderSchema } from '../orders/schemas/order.schema';
 import { VietQRModule } from '../vietqr/vietqr.module';
 import { PermissionsModule } from '../permissions/permissions.module';
@@ -40,8 +42,8 @@ import { User, UserSchema } from '../users/schemas/users.schema';
     forwardRef(() => AuthModule),
     PermissionsModule,
   ],
-  controllers: [CheckoutController],
-  providers: [CheckoutService, BankTransferService, RoleService, AuthService, UsersService, VerifyService, UsersRepository],
+  controllers: [CheckoutController, MetamaskPaymentController],
+  providers: [CheckoutService, BankTransferService, MetamaskPaymentService, RoleService, AuthService, UsersService, VerifyService, UsersRepository],
   exports: [CheckoutService],
 })
 export class CheckoutModule { }

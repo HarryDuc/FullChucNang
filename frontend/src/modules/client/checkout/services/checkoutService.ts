@@ -10,7 +10,7 @@ export interface Checkout {
   name: string;
   phone: string;
   address: string;
-  paymentMethod: "cash" | "payos" | "bank" | "paypal";
+  paymentMethod: "cash" | "payos" | "bank" | "paypal" | "metamask";
   paymentStatus: "pending" | "paid" | "failed";
   paymentMethodInfo?: Record<string, any>;
   createdAt?: string;

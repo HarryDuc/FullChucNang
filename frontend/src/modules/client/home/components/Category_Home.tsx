@@ -95,7 +95,7 @@ const Category_Home = () => {
                 >
                   <img
                     src={category.icon}
-                    alt={`Icon cho ${category.label || ""}`}
+                    alt={`Icon cho ${category.label}`}
                     loading="lazy"
                     className="object-contain"
                   />

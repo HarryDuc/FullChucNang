@@ -73,11 +73,11 @@ const ProductCardShopeeStyle: React.FC<ProductCardShopeeStyleProps> = ({
 
         <div className="flex items-center space-x-2 mb-1">
           <span className="text-red-600 font-bold text-base">
-            {formatPrice(discountPrice)}
+          {formatPrice(currentPrice)}
           </span>
           {discountPercent > 0 && (
             <span className="text-gray-400 text-sm line-through">
-              {formatPrice(currentPrice)}
+              {formatPrice(discountPrice)}
             </span>
           )}
         </div>

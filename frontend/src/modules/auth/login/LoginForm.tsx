@@ -13,6 +13,7 @@ import {
 import { useSearchParams } from "next/navigation";
 import { useUser } from "@/modules/client/users/hooks/useUser";
 import Image from "next/image";
+import MetamaskLogin from "../components/MetamaskLogin";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -111,6 +112,9 @@ const LoginForm = () => {
             />
             <span>Đăng nhập bằng Google</span>
           </button>
+
+          {/* MetaMask Login Button */}
+          <MetamaskLogin />
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">

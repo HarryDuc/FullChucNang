@@ -71,6 +71,34 @@ const PaymentMethod = ({
               </span>
             </label>
           </div>
+
+          <div className="flex items-center">
+            <input
+              type="radio"
+              id="metamask"
+              name="paymentMethod"
+              value="metamask"
+              checked={paymentMethod === "metamask"}
+              onChange={() => onPaymentMethodChange("metamask")}
+              className="h-4 w-4 text-blue-900"
+            />
+            <label
+              htmlFor="metamask"
+              className="ml-3 flex items-center text-gray-700"
+            >
+              MetaMask{" "}
+              <Image
+                src="/metamask-fox.svg"
+                alt="MetaMask"
+                className="h-6 ml-2"
+                width={24}
+                height={24}
+              />
+              <span className="text-xs text-gray-500 ml-2">
+                (Thanh toán Ethereum)
+              </span>
+            </label>
+          </div>
         </div>
       </div>
     </div>
