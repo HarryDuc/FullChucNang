@@ -8,7 +8,7 @@ import type {
   VariantAttribute,
   VariantAttributeValue,
   VariantCombination,
-} from "../../../admin/products/models/product.model";
+} from "../models/product.model";
 
 interface ProductInfoProps {
   product: Product;
@@ -59,17 +59,20 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
 
   // Xác định giá hiển thị dựa trên biến thể được chọn và props
   const additionalPrice = calculateAdditionalPrice();
-  const baseDisplayPrice = selectedVariant
-    ? selectedVariant.variantCurrentPrice ||
-      selectedVariant.variantImportPrice ||
-      product.basePrice
-    : currentPrice || product.basePrice;
 
-  const displayPrice = baseDisplayPrice + additionalPrice;
+  // Tính giá hiển thị dựa trên việc có variant hay không
+  const baseDisplayPrice = product.hasVariants
+    ? selectedVariant
+      ? (product.basePrice || 0) + additionalPrice // Có variant -> basePrice + additionalPrice
+      : product.basePrice || 0 // Chưa chọn variant -> basePrice
+    : product.currentPrice || product.basePrice || 0; // Không có variant -> currentPrice
 
-  const displayDiscountPrice = selectedVariant
-    ? selectedVariant.variantDiscountPrice || discountPrice
-    : discountPrice;
+  const displayPrice = baseDisplayPrice;
+
+  // Xác định giá giảm dựa trên việc có variant hay không
+  const displayDiscountPrice = product.hasVariants
+    ? undefined // Có variant -> không có giá giảm
+    : product.discountPrice; // Không có variant -> lấy giá giảm từ sản phẩm
 
   // Tính toán phần trăm giảm giá
   const calculatedDiscount =

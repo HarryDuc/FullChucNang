@@ -48,6 +48,13 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     initialData?.discountPrice || 0
   );
 
+  // Stock Management
+  const [stock, setStock] = useState(initialData?.stock || 0);
+  const [sold, setSold] = useState(initialData?.sold || 0);
+  const [hasVariants, setHasVariants] = useState(
+    initialData?.hasVariants || false
+  );
+
   // Images
   const [thumbnail, setThumbnail] = useState(initialData?.thumbnail || "");
   const [gallery, setGallery] = useState<string[]>(initialData?.gallery || []);
@@ -84,12 +91,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   // SEO
   const [seoTitle] = useState(initialData?.seo?.title || "");
-  const [seoDescription] = useState(
-    initialData?.seo?.description || ""
-  );
-  const [seoKeywords] = useState(
-    initialData?.seo?.keywords?.join(", ") || ""
-  );
+  const [seoDescription] = useState(initialData?.seo?.description || "");
+  const [seoKeywords] = useState(initialData?.seo?.keywords?.join(", ") || "");
 
   // Stock Info
   const [stockInfo] = useState<StockInfo>(
@@ -141,6 +144,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   // Handle variant changes
   const handleVariantAttributesChange = (newAttributes: VariantAttribute[]) => {
     setVariantAttributes(newAttributes);
+    // Only update hasVariants if we're adding or removing all attributes
+    if (newAttributes.length === 0) {
+      setHasVariants(false);
+    }
   };
 
   const handleVariantsChange = (newVariants: ProductVariant[]) => {
@@ -156,17 +163,24 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       variantDiscountPrice: variant.variantDiscountPrice || 0,
     }));
 
-    // Tính tổng số lượng tồn kho của tất cả biến thể
+    // Tính tổng số lượng tồn kho và đã bán của tất cả biến thể
     const totalStock = updatedVariants.reduce(
       (sum, variant) => sum + (variant.variantStock || 0),
       0
     );
+    const totalSold = updatedVariants.reduce(
+      (sum, variant) => sum + (variant.variantSold || 0),
+      0
+    );
 
-    // Tự động cập nhật trạng thái nếu tổng tồn kho = 0
+    // Cập nhật stock và sold của sản phẩm
+    setStock(totalStock);
+    setSold(totalSold);
+
+    // Tự động cập nhật trạng thái dựa trên tồn kho
     if (totalStock === 0) {
       setStatus("outOfStock");
     } else if (status === "outOfStock" && totalStock > 0) {
-      // Nếu đang là hết hàng mà có tồn kho thì chuyển về published
       setStatus("published");
     }
 
@@ -194,143 +208,70 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     setIsSubmitting(true);
     setErrorMsg("");
 
-    console.log("Form data before validation:", {
-      name,
-      slug,
-      description,
-      shortDescription,
-      importPrice,
-      currentPrice,
-      discountPrice,
-      thumbnail,
-      gallery,
-      selectedCategoryNames,
-      variantAttributes,
-      variants,
-      stockInfo,
-      status,
-      isVisible,
-      isFeatured,
-      isNewArrival,
-      isBestSeller,
-      seoTitle,
-      seoDescription,
-      seoKeywords,
-    });
-
-    // Validate required fields
-    if (!name.trim()) {
-      setErrorMsg("Vui lòng nhập tên sản phẩm");
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (!slug.trim()) {
-      setErrorMsg("Vui lòng nhập slug sản phẩm");
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (!basePrice || basePrice <= 0) {
-      setErrorMsg("Vui lòng nhập giá cơ bản hợp lệ");
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (!currentPrice || currentPrice <= 0) {
-      setErrorMsg("Vui lòng nhập giá bán hợp lệ");
-      setIsSubmitting(false);
-      return;
-    }
-
-    // Validate variants if they exist
-    if (variants.length > 0) {
-      console.log("Validating variants:", variants);
-      const invalidVariant = variants.find(
-        (v) => !v.variantName || !v.combination || v.combination.length === 0
-      );
-      if (invalidVariant) {
-        console.error("Invalid variant found:", invalidVariant);
-        setErrorMsg("Thông tin biến thể không hợp lệ");
-        setIsSubmitting(false);
-        return;
-      }
-    }
-
     try {
+      // Validate required fields
+      if (!name || !slug || !basePrice) {
+        throw new Error("Vui lòng điền đầy đủ thông tin bắt buộc");
+      }
+
+      // Validate stock
+      if (!hasVariants && stock < 0) {
+        throw new Error("Số lượng tồn kho không thể âm");
+      }
+
       // Prepare category data
       const mainCategory = selectedCategoryNames[0] || "";
       const subCategories = selectedCategoryNames.slice(1);
 
-      console.log("Category data:", {
-        mainCategory,
-        subCategories,
-        selectedCategoryNames,
-      });
-
-      // Validate category
-      if (!mainCategory) {
-        setErrorMsg("Vui lòng chọn danh mục chính cho sản phẩm");
-        setIsSubmitting(false);
-        return;
-      }
-
+      // Prepare product data
       const productData: Partial<Product> = {
-        name: name.trim(),
-        ...(mode === "create" ? { slug: slug.trim() } : {}),
+        name,
+        slug,
         description,
-        shortDescription: shortDescription.trim(),
-        basePrice: basePrice || 0,
-        importPrice: importPrice || 0,
-        currentPrice: currentPrice || 0,
-        discountPrice: discountPrice || 0,
+        shortDescription,
+        basePrice,
+        importPrice,
+        currentPrice,
+        discountPrice,
+        stock,
+        sold,
+        hasVariants,
         thumbnail,
         gallery,
+        status,
+        isVisible,
+        isFeatured,
+        isNewArrival,
+        isBestSeller,
         category: {
           main: mainCategory,
           sub: subCategories,
           tags: [],
         },
         variantAttributes,
-        variants: variants.map((variant) => ({
-          ...variant,
-          variantName: variant.variantName.trim(),
-          sku: variant.sku?.trim() || "",
-          variantStock: variant.variantStock || 0,
-          variantSold: variant.variantSold || 0,
-          variantGalleries: variant.variantGalleries || [],
-          variantImportPrice: variant.variantImportPrice || 0,
-          variantCurrentPrice: variant.variantCurrentPrice || 0,
-          variantDiscountPrice: variant.variantDiscountPrice || 0,
-        })),
-        stockInfo,
-        status,
-        isVisible,
-        isFeatured,
-        isNewArrival,
-        isBestSeller,
+        variants,
         seo: {
-          title: seoTitle.trim(),
-          description: seoDescription.trim(),
-          keywords: seoKeywords
-            .split(",")
-            .map((k) => k.trim())
-            .filter((k) => k),
+          title: seoTitle,
+          description: seoDescription,
+          keywords: seoKeywords.split(",").map((k) => k.trim()),
+        },
+        stockInfo: {
+          totalStock: stock,
+          lowStockThreshold: stockInfo.lowStockThreshold,
+          stockStatus:
+            stock === 0
+              ? "outOfStock"
+              : stock <= (stockInfo.lowStockThreshold || 10)
+              ? "lowStock"
+              : "inStock",
         },
       };
 
-      console.log("Final product data being sent:", productData);
-
       await onSubmit(productData);
       setIsSubmitting(false);
-    } catch (error: any) {
-      console.error("Form submission error:", error);
+    } catch (error) {
       setIsSubmitting(false);
-      console.log(error);
-      if (error.response) {
-        console.error("Error response:", await error.response.text());
-      }
-      setErrorMsg(error.message || "Có lỗi xảy ra khi lưu sản phẩm");
+      setErrorMsg(error instanceof Error ? error.message : "Có lỗi xảy ra");
     }
   };
 
@@ -390,14 +331,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           />
         </div>
 
-              {/* Mô tả sản phẩm */}
-              <div className="mb-4">
-                <label className="block mb-1 font-medium">Mô tả</label>
-                <SunEditerUploadImage
-                  postData={description}
-                  setPostData={setDescription}
-                />
-              </div>
+        {/* Mô tả sản phẩm */}
+        <div className="mb-4">
+          <label className="block mb-1 font-medium">Mô tả</label>
+          <SunEditerUploadImage
+            postData={description}
+            setPostData={setDescription}
+          />
+        </div>
       </div>
 
       {/* Giá sản phẩm */}
@@ -526,15 +467,79 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         </div>
       </div>
 
-      {/* Biến thể */}
+      {/* Stock Management Section */}
       <div className="bg-white rounded-xl shadow p-6 space-y-4">
-        <VariantOptions
-          initialAttributes={variantAttributes}
-          initialVariants={variants}
-          onAttributesChange={handleVariantAttributesChange}
-          onVariantsChange={handleVariantsChange}
-        />
+        <h3 className="text-lg font-medium">Quản lý tồn kho</h3>
+
+        <div className="flex items-center space-x-4 mb-4">
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              checked={hasVariants}
+              onChange={(e) => {
+                const newHasVariants = e.target.checked;
+                setHasVariants(newHasVariants);
+                if (!newHasVariants) {
+                  setVariantAttributes([]);
+                  setVariants([]);
+                }
+              }}
+              className="mr-2"
+            />
+            Sản phẩm có biến thể
+          </label>
+        </div>
+
+        {!hasVariants && (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium">
+                Số lượng tồn kho
+                <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                value={stock}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value);
+                  setStock(value);
+                  // Cập nhật trạng thái dựa trên tồn kho
+                  if (value === 0) {
+                    setStatus("outOfStock");
+                  } else if (status === "outOfStock" && value > 0) {
+                    setStatus("published");
+                  }
+                }}
+                min="0"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium">Đã bán</label>
+              <input
+                type="number"
+                value={sold}
+                onChange={(e) => setSold(parseInt(e.target.value))}
+                min="0"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Variant Management Section */}
+      {hasVariants && (
+        <div className="bg-white rounded-xl shadow p-6 space-y-4">
+          <h3 className="text-lg font-medium">Quản lý biến thể</h3>
+          <VariantOptions
+            initialAttributes={variantAttributes}
+            initialVariants={variants}
+            onAttributesChange={handleVariantAttributesChange}
+            onVariantsChange={handleVariantsChange}
+          />
+        </div>
+      )}
 
       {/* Trạng thái */}
       <div className="bg-white rounded-xl shadow p-6 space-y-4">

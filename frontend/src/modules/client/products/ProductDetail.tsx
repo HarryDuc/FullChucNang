@@ -46,8 +46,10 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
   const [, setMetaDescription] = useState<string>("");
 
   // Get related products using the hook
-  const { products: relatedProducts } =
-    useProductsByMainCategory(product?.category?.main || null, 1);
+  const { products: relatedProducts } = useProductsByMainCategory(
+    product?.category?.main || null,
+    1
+  );
 
   // Listen for cart changes
   useEffect(() => {
@@ -306,12 +308,13 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
     setSelectedVariant(variant);
     updateUrlWithVariant(variant);
 
-    // Cập nhật giá dựa trên biến thể được chọn
-    if (variant) {
-      setCurrentPrice(variant.variantCurrentPrice || product?.basePrice || 0);
-      setDiscountPrice(variant.variantDiscountPrice);
+    // Update price based on selected variant
+    if (variant && product) {
+      const variantPrices = calculateVariantPrice(variant, product);
+      setCurrentPrice(variantPrices.currentPrice);
+      setDiscountPrice(variantPrices.discountPrice);
 
-      // Cập nhật hình ảnh dựa trên biến thể
+      // Update image based on variant
       if (variant.variantThumbnail) {
         setSelectedImage(variant.variantThumbnail);
       } else if (
@@ -321,11 +324,11 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
         setSelectedImage(variant.variantGalleries[0]);
       }
     } else {
-      // Reset về giá gốc của sản phẩm
+      // Reset to original product price
       setCurrentPrice(product?.basePrice || 0);
       setDiscountPrice(product?.discountPrice);
 
-      // Reset về hình ảnh gốc của sản phẩm
+      // Reset to original product image
       if (product?.thumbnail) {
         setSelectedImage(product.thumbnail);
       } else if (product?.gallery && product.gallery.length > 0) {
@@ -334,14 +337,50 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
     }
   };
 
+  // Tính tổng additionalPrice từ các thuộc tính của variant đã chọn
+  const calculateVariantPrice = (
+    variant: ProductVariant,
+    baseProduct: Product
+  ) => {
+    let totalAdditionalPrice = 0;
+
+    // Chỉ tính additionalPrice khi sản phẩm có variants
+    if (baseProduct.hasVariants) {
+      // Lặp qua từng combination trong variant
+      variant.combination.forEach((combo) => {
+        // Tìm attribute tương ứng
+        const attribute = baseProduct.variantAttributes?.find(
+          (attr) => attr.name === combo.attributeName
+        );
+
+        // Tìm value tương ứng và cộng additionalPrice
+        const value = attribute?.values.find(
+          (val) => val.value === combo.value
+        );
+        if (value?.additionalPrice) {
+          totalAdditionalPrice += value.additionalPrice;
+        }
+      });
+
+      // Với sản phẩm có variant, chỉ dùng basePrice + additionalPrice
+      return {
+        currentPrice: (baseProduct.basePrice || 0) + totalAdditionalPrice,
+        // Không lấy discountPrice từ sản phẩm chính khi có variant
+        discountPrice: undefined,
+      };
+    } else {
+      // Với sản phẩm không có variant, dùng giá và giảm giá từ sản phẩm chính
+      return {
+        currentPrice: baseProduct.currentPrice || baseProduct.basePrice || 0,
+        discountPrice: baseProduct.discountPrice,
+      };
+    }
+  };
+
   // Add to cart function
   const addToCart = () => {
     if (product) {
-      if (
-        product.variantAttributes &&
-        product.variantAttributes.length > 0 &&
-        !selectedVariant
-      ) {
+      if (product.hasVariants && !selectedVariant) {
         toast.error(
           <div className="flex flex-col">
             <span className="font-medium">
@@ -349,7 +388,7 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
             </span>
             <span className="text-xs mt-1 text-gray-600">
               Hãy chọn{" "}
-              {product.variantAttributes.map((attr) => attr.name).join(", ")}{" "}
+              {product.variantAttributes?.map((attr) => attr.name).join(", ")}{" "}
               trước khi thêm vào giỏ hàng
             </span>
           </div>,
@@ -364,20 +403,48 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
         return;
       }
 
+      // Check stock before adding to cart
+      const stockToCheck = selectedVariant
+        ? selectedVariant.variantStock
+        : product.stock;
+      if (stockToCheck !== undefined && stockToCheck < quantity) {
+        toast.error(
+          <div className="flex flex-col">
+            <span className="font-medium">Số lượng vượt quá tồn kho</span>
+            <span className="text-xs mt-1 text-gray-600">
+              Chỉ còn {stockToCheck} sản phẩm trong kho
+            </span>
+          </div>,
+          {
+            duration: 2000,
+            style: {
+              maxWidth: "95vw",
+              padding: "10px 15px",
+            },
+          }
+        );
+        return;
+      }
+
+      // Tính giá dựa vào việc có variant hay không
+      const priceData =
+        product.hasVariants && selectedVariant
+          ? calculateVariantPrice(selectedVariant, product) // Có variant -> tính theo variant
+          : {
+              // Không có variant -> lấy giá sản phẩm chính
+              currentPrice: product.currentPrice || product.basePrice || 0,
+              discountPrice: product.discountPrice,
+            };
+
       const selectedProductData: CartItem = selectedVariant
         ? {
             _id: product._id || product.id || "",
             name: product.name,
             slug: product.slug,
             variant: selectedVariant.variantName,
-            currentPrice:
-              selectedVariant.variantCurrentPrice || product.basePrice || 0,
-            discountPrice: selectedVariant.variantDiscountPrice,
-            price:
-              selectedVariant.variantDiscountPrice ||
-              selectedVariant.variantCurrentPrice ||
-              product.basePrice ||
-              0,
+            currentPrice: priceData.currentPrice,
+            discountPrice: priceData.discountPrice,
+            price: priceData.discountPrice || priceData.currentPrice || 0,
             quantity: quantity,
             image: selectedVariant.variantThumbnail || selectedImage,
             sku: selectedVariant.sku || product.sku,
@@ -386,9 +453,9 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
             _id: product._id || product.id || "",
             name: product.name,
             slug: product.slug,
-            currentPrice: product.basePrice || 0,
-            discountPrice: product.discountPrice,
-            price: product.discountPrice || product.basePrice || 0,
+            currentPrice: priceData.currentPrice,
+            discountPrice: priceData.discountPrice,
+            price: priceData.discountPrice || priceData.currentPrice || 0,
             quantity: quantity,
             image:
               product.thumbnail ||
@@ -425,11 +492,7 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
   // Buy now function
   const buyNow = () => {
     if (product) {
-      if (
-        product.variantAttributes &&
-        product.variantAttributes.length > 0 &&
-        !selectedVariant
-      ) {
+      if (product.hasVariants && !selectedVariant) {
         toast.error(
           <div className="flex flex-col">
             <span className="font-medium">
@@ -437,7 +500,7 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
             </span>
             <span className="text-xs mt-1 text-gray-600">
               Hãy chọn{" "}
-              {product.variantAttributes.map((attr) => attr.name).join(", ")}{" "}
+              {product.variantAttributes?.map((attr) => attr.name).join(", ")}{" "}
               trước khi mua ngay
             </span>
           </div>,
@@ -570,9 +633,7 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
           </div>
         </main>
         {/* Related Products Section */}
-        <RelatedProducts
-          relatedProducts={relatedProducts}
-        />
+        <RelatedProducts relatedProducts={relatedProducts} />
       </div>
     </>
   );

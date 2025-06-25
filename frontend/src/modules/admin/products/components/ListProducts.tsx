@@ -65,13 +65,8 @@ const defaultFilters: Filters = {
 };
 
 const ListProducts = () => {
-  const {
-    products,
-    deleteProduct,
-    currentPage,
-    totalPages,
-    fetchProducts,
-  } = useProducts();
+  const { products, deleteProduct, currentPage, totalPages, fetchProducts } =
+    useProducts();
 
   // State tìm kiếm
   const [currentSearchTerm, setCurrentSearchTerm] = useState("");

@@ -58,12 +58,12 @@ const ProductCardShopeeStyle: React.FC<ProductCardShopeeStyleProps> = ({
 
         <h3 className="line-clamp-2 min-h-[2.5rem] font-medium text-gray-800">
           {discountPercent > 0 && (
-              <span className="text-xs bg-gray-100 text-red-500 p-[3px] rounded-md font-semibold mr-1">-{discountPercent}%</span>
+            <span className="text-xs bg-gray-100 text-red-500 p-[3px] rounded-md font-semibold mr-1">
+              -{discountPercent}%
+            </span>
           )}
           <span className="text-gray-800 font-medium">{name}</span>
         </h3>
-
-
 
         {/* <div className="flex items-center text-yellow-500 my-1">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -73,11 +73,11 @@ const ProductCardShopeeStyle: React.FC<ProductCardShopeeStyleProps> = ({
 
         <div className="flex items-center space-x-2 mb-1">
           <span className="text-red-600 font-bold text-base">
-          {formatPrice(currentPrice)}
+          {formatPrice(discountPrice)}
           </span>
           {discountPercent > 0 && (
             <span className="text-gray-400 text-sm line-through">
-              {formatPrice(discountPrice)}
+              {formatPrice(currentPrice)}
             </span>
           )}
         </div>
@@ -94,7 +94,7 @@ const ProductCardShopeeStyle: React.FC<ProductCardShopeeStyleProps> = ({
         )} */}
       </Link>
 
-      {!isContact && (
+      {/* {!isContact && (
         <button
           onClick={onAddToCart}
           className="w-full mt-2 flex items-center justify-center bg-blue-400 hover:bg-blue-500 text-white py-1 rounded-md transition"
@@ -102,7 +102,7 @@ const ProductCardShopeeStyle: React.FC<ProductCardShopeeStyleProps> = ({
           <IoCartOutline className="mr-2" />
           Thêm vào giỏ
         </button>
-      )}
+      )} */}
     </article>
   );
 };

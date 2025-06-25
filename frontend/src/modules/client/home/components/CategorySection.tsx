@@ -21,6 +21,7 @@ interface DisplayProduct {
   slug: string;
   rating?: number;
   sku?: string;
+  hasVariants?: boolean;
 }
 
 // Interface cho danh mục với sản phẩm
@@ -38,10 +39,12 @@ interface ProductData {
   name: string;
   currentPrice?: number;
   discountPrice?: number;
+  basePrice?: number;
   thumbnail?: string;
   slug: string;
   rating?: number;
   sku?: string;
+  hasVariants?: boolean;
 }
 
 // Các slug được quy định để hiển thị (dạng slug)
@@ -93,10 +96,11 @@ const CategorySection: React.FC = () => {
       name: product.name,
       slug: product.slug,
       currentPrice: product.originalPrice,
-      discountPrice:
-        product.salePrice !== product.originalPrice
-          ? product.salePrice
-          : undefined,
+      discountPrice: product.hasVariants
+        ? undefined
+        : product.salePrice !== product.originalPrice
+        ? product.salePrice
+        : undefined,
       price: product.salePrice || product.originalPrice || 0,
       quantity: 1,
       image: product.image,
@@ -173,27 +177,40 @@ const CategorySection: React.FC = () => {
                   6
                 );
 
-
-
                 return {
                   id: category._id,
                   title: category.name,
                   bannerImage: images[index % images.length],
                   slug: category.slug,
-                  products: productsData.data.map((product: ProductData) => ({
-                    id: product._id || product.id || "",
-                    name: product.name,
-                    originalPrice: product.currentPrice,
-                    salePrice: product.discountPrice || product.currentPrice,
-                    discountPercent: calculateDiscount(
-                      product.currentPrice,
-                      product.discountPrice
-                    ),
-                    image: product.thumbnail ? product.thumbnail : "./image/Logo_Decor-More1.png",
-                    slug: product.slug,
-                    rating: product.rating || 0,
-                    sku: product.sku || "",
-                  })),
+                  products: productsData.data.map((product: ProductData) => {
+                    // Xác định giá hiển thị dựa trên việc có variant hay không
+                    const displayPrice = product.hasVariants
+                      ? product.basePrice || 0 // Có variant -> hiển thị basePrice
+                      : product.currentPrice || product.basePrice || 0; // Không có variant -> hiển thị currentPrice
+
+                    // Xác định giá giảm dựa trên việc có variant hay không
+                    const displayDiscountPrice = product.hasVariants
+                      ? undefined // Có variant -> không hiển thị giá giảm
+                      : product.discountPrice; // Không có variant -> hiển thị discountPrice
+
+                    return {
+                      id: product._id || product.id || "",
+                      name: product.name,
+                      originalPrice: displayPrice,
+                      salePrice: displayDiscountPrice || displayPrice,
+                      discountPercent: calculateDiscount(
+                        displayPrice,
+                        displayDiscountPrice
+                      ),
+                      image: product.thumbnail
+                        ? product.thumbnail
+                        : "./image/Logo_Decor-More1.png",
+                      slug: product.slug,
+                      rating: product.rating || 0,
+                      sku: product.sku || "",
+                      hasVariants: product.hasVariants,
+                    };
+                  }),
                 };
               }
             )

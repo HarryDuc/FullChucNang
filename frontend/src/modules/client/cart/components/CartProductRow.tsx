@@ -39,7 +39,7 @@ const CartProductRow: FC<CartProductRowProps> = ({
         </div>
         <div className="ml-4 md:ml-6">
           <Link
-            href={`/product/${item.slug}`}
+            href={`/san-pham/${item.slug}`}
             className="no-underline hover:underline"
             tabIndex={0}
             aria-label={`Xem chi tiết sản phẩm ${item.name}`}

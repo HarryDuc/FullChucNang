@@ -124,8 +124,17 @@ export const ProductService = {
   // Tạo sản phẩm mới
   create: async (product: Partial<Product>): Promise<Product> => {
     try {
-      console.log('Creating product with data:', product);
-      const response = await fetch(PRODUCT_API, fetchOptions("POST", product));
+      // Xử lý hasVariants dựa trên dữ liệu đầu vào
+      const hasVariants = !!(product.variants && product.variants.length > 0);
+      const productData = {
+        ...product,
+        hasVariants,
+        // Nếu không có biến thể, đảm bảo stock được thiết lập
+        stock: hasVariants ? undefined : (product.stock || 0)
+      };
+
+      console.log('Creating product with data:', productData);
+      const response = await fetch(PRODUCT_API, fetchOptions("POST", productData));
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -133,7 +142,7 @@ export const ProductService = {
           status: response.status,
           statusText: response.statusText,
           responseText: errorText,
-          requestData: product
+          requestData: productData
         });
         try {
           const errorJson = JSON.parse(errorText);
@@ -154,9 +163,18 @@ export const ProductService = {
   // Cập nhật sản phẩm
   update: async (slug: string, product: Partial<Product>): Promise<Product> => {
     try {
+      // Xử lý hasVariants dựa trên dữ liệu đầu vào
+      const hasVariants = !!(product.variants && product.variants.length > 0);
+      const productData = {
+        ...product,
+        hasVariants,
+        // Nếu không có biến thể, đảm bảo stock được thiết lập
+        stock: hasVariants ? undefined : (product.stock || 0)
+      };
+
       const response = await fetch(
         `${PRODUCT_API}/${slug}`,
-        fetchOptions("PUT", product)
+        fetchOptions("PUT", productData)
       );
       return handleResponse(response);
     } catch (error) {
@@ -253,7 +271,7 @@ export const ProductService = {
     try {
       const response = await fetch(
         `${PRODUCT_API}/${slug}/variants`,
-        fetchOptions("PUT", { variants })
+        fetchOptions("PUT", { variants, hasVariants: true })
       );
       return handleResponse(response);
     } catch (error) {
@@ -272,6 +290,20 @@ export const ProductService = {
       return handleResponse(response);
     } catch (error) {
       console.error(`Lỗi khi cập nhật thuộc tính biến thể sản phẩm ${slug}:`, error);
+      throw error;
+    }
+  },
+
+  // Cập nhật số lượng tồn kho của sản phẩm
+  updateStock: async (slug: string, stock: number): Promise<Product> => {
+    try {
+      const response = await fetch(
+        `${PRODUCT_API}/${slug}/stock`,
+        fetchOptions("PUT", { stock })
+      );
+      return handleResponse(response);
+    } catch (error) {
+      console.error(`Lỗi khi cập nhật số lượng tồn kho sản phẩm ${slug}:`, error);
       throw error;
     }
   }

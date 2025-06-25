@@ -754,15 +754,15 @@ const CheckoutSection = () => {
                     onPaymentMethodChange={setPaymentMethod}
                   />
 
-                  <VoucherInput
+                  {/* <VoucherInput
                     productSlug={cartItems[0]?.slug}
                     userId={getUserIdFromToken() || undefined}
                     paymentMethod={getVoucherPaymentMethod(paymentMethod)}
                     totalAmount={getSubtotal()}
                     onApply={handleVoucherApplied}
-                  />
+                  /> */}
 
-                  <div className="mt-8">
+                  {/* <div className="mt-8">
                     <button
                       type="submit"
                       className={`w-full bg-blue-700 text-white py-3 px-4 rounded-md font-medium hover:bg-blue-800 transition-colors ${
@@ -772,7 +772,7 @@ const CheckoutSection = () => {
                     >
                       {isSubmitting ? "ĐANG XỬ LÝ..." : "HOÀN TẤT ĐƠN HÀNG"}
                     </button>
-                  </div>
+                  </div> */}
                 </form>
               )}
             </div>

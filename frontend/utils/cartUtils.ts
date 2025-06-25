@@ -43,7 +43,7 @@ export const getCart = (): CartItem[] => {
       _id: item._id || item.id || '', // 🔄 Hỗ trợ cả _id mới và id cũ
       name: item.name,
       // Đảm bảo giữ nguyên giá gốc
-      currentPrice: item.currentPrice,
+      currentPrice: item.currentPrice || 0,
       discountPrice: item.discountPrice,
       // Tính toán giá hiển thị
       price: item.discountPrice || item.currentPrice || 0,
@@ -93,7 +93,7 @@ export const saveCart = (cart: CartItem[]): void => {
  * @returns Hàm để hủy đăng ký lắng nghe
  */
 export const listenCartChange = (callback: () => void): () => void => {
-  if (typeof window === 'undefined') return () => {};
+  if (typeof window === 'undefined') return () => { };
 
   // 🔄 Lắng nghe sự kiện cart-updated từ các thao tác trên giỏ hàng
   const handleCartUpdated = () => {
@@ -148,12 +148,14 @@ export const addToCart = (item: CartItem): CartItem[] => {
   );
 
   if (existingItemIndex !== -1) {
-    // ⬆️ Nếu sản phẩm đã tồn tại, cập nhật số lượng nhưng giữ nguyên các thông tin giá
+    // ⬆️ Nếu sản phẩm đã tồn tại, cập nhật số lượng và giữ nguyên các thông tin giá
     cart[existingItemIndex].quantity += item.quantity;
   } else {
     // ➕ Nếu sản phẩm chưa tồn tại, thêm vào giỏ hàng với cartItemId duy nhất
     cart.push({
       ...item,
+      currentPrice: item.currentPrice || 0,
+      discountPrice: item.discountPrice,
       price: item.discountPrice || item.currentPrice || 0,
       cartItemId: generateCartItemId()
     });

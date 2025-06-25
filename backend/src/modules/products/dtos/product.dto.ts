@@ -287,6 +287,17 @@ export class CreateProductDto {
   @Type(() => CategoryInfoDto)
   category?: CategoryInfoDto;
 
+  @IsNumber()
+  @Min(0)
+  stock: number;
+
+  @IsNumber()
+  @Min(0)
+  sold: number;
+
+  @IsBoolean()
+  hasVariants: boolean;
+
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
@@ -320,9 +331,8 @@ export class CreateProductDto {
   @IsBoolean()
   isBestSeller?: boolean;
 
-  @IsOptional()
   @IsEnum(['draft', 'published', 'archived', 'outOfStock', 'comingSoon'])
-  status?: string;
+  status: string;
 
   @IsOptional()
   @ValidateNested()
@@ -343,11 +353,6 @@ export class CreateProductDto {
   @IsNumber()
   @Min(0)
   viewCount?: number;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  soldCount?: number;
 
   @IsOptional()
   @ValidateNested()
@@ -416,6 +421,20 @@ export class UpdateProductDto implements Partial<CreateProductDto> {
   category?: CategoryInfoDto;
 
   @IsOptional()
+  @IsNumber()
+  @Min(0)
+  stock?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  sold?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  hasVariants?: boolean;
+
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => VariantAttributeDto)
@@ -471,11 +490,6 @@ export class UpdateProductDto implements Partial<CreateProductDto> {
   @IsNumber()
   @Min(0)
   viewCount?: number;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  soldCount?: number;
 
   @IsOptional()
   @ValidateNested()

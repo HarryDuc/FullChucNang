@@ -174,12 +174,25 @@ export class Product {
   @Prop({ default: false })
   isBestSeller?: boolean;
 
+  @Prop({ type: Number, default: 0 })
+  stock: number; // Số lượng tồn kho của sản phẩm chính
+
+  @Prop({ type: Number, default: 0 })
+  sold: number; // Số lượng đã bán của sản phẩm chính
+
   @Prop({
     type: String,
     enum: ['draft', 'published', 'archived', 'outOfStock', 'comingSoon'],
     default: 'draft'
   })
-  status?: string;
+  status: string;
+
+  @Prop({
+    type: Boolean,
+    default: false,
+    description: 'Xác định sản phẩm có sử dụng biến thể hay không'
+  })
+  hasVariants: boolean;
 
   @Prop({ type: CategoryInfoSchema })
   category?: {
@@ -195,10 +208,10 @@ export class Product {
   };
 
   @Prop({ type: [VariantAttribute], default: [] })
-  variantAttributes: VariantAttribute[];
+  variantAttributes?: VariantAttribute[];
 
   @Prop({ type: [ProductVariant], default: [] })
-  variants: ProductVariant[];
+  variants?: ProductVariant[];
 
   @Prop({ default: () => new Date() })
   createdAt?: Date;
@@ -214,9 +227,35 @@ export class Product {
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
 
+// Middleware để tự động cập nhật trạng thái dựa trên stock
+ProductSchema.pre('save', function (next) {
+  // Nếu sản phẩm có biến thể
+  if (this.hasVariants && this.variants && this.variants.length > 0) {
+    // Tính tổng stock từ tất cả biến thể
+    const totalStock = this.variants.reduce((sum, variant) => sum + (variant.variantStock || 0), 0);
+    this.stock = totalStock;
+
+    // Tính tổng số lượng đã bán từ tất cả biến thể
+    const totalSold = this.variants.reduce((sum, variant) => sum + (variant.variantSold || 0), 0);
+    this.sold = totalSold;
+  }
+
+  // Cập nhật trạng thái dựa trên stock
+  if (this.stock <= 0) {
+    this.status = 'outOfStock';
+  } else if (this.status === 'outOfStock' && this.stock > 0) {
+    this.status = 'published';
+  }
+
+  next();
+});
+
 // Tạo index cho các trường quan trọng
 ProductSchema.index({ slug: 1 });
 ProductSchema.index({ 'category.main': 1 });
 ProductSchema.index({ 'variants.sku': 1 });
 ProductSchema.index({ 'variantAttributes.slug': 1 });
 ProductSchema.index({ 'variantAttributes.values.slug': 1 });
+ProductSchema.index({ stock: 1 });
+ProductSchema.index({ status: 1 });
+ProductSchema.index({ hasVariants: 1 });

@@ -40,7 +40,7 @@ export interface ProductVariant {
   variantImportPrice?: number;
   variantCurrentPrice?: number;
   variantDiscountPrice?: number;
-  variantStock?: number;
+  variantStock?: number; // Changed from required to optional
   variantSold?: number;
   variantThumbnail?: string;
   variantGalleries?: string[];
@@ -75,9 +75,9 @@ export interface SeoInfo {
  * Interface cho thông tin tồn kho
  */
 export interface StockInfo {
-  totalStock?: number;
+  totalStock: number; // Tổng số lượng tồn kho
   lowStockThreshold?: number;
-  stockStatus?: 'inStock' | 'lowStock' | 'outOfStock';
+  stockStatus: 'inStock' | 'lowStock' | 'outOfStock';
 }
 
 /**
@@ -118,22 +118,26 @@ export interface Product {
   isFeatured?: boolean;
   isNewArrival?: boolean;
   isBestSeller?: boolean;
-  status?: 'draft' | 'published' | 'archived' | 'outOfStock' | 'comingSoon';
+  status: 'draft' | 'published' | 'archived' | 'outOfStock' | 'comingSoon';
 
   // Thông tin phân loại
   category?: CategoryInfo;
 
   // Thông tin biến thể
+  hasVariants: boolean; // Có biến thể hay không
   variantAttributes?: VariantAttribute[];
   variants?: ProductVariant[];
+
+  // Thông tin tồn kho
+  stock: number; // Số lượng tồn kho (cho sản phẩm không có biến thể)
+  sold: number; // Số lượng đã bán (cho sản phẩm không có biến thể)
+  stockInfo?: StockInfo;
 
   // Thông tin bổ sung
   seo?: SeoInfo;
   tags?: string[];
   displayOrder?: number;
   viewCount?: number;
-  soldCount?: number;
-  stockInfo?: StockInfo;
   promotion?: PromotionInfo;
 
   // Thông tin thời gian
@@ -157,5 +161,5 @@ export interface CartItem {
   image: string;
   sku?: string;
   variantId?: string;
-  stock?: number;
+  stock: number; // Số lượng tồn kho hiện tại
 }

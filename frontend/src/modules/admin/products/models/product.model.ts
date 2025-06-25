@@ -74,7 +74,7 @@ export interface SeoInfo {
  * Interface cho thông tin tồn kho
  */
 export interface StockInfo {
-  totalStock?: number;
+  totalStock: number;
   lowStockThreshold?: number;
   stockStatus?: 'inStock' | 'lowStock' | 'outOfStock';
 }
@@ -108,6 +108,11 @@ export interface Product {
   currentPrice?: number;
   discountPrice?: number;
 
+  // Thông tin tồn kho
+  stock: number; // Số lượng tồn kho (bắt buộc)
+  sold: number; // Số lượng đã bán (bắt buộc)
+  hasVariants: boolean; // Có sử dụng biến thể hay không
+
   // Thông tin hình ảnh
   thumbnail?: string;
   gallery?: string[];
@@ -117,7 +122,7 @@ export interface Product {
   isFeatured?: boolean;
   isNewArrival?: boolean;
   isBestSeller?: boolean;
-  status?: 'draft' | 'published' | 'archived' | 'outOfStock' | 'comingSoon';
+  status: 'draft' | 'published' | 'archived' | 'outOfStock' | 'comingSoon';
 
   // Thông tin phân loại
   category?: CategoryInfo;
@@ -131,7 +136,6 @@ export interface Product {
   tags?: string[];
   displayOrder?: number;
   viewCount?: number;
-  soldCount?: number;
   stockInfo?: StockInfo;
   promotion?: PromotionInfo;
 

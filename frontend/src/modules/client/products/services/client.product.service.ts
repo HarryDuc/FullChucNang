@@ -5,6 +5,37 @@ export interface Category {
   slug: string;
 }
 
+export interface VariantAttributeValue {
+  value: string;
+  slug: string;
+  additionalPrice?: number;
+  discountPrice?: number;
+  thumbnail?: string;
+  displayOrder?: number;
+}
+
+export interface VariantAttribute {
+  name: string;
+  slug: string;
+  description?: string;
+  displayOrder?: number;
+  values: VariantAttributeValue[];
+}
+
+export interface ProductVariant {
+  id?: string;
+  variantName: string;
+  combination: { attributeName: string; value: string }[];
+  sku?: string;
+  variantImportPrice?: number;
+  variantCurrentPrice?: number;
+  variantDiscountPrice?: number;
+  variantStock: number;
+  variantSold: number;
+  variantThumbnail?: string;
+  variantGalleries?: string[];
+}
+
 export interface Product {
   _id: string;
   name: string;
@@ -22,6 +53,20 @@ export interface Product {
   createdAt: string;
   publishedAt: string;
   sku: string;
+  description?: string;
+  shortDescription?: string;
+  basePrice: number;
+  importPrice?: number;
+  gallery?: string[];
+  isFeatured?: boolean;
+  isNewArrival?: boolean;
+  isBestSeller?: boolean;
+  stock: number;
+  sold: number;
+  status: 'draft' | 'published' | 'archived' | 'outOfStock' | 'comingSoon';
+  hasVariants: boolean;
+  variantAttributes?: VariantAttribute[];
+  variants?: ProductVariant[];
 }
 
 const BASE_API = process.env.NEXT_PUBLIC_API_URL;

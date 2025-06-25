@@ -82,18 +82,38 @@ function FilterBar({
 }
 
 function ProductCard({ product }: { product: Product }) {
-  const { name, thumbnail, discountPrice, currentPrice, slug, _id, sku } =
-    product;
-  const price = discountPrice || currentPrice || 0;
+  const {
+    name,
+    thumbnail,
+    discountPrice,
+    currentPrice,
+    basePrice,
+    slug,
+    _id,
+    sku,
+    hasVariants,
+  } = product;
+  console.log(product);
+  // Xác định giá hiển thị dựa trên việc có variant hay không
+  const displayPrice = hasVariants
+    ? basePrice || 0 // Có variant -> hiển thị basePrice
+    : currentPrice || basePrice || 0; // Không có variant -> hiển thị currentPrice
+
+  // Xác định giá giảm dựa trên việc có variant hay không
+  const displayDiscountPrice = hasVariants
+    ? undefined // Có variant -> không hiển thị giá giảm
+    : discountPrice; // Không có variant -> hiển thị discountPrice
+
+  const finalPrice = displayDiscountPrice || displayPrice;
 
   const handleAddToCart = () => {
     const productData: CartItem = {
       _id: _id || "",
       name,
       slug,
-      price,
-      currentPrice,
-      discountPrice,
+      currentPrice: displayPrice,
+      discountPrice: displayDiscountPrice,
+      price: finalPrice,
       quantity: 1,
       image: thumbnail?.startsWith("http") ? thumbnail : `${thumbnail}`,
       sku: sku || "",
@@ -122,8 +142,8 @@ function ProductCard({ product }: { product: Product }) {
         slug={slug}
         name={name}
         imageUrl={`${thumbnail}`}
-        currentPrice={currentPrice}
-        discountPrice={discountPrice}
+        currentPrice={displayPrice}
+        discountPrice={displayDiscountPrice}
         onAddToCart={handleAddToCart}
       />
     </article>
@@ -180,8 +200,8 @@ export default function ProductListSection({ slug }: { slug: string }) {
       if (page > 1 && products.length === 0) {
         setHasMore(false);
       } else {
-        // Lọc ra các sản phẩm không bị ẩn trước khi thêm vào danh sách
-        const visibleProducts = products.filter((p) => p.isVisible !== true);
+        // Lọc ra các sản phẩm không bị ẩn và có trạng thái published
+        const visibleProducts = products.filter((p) => p.isVisible !== false);
         setAllProducts((prev) =>
           page === 1
             ? visibleProducts
@@ -198,22 +218,29 @@ export default function ProductListSection({ slug }: { slug: string }) {
   }, [products, loading, page, totalPages]);
 
   const sortedProducts = useMemo(() => {
-    // Lọc ra các sản phẩm không bị ẩn trước khi sắp xếp
     const copy = [...allProducts];
 
     switch (sortOption) {
       case "price-asc":
-        return copy.sort(
-          (a, b) =>
-            (a.discountPrice || a.currentPrice || 0) -
-            (b.discountPrice || b.currentPrice || 0)
-        );
+        return copy.sort((a, b) => {
+          const priceA = a.hasVariants
+            ? a.basePrice || 0
+            : a.discountPrice || a.currentPrice || 0;
+          const priceB = b.hasVariants
+            ? b.basePrice || 0
+            : b.discountPrice || b.currentPrice || 0;
+          return priceA - priceB;
+        });
       case "price-desc":
-        return copy.sort(
-          (a, b) =>
-            (b.discountPrice || b.currentPrice || 0) -
-            (a.discountPrice || a.currentPrice || 0)
-        );
+        return copy.sort((a, b) => {
+          const priceA = a.hasVariants
+            ? a.basePrice || 0
+            : a.discountPrice || a.currentPrice || 0;
+          const priceB = b.hasVariants
+            ? b.basePrice || 0
+            : b.discountPrice || b.currentPrice || 0;
+          return priceB - priceA;
+        });
       case "newest":
         return copy.sort(
           (a, b) =>

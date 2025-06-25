@@ -23,6 +23,8 @@ import {
   MdOutlineEmail,
   MdOutlinePerson,
   MdOutlineSwapHoriz,
+  MdOutlineAdminPanelSettings,
+  MdOutlineManageAccounts,
 } from "react-icons/md";
 import { useAuth } from "@/context/AuthContext";
 
@@ -58,14 +60,14 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
     {
       href: "/admin",
       icon: <MdOutlineDashboard />,
-      label: "Dashboard",
-      group: "Overview",
+      label: "Tổng quan",
+      group: "Tổng quan",
     },
     {
       href: "/admin/products",
       icon: <MdOutlineShoppingBag />,
-      label: "Products",
-      group: "E-commerce",
+      label: "Sản phẩm",
+      group: "Thương mại điện tử",
       requiredPermission: {
         resource: "products",
         action: "read",
@@ -75,7 +77,7 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
       href: "/admin/flash-sale",
       icon: <MdOutlineFlashOn />,
       label: "Flash Sale",
-      group: "E-commerce",
+      group: "Thương mại điện tử",
       requiredPermission: {
         resource: "products",
         action: "read",
@@ -84,8 +86,8 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
     {
       href: "/admin/categories-product",
       icon: <MdOutlineFolder />,
-      label: "Categories",
-      group: "E-commerce",
+      label: "Danh mục sản phẩm",
+      group: "Thương mại điện tử",
       requiredPermission: {
         resource: "categories-product",
         action: "read",
@@ -94,8 +96,8 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
     {
       href: "/admin/orders",
       icon: <MdOutlineShoppingCart />,
-      label: "Orders",
-      group: "E-commerce",
+      label: "Đơn hàng",
+      group: "Thương mại điện tử",
       requiredPermission: {
         resource: "orders",
         action: "read",
@@ -104,28 +106,18 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
     {
       href: "/admin/voucher",
       icon: <MdOutlineDiscount />,
-      label: "Vouchers",
-      group: "E-commerce",
+      label: "Mã giảm giá",
+      group: "Thương mại điện tử",
       requiredPermission: {
         resource: "vouchers",
         action: "read",
       },
     },
     {
-      href: "/admin/users",
-      icon: <MdOutlinePeople />,
-      label: "Users",
-      group: "Management",
-      requiredPermission: {
-        resource: "users",
-        action: "read",
-      },
-    },
-    {
       href: "/admin/permissions",
       icon: <MdOutlineSecurity />,
-      label: "Permission",
-      group: "Management",
+      label: "Phân quyền",
+      group: "Quản lý",
       requiredPermission: {
         resource: "permissions",
         action: "read",
@@ -133,19 +125,8 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
     },
     {
       href: "/admin/manager-permissions",
-      icon: <MdOutlineSecurity />,
-      label: "Manager Permissions",
-      group: "Management",
-      requiredPermission: {
-        resource: "manager-permissions",
-        action: "read",
-      },
-    },
-
-    {
-      href: "/admin/manager-permissions",
-      icon: <MdOutlineSecurity />,
-      label: "Quản lý quyền hạn",
+      icon: <MdOutlineManageAccounts />,
+      label: "Quản lý phân quyền",
       group: "Quản lý",
       requiredPermission: {
         resource: "manager-permissions",
@@ -165,7 +146,7 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
     {
       href: "/admin/redirects",
       icon: <MdOutlineSwapHoriz />,
-      label: "Redirects",
+      label: "Chuyển hướng",
       group: "SEO",
       requiredPermission: {
         resource: "redirects",
@@ -175,8 +156,8 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
     {
       href: "/admin/posts",
       icon: <MdOutlineArticle />,
-      label: "Posts",
-      group: "Content",
+      label: "Bài viết",
+      group: "Nội dung",
       requiredPermission: {
         resource: "posts",
         action: "read",
@@ -185,8 +166,8 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
     {
       href: "/admin/categories-post",
       icon: <MdOutlineFolderShared />,
-      label: "Post Categories",
-      group: "Content",
+      label: "Danh mục bài viết",
+      group: "Nội dung",
       requiredPermission: {
         resource: "categories-post",
         action: "read",
@@ -195,8 +176,8 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
     {
       href: "/admin/create-page",
       icon: <MdOutlineArticle />,
-      label: "Pages",
-      group: "Content",
+      label: "Trang tĩnh",
+      group: "Nội dung",
       requiredPermission: {
         resource: "pages",
         action: "read",
@@ -205,8 +186,8 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
     {
       href: "/admin/media",
       icon: <MdOutlinePermMedia />,
-      label: "Media",
-      group: "Content",
+      label: "Thư viện media",
+      group: "Nội dung",
       requiredPermission: {
         resource: "images",
         action: "read",
@@ -215,8 +196,8 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
     {
       href: "/admin/banner",
       icon: <MdOutlineViewCarousel />,
-      label: "Banners",
-      group: "Content",
+      label: "Banner quảng cáo",
+      group: "Nội dung",
       requiredPermission: {
         resource: "banner",
         action: "read",
@@ -225,8 +206,8 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
     {
       href: "/admin/contact",
       icon: <MdOutlineEmail />,
-      label: "Contact",
-      group: "Content",
+      label: "Liên hệ",
+      group: "Nội dung",
       requiredPermission: {
         resource: "contact",
         action: "list",
@@ -235,8 +216,8 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
     {
       href: "/admin/vietqr-config",
       icon: <MdOutlinePayment />,
-      label: "VietQR Config",
-      group: "Settings",
+      label: "Cấu hình VietQR",
+      group: "Cài đặt",
       requiredPermission: {
         resource: "vietqr-config",
         action: "read",
@@ -245,8 +226,8 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
     {
       href: "/admin/info-website",
       icon: <MdOutlineInfo />,
-      label: "Website Info",
-      group: "Settings",
+      label: "Thông tin website",
+      group: "Cài đặt",
       requiredPermission: {
         resource: "info-website",
         action: "read",
@@ -255,8 +236,8 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
     {
       href: "/admin/scripts",
       icon: <MdOutlineCode />,
-      label: "Scripts",
-      group: "Settings",
+      label: "Mã script",
+      group: "Cài đặt",
       requiredPermission: {
         resource: "script",
         action: "read",
