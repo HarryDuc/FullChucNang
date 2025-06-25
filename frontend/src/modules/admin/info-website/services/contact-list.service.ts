@@ -30,7 +30,9 @@ export interface IContactList {
 export type CreateContactListDto = Omit<IContactList, '_id' | 'createdAt' | 'updatedAt'>;
 export type UpdateContactListDto = Partial<CreateContactListDto>;
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL + '/info-websitesapi';
+import { config } from "@/config/config";
+import { API_URL_CLIENT } from "@/config/apiRoutes";
+const BASE_URL = API_URL_CLIENT + config.ROUTES.INFO_WEBSITE.BASE;
 
 // Create axios instance with default config
 const api = axios.create({

@@ -23,7 +23,7 @@ import { Roles } from '../../../common/decorators/roles.decorator';
 import { PermissionGuard } from 'src/modules/permissions/guards/permission.guard';
 import { RequirePermission } from 'src/common/decorators/permission.decorator';
 
-@Controller('images')
+@Controller('imagesapi')
 export class ImagesController {
   constructor(private readonly imagesService: ImagesService) { }
 

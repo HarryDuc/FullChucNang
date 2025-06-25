@@ -9,7 +9,7 @@ import { VerifyService } from '../services/verify.service';
 import { UsersService } from '../../users/services/users.service';
 import { VerifyEmailDto, SendVerificationDto } from '../dto/verify.dto';
 
-@Controller('verify')
+@Controller('verifysapi')
 export class VerifyController {
   constructor(
     private readonly verifyService: VerifyService,

@@ -1,5 +1,9 @@
 import api from '@/config/api';
 import imageCompression from 'browser-image-compression';
+import { API_URL_CLIENT } from "@/config/apiRoutes";
+import { config } from "@/config/config";
+
+const IMAGE_UPLOAD_API = API_URL_CLIENT + config.ROUTES.IMAGES.BASE;
 
 export interface ImageResponse {
   _id: string;
@@ -154,7 +158,7 @@ const imageService = {
 
       formData.append('file', processedFile);
 
-      const response = await api.post('/images/upload', formData, {
+      const response = await api.post(IMAGE_UPLOAD_API + '/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -223,7 +227,7 @@ const imageService = {
           formData.append('files', file);
         });
 
-        const response = await api.post('/images/upload-multiple', formData, {
+        const response = await api.post(IMAGE_UPLOAD_API + '/upload-multiple', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -346,7 +350,7 @@ const imageService = {
       const processedFile = compress ? await imageService.compressImage(file) : file;
       formData.append('file', processedFile);
 
-      const response = await api.post('/images/sunEditor', formData, {
+      const response = await api.post(IMAGE_UPLOAD_API + '/sunEditor', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -364,7 +368,7 @@ const imageService = {
    * Get all images
    */
   getAllImages: async (): Promise<ImageResponse[]> => {
-    const response = await api.get('/images');
+    const response = await api.get(IMAGE_UPLOAD_API);
     return response.data;
   },
 
@@ -372,7 +376,7 @@ const imageService = {
    * Delete an image by slug
    */
   deleteImage: async (slug: string): Promise<any> => {
-    const response = await api.delete(`/images/${slug}`);
+    const response = await api.delete(`${IMAGE_UPLOAD_API}/${slug}`);
     return response.data;
   },
 };

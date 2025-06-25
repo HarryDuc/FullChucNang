@@ -18,7 +18,7 @@ import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { PermissionGuard } from 'src/modules/permissions/guards/permission.guard';
 
-@Controller('scripts')
+@Controller('scriptsapi')
 export class ScriptController {
   constructor(private readonly scriptService: ScriptService) { }
 

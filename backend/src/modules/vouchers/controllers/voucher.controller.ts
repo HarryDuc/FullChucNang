@@ -18,7 +18,7 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 import { PermissionGuard } from 'src/modules/permissions/guards/permission.guard';
 import { RequirePermission } from 'src/common/decorators/permission.decorator';
 
-@Controller('vouchers')
+@Controller('vouchersapi')
 export class VoucherController {
   constructor(private readonly voucherService: VoucherService) { }
 

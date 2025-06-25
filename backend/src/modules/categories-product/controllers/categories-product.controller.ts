@@ -20,7 +20,7 @@ import { PermissionGuard } from 'src/modules/permissions/guards/permission.guard
 /**
  * 📌 Controller để quản lý danh mục sản phẩm.
  */
-@Controller('categories-product')
+@Controller('categories-productsapi')
 export class CategoriesProductController {
   constructor(private readonly categoriesService: CategoriesProductService) { }
 

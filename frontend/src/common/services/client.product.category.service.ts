@@ -1,4 +1,6 @@
-const CATEGORY_API = `${process.env.NEXT_PUBLIC_API_URL}/categories-product`;
+import { API_URL_CLIENT } from "@/config/apiRoutes";
+import { config } from "@/config/config";
+const CATEGORY_API = API_URL_CLIENT + config.ROUTES.CATEGORIES_PRODUCT.BASE;
 
 // Hàm xử lý phản hồi từ API
 const handleResponse = async (response: Response) => {

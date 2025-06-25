@@ -1,7 +1,8 @@
 import { ClientProduct } from "../models/product.model";
+import { API_URL_CLIENT } from "@/config/apiRoutes";
+import { config } from "@/config/config";
 
-const BASE_API = process.env.NEXT_PUBLIC_API_URL;
-const PRODUCT_API = `${BASE_API}/productapi`;
+const PRODUCT_API = API_URL_CLIENT + config.ROUTES.PRODUCTS.BASE;
 
 const handleResponse = async (response: Response) => {
   if (!response.ok) {

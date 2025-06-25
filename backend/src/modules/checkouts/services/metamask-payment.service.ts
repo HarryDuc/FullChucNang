@@ -8,6 +8,8 @@ import { ethers } from 'ethers';
 @Injectable()
 export class MetamaskPaymentService {
   private readonly logger = new Logger(MetamaskPaymentService.name);
+  private readonly USDT_CONTRACT_ADDRESS = '0x55d398326f99059fF775485246999027B3197955'; // BSC USDT Contract
+  private readonly USDT_DECIMALS = 18;
 
   constructor(
     @InjectModel(Checkout.name) private checkoutModel: Model<Checkout>,
@@ -15,10 +17,10 @@ export class MetamaskPaymentService {
   ) { }
 
   /**
-   * Xác nhận giao dịch MetaMask
+   * Xác nhận giao dịch MetaMask với USDT
    * @param slug slug của checkout
    * @param transactionHash hash của giao dịch
-   * @param amount số tiền thanh toán
+   * @param amount số tiền thanh toán (USDT)
    * @param walletAddress địa chỉ ví
    */
   async verifyTransaction(
@@ -47,10 +49,10 @@ export class MetamaskPaymentService {
         );
       }
 
-      // Kiểm tra số tiền - Lưu ý: amount ở đây là số BNB, không phải VND
+      // Kiểm tra số tiền - Lưu ý: amount ở đây là số USDT, không phải VND
       // Không so sánh trực tiếp với order.totalPrice (VND) mà chỉ lưu lại thông tin
       this.logger.log(
-        `Xác minh thanh toán: Số BNB nhận được: ${amount}, Số tiền đơn hàng (VND): ${order.totalPrice}`,
+        `Xác minh thanh toán: Số USDT nhận được: ${amount}, Số tiền đơn hàng (VND): ${order.totalPrice}`,
       );
 
       // Lưu thông tin thanh toán, nhận tất cả giao dịch đã được xác nhận
@@ -59,11 +61,13 @@ export class MetamaskPaymentService {
         ...checkout.paymentMethodInfo,
         transactionHash,
         walletAddress,
-        amountInBNB: amount,
+        amountInUSDT: amount,
         amountInVND: order.totalPrice,
         verificationTime: new Date(),
         verified: true,
-        currency: 'BNB',
+        currency: 'USDT',
+        tokenAddress: this.USDT_CONTRACT_ADDRESS,
+        tokenDecimals: this.USDT_DECIMALS,
         network: networkInfo?.network || 'BSC',
         chainId: networkInfo?.chainId,
         blockExplorer: networkInfo?.blockExplorer || 'https://bscscan.com/',
@@ -74,18 +78,17 @@ export class MetamaskPaymentService {
 
       // Cập nhật trạng thái đơn hàng
       order.status = 'processing'; // hoặc trạng thái phù hợp
-      // order.paymentStatus = 'paid';
 
       // Lưu thay đổi
       await Promise.all([checkout.save(), order.save()]);
 
       this.logger.log(
-        `Xác minh thanh toán MetaMask thành công cho đơn hàng ${order._id}`,
+        `Xác minh thanh toán USDT thành công cho đơn hàng ${order._id}`,
       );
       return checkout;
     } catch (error) {
       this.logger.error(
-        `Lỗi khi xác minh giao dịch MetaMask: ${error.message}`,
+        `Lỗi khi xác minh giao dịch USDT: ${error.message}`,
         error.stack,
       );
       throw error;
@@ -93,7 +96,7 @@ export class MetamaskPaymentService {
   }
 
   /**
-   * Tạo thông tin thanh toán MetaMask cho checkout
+   * Tạo thông tin thanh toán USDT cho checkout
    * @param slug slug của checkout
    * @param receivingAddress địa chỉ nhận tiền (của shop)
    */
@@ -122,7 +125,9 @@ export class MetamaskPaymentService {
         ...checkout.paymentMethodInfo,
         receivingAddress: receivingAddress,
         amount: order.totalPrice,
-        currency: 'BNB',
+        currency: 'USDT',
+        tokenAddress: this.USDT_CONTRACT_ADDRESS,
+        tokenDecimals: this.USDT_DECIMALS,
         network: 'BSC',
         generatedAt: new Date(),
       };
@@ -134,10 +139,12 @@ export class MetamaskPaymentService {
         receivingAddress,
         amount: order.totalPrice,
         orderCode: checkout.orderCode,
+        tokenAddress: this.USDT_CONTRACT_ADDRESS,
+        tokenDecimals: this.USDT_DECIMALS,
       };
     } catch (error) {
       this.logger.error(
-        `Lỗi khi tạo thông tin thanh toán MetaMask: ${error.message}`,
+        `Lỗi khi tạo thông tin thanh toán USDT: ${error.message}`,
         error.stack,
       );
       throw error;

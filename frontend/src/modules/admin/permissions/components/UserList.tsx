@@ -3,6 +3,10 @@
 import React, { useState, useEffect } from "react";
 import api from "@/common/utils/api"
 import { useUserRoles } from "../../manager-permissions/hooks/useUserRoles";
+import { API_URL_CLIENT } from "@/config/apiRoutes";
+import { config } from "@/config/config";
+
+
 
 interface User {
   id: string;
@@ -30,7 +34,7 @@ export const UserList: React.FC<UserListProps> = ({
       try {
         setLoading(true);
         const response = await api.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/users`,
+          `${API_URL_CLIENT}${config.ROUTES.USERS.BASE}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,

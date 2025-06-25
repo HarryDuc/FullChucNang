@@ -29,7 +29,7 @@ class UpdateSlugDto {
 /**
  * Bộ điều khiển quản lý bài viết (CRUD) tại endpoint /api/posts
  */
-@Controller('postapi')
+@Controller('postsapi')
 export class PostController {
   constructor(private readonly postService: PostService) { }
 

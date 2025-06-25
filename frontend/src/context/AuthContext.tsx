@@ -11,7 +11,8 @@ import {
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode"; // Use the default export from jwt-decode
 import axios from "axios";
-import { apiRoutes } from "@/config/apiRoutes";
+import { API_URL_CLIENT, apiRoutes } from "@/config/apiRoutes";
+import { config } from "@/config/config";
 
 // User roles
 type UserRole = "user" | "admin" | "staff" | "manager" | "technical";
@@ -46,7 +47,7 @@ interface AuthContextType {
   isLoadingPermissions: boolean;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const BASE_URL = API_URL_CLIENT
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 

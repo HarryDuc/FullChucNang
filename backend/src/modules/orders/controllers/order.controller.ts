@@ -22,7 +22,7 @@ import { Public } from 'src/common/decorators/public.decorator';
  * OrderController định nghĩa các endpoint cho thao tác CRUD trên đơn hàng.
  * - Sử dụng slug làm định danh duy nhất thay vì _id.
  */
-@Controller('orders')
+@Controller('ordersapi')
 export class OrderController {
   constructor(private readonly orderService: OrderService) { }
 

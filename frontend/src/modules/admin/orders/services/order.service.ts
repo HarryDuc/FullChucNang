@@ -6,8 +6,10 @@ import {
   updatePaymentStatus as updateCheckoutPaymentStatus,
 } from "../../checkouts/services/checkoutService";
 
-const BASE_API = process.env.NEXT_PUBLIC_API_URL!;
-const ORDER_URL = `${BASE_API}/orders`;
+import { config } from "@/config/config";
+import { API_URL_CLIENT } from "@/config/apiRoutes";
+
+const ORDER_URL = API_URL_CLIENT + config.ROUTES.ORDERS.BASE;
 
 // Interface cho đơn hàng với thông tin checkout
 export interface OrderWithCheckout extends Order {

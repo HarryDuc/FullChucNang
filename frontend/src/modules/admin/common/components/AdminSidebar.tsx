@@ -164,7 +164,7 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
       },
     },
     {
-      href: "/admin/categories-post",
+      href: "/admin/categories-posts",
       icon: <MdOutlineFolderShared />,
       label: "Danh mục bài viết",
       group: "Nội dung",

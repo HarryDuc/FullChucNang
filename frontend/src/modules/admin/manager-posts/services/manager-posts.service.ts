@@ -1,7 +1,9 @@
 import { Post, PostStatus, UpdateStatusDto, UpdateVisibilityDto } from "../../posts/models/post.model";
 
-const BASE_API = process.env.NEXT_PUBLIC_API_URL;
-const POST_API = `${BASE_API}/postapi`;
+import { config } from "@/config/config";
+import { API_URL_CLIENT } from "@/config/apiRoutes";
+
+const POST_API = API_URL_CLIENT + config.ROUTES.POSTS.BASE;
 
 // 🔧 Xử lý response từ server
 const handleResponse = async (response: Response) => {

@@ -12,7 +12,9 @@ const getToken = () => {
   return null;
 };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL + '/vietqr-configapi';
+import { config } from "@/config/config";
+import { API_URL_CLIENT } from "@/config/apiRoutes";
+const API_URL = API_URL_CLIENT + config.ROUTES.VIETQR_CONFIG.BASE;
 
 export const vietQRConfigService = {
   getAll: async (): Promise<VietQRConfig[]> => {

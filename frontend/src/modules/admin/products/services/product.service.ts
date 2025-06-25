@@ -1,10 +1,12 @@
 import { ClientProduct } from "@/common/models/product.model";
 import { Product } from "../models/product.model";
 
-const BASE_API = process.env.NEXT_PUBLIC_API_URL!;
-const IMAGE_UPLOAD_API = `${BASE_API}/images/upload`;
-const PRODUCT_API = `${BASE_API}/productapi`;
-const CATEGORY_API = `${BASE_API}/categories-product`;
+import { config } from "@/config/config";
+import { API_URL_CLIENT } from "@/config/apiRoutes";
+
+const IMAGE_UPLOAD_API = API_URL_CLIENT + config.ROUTES.IMAGES.UPLOAD;
+const PRODUCT_API = API_URL_CLIENT + config.ROUTES.PRODUCTS.BASE;
+const CATEGORY_API = API_URL_CLIENT + config.ROUTES.CATEGORIES_PRODUCT.BASE;
 
 // Hàm xử lý phản hồi từ API
 const handleResponse = async (response: Response) => {

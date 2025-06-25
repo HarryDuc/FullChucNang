@@ -1,7 +1,9 @@
 import { Redirect, RedirectPagination } from "../models/redirect.model";
 
-const BASE_API = process.env.NEXT_PUBLIC_API_URL!;
-const REDIRECT_API = `${BASE_API}/redirects`;
+import { config } from "@/config/config";
+import { API_URL_CLIENT } from "@/config/apiRoutes";
+
+const REDIRECT_API = API_URL_CLIENT + config.ROUTES.REDIRECTS.BASE;
 
 // Hàm xử lý phản hồi từ API
 const handleResponse = async (response: Response) => {
@@ -39,12 +41,12 @@ export const RedirectService = {
   ): Promise<RedirectPagination> => {
     try {
       let url = `${REDIRECT_API}?page=${page}&limit=${limit}`;
-      
+
       if (type) url += `&type=${encodeURIComponent(type)}`;
       if (isActive !== undefined) url += `&isActive=${isActive}`;
       if (path) url += `&path=${encodeURIComponent(path)}`;
       if (statusCode) url += `&statusCode=${statusCode}`;
-      
+
       const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
@@ -66,7 +68,7 @@ export const RedirectService = {
           Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
         },
       });
-      
+
       return handleResponse(response);
     } catch (error) {
       console.error(`Lỗi khi lấy redirect với ID ${id}:`, error);
@@ -103,7 +105,7 @@ export const RedirectService = {
         `${REDIRECT_API}/${id}`,
         fetchOptions("PATCH", redirect)
       );
-      
+
       return handleResponse(response);
     } catch (error) {
       console.error(`Lỗi khi cập nhật redirect ${id}:`, error);
@@ -118,7 +120,7 @@ export const RedirectService = {
         `${REDIRECT_API}/${id}`,
         fetchOptions("DELETE")
       );
-      
+
       await handleResponse(response);
     } catch (error) {
       console.error(`Lỗi khi xóa redirect ${id}:`, error);
@@ -134,7 +136,7 @@ export const RedirectService = {
           Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
         },
       });
-      
+
       const result = await handleResponse(response);
       return result?._id ? result : null;
     } catch (error) {
@@ -142,4 +144,4 @@ export const RedirectService = {
       return null;
     }
   }
-}; 
+};

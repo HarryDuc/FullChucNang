@@ -1,7 +1,10 @@
 import axios, { AxiosResponse } from "axios";
 
 // 🌐 Lấy API URL từ môi trường
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { config } from "@/config/config";
+import { API_URL_CLIENT } from "@/config/apiRoutes";
+
+const API_URL = API_URL_CLIENT + config.ROUTES.AUTH.BASE;
 
 // =====================
 // 📦 Kiểu dữ liệu chuẩn
@@ -57,7 +60,7 @@ export const registerAPI = async (
 ): Promise<AuthResponse> => {
   try {
     const response: AxiosResponse<AuthResponse> = await axios.post(
-      `${API_URL}/auth/register`,
+      `${API_URL}/register`,
       { email, password, fullName },
       {
         headers: { "Content-Type": "application/json" },
@@ -80,7 +83,7 @@ export const checkEmailAPI = async (
 ): Promise<EmailCheckResponse> => {
   try {
     const response: AxiosResponse<EmailCheckResponse> = await axios.get(
-      `${API_URL}/auth/check-email`,
+      `${API_URL}/check-email`,
       { params: { email } }
     );
     return response.data;
@@ -107,7 +110,7 @@ export const loginAPI = async (
 ): Promise<AuthResponse> => {
   try {
     const response: AxiosResponse<AuthResponse> = await axios.post(
-      `${API_URL}/auth/login`,
+      `${API_URL}/login`,
       { email, password },
       {
         headers: { "Content-Type": "application/json" },
@@ -128,7 +131,7 @@ export const loginAPI = async (
 export const fetchUserByToken = async (token: string): Promise<User> => {
   try {
     const response: AxiosResponse<User> = await axios.get(
-      `${API_URL}/auth/me`,
+      `${API_URL}/me`,
       {
         headers: { Authorization: `Bearer ${token}` },
       }
@@ -147,7 +150,7 @@ export const fetchUserByToken = async (token: string): Promise<User> => {
 export const logoutAPI = async (): Promise<{ message: string }> => {
   try {
     const response: AxiosResponse<{ message: string }> = await axios.post(
-      `${API_URL}/auth/logout`,
+      `${API_URL}/logout`,
       {},
       {
         headers: {
@@ -177,7 +180,7 @@ export const requestPasswordResetAPI = async (
 ): Promise<PasswordResetResponse> => {
   try {
     const response: AxiosResponse<PasswordResetResponse> = await axios.post(
-      `${API_URL}/auth/request-password-reset`,
+      `${API_URL}/request-password-reset`,
       { email, resetMethod },
       {
         headers: { "Content-Type": "application/json" },
@@ -200,7 +203,7 @@ export const verifyOtpAPI = async (
 ): Promise<PasswordResetResponse> => {
   try {
     const response: AxiosResponse<PasswordResetResponse> = await axios.post(
-      `${API_URL}/auth/verify-otp`,
+      `${API_URL}/verify-otp`,
       { email, otp },
       {
         headers: { "Content-Type": "application/json" },
@@ -223,7 +226,7 @@ export const resetPasswordWithTokenAPI = async (
 ): Promise<PasswordResetResponse> => {
   try {
     const response: AxiosResponse<PasswordResetResponse> = await axios.post(
-      `${API_URL}/auth/reset-password/token`,
+      `${API_URL}/reset-password/token`,
       { token, newPassword },
       {
         headers: { "Content-Type": "application/json" },
@@ -247,7 +250,7 @@ export const resetPasswordWithOtpAPI = async (
 ): Promise<PasswordResetResponse> => {
   try {
     const response: AxiosResponse<PasswordResetResponse> = await axios.post(
-      `${API_URL}/auth/reset-password/otp`,
+      `${API_URL}/reset-password/otp`,
       { email, otp, newPassword },
       {
         headers: { "Content-Type": "application/json" },
@@ -266,7 +269,7 @@ export const resetPasswordWithOtpAPI = async (
 // =====================
 export const initiateGoogleLogin = () => {
   // Chuyển hướng người dùng đến endpoint Google auth của backend
-  window.location.href = `${API_URL}/auth/google`;
+  window.location.href = `${API_URL}/google`;
 };
 
 // =====================
@@ -275,7 +278,7 @@ export const initiateGoogleLogin = () => {
 export const handleGoogleCallback = async (token: string): Promise<AuthResponse> => {
   try {
     // Verify token với backend
-    const response = await axios.get(`${API_URL}/auth/verify-token`, {
+    const response = await axios.get(`${API_URL}/verify-token`, {
       headers: {
         Authorization: `Bearer ${token}`
       }

@@ -2,6 +2,10 @@ import { ethers } from 'ethers';
 import api from '../../config/api';
 import { ApiResponse } from '../types/api-response';
 import axios, { AxiosError } from 'axios';
+import { API_URL_CLIENT } from "@/config/apiRoutes";
+import { config } from "@/config/config";
+
+const AUTH_API = API_URL_CLIENT + config.ROUTES.AUTH.BASE;
 
 /**
  * Service for MetaMask authentication
@@ -148,7 +152,7 @@ export class MetamaskService {
           attempts++;
           console.log(`Attempt ${attempts} to get nonce...`);
 
-          const response = await api.post('/auth/metamask/nonce',
+          const response = await api.post(AUTH_API + '/metamask/nonce',
             { address: checksumAddress },
             {
               timeout: 10000, // 10 giây
@@ -255,7 +259,7 @@ export class MetamaskService {
       console.log('Sending authentication request with:', { address, signature: signature.substring(0, 20) + '...' });
 
       // Thêm timeout dài hơn để đảm bảo server có đủ thời gian xử lý
-      const response = await api.post('/auth/metamask/authenticate', {
+      const response = await api.post(AUTH_API + '/metamask/authenticate', {
         address,
         signature,
       }, {
@@ -313,7 +317,7 @@ export class MetamaskService {
       const signature = await this.signMessage(message);
 
       // Link the wallet
-      const response = await api.post<ApiResponse<any>>('/auth/metamask/link', {
+      const response = await api.post<ApiResponse<any>>(AUTH_API + '/metamask/link', {
         address,
         signature,
       });
@@ -335,7 +339,7 @@ export class MetamaskService {
    */
   public async getUserWallets(): Promise<any> {
     try {
-      const response = await api.get<ApiResponse<any>>('/auth/metamask/wallets');
+      const response = await api.get<ApiResponse<any>>(AUTH_API + '/metamask/wallets');
 
       // Kiểm tra phản hồi
       if (!response.data || !response.data.data) {
@@ -354,7 +358,7 @@ export class MetamaskService {
    */
   public async removeWallet(address: string): Promise<any> {
     try {
-      const response = await api.delete<ApiResponse<any>>(`/auth/metamask/wallets/${address}`);
+      const response = await api.delete<ApiResponse<any>>(AUTH_API + `/metamask/wallets/${address}`);
 
       // Kiểm tra phản hồi
       if (!response.data || !response.data.data) {
@@ -373,7 +377,7 @@ export class MetamaskService {
    */
   public async setPrimaryWallet(address: string): Promise<any> {
     try {
-      const response = await api.post<ApiResponse<any>>(`/auth/metamask/wallets/${address}/primary`);
+      const response = await api.post<ApiResponse<any>>(AUTH_API + `/metamask/wallets/${address}/primary`);
 
       // Kiểm tra phản hồi
       if (!response.data || !response.data.data) {

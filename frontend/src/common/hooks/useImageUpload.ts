@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { uploadImage } from '../services/imageService1';
+import imageService from '../services/imageService';
 
 export const useImageUpload = () => {
     const [isLoading, setIsLoading] = useState(false);
@@ -8,7 +8,7 @@ export const useImageUpload = () => {
     const handleUpload = async (file: File, userId: string) => {
         setIsLoading(true);
         try {
-            const response = await uploadImage(file, userId);
+            const response = await imageService.uploadImage(file, true);
             setUploadedUrl(response.url);
         } catch (error) {
             console.error('Error uploading image:', error);

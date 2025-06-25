@@ -1,5 +1,9 @@
 import api from '@/common/utils/api';
 import { Permission } from '../../permissions/services/permission.service';
+import { config } from '@/config/config';
+import { API_URL_CLIENT } from '@/config/apiRoutes';
+
+const API_URL = API_URL_CLIENT
 
 export interface Role {
   id: string;
@@ -34,8 +38,8 @@ export class RoleService {
   private userRolesUrl: string;
 
   private constructor() {
-    this.baseUrl = process.env.NEXT_PUBLIC_API_URL + '/roles';
-    this.userRolesUrl = process.env.NEXT_PUBLIC_API_URL + '/user-roles';
+    this.baseUrl = API_URL + config.ROUTES.MANAGER_PERMISSIONS.ROLES_BASE;
+    this.userRolesUrl = API_URL + config.ROUTES.MANAGER_PERMISSIONS.USER_ROLES_BASE;
   }
 
   public static getInstance(): RoleService {

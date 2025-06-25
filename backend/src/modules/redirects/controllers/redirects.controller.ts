@@ -17,7 +17,7 @@ import { Roles } from '../../../common/decorators/roles.decorator';
 import { PermissionGuard } from 'src/modules/permissions/guards/permission.guard';
 import { RequirePermission } from 'src/common/decorators/permission.decorator';
 
-@Controller('redirects')
+@Controller('redirectsapi')
 export class RedirectsController {
   constructor(private readonly redirectsService: RedirectsService) {}
 

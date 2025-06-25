@@ -12,7 +12,6 @@ const HomeSection = () => {
         className="flex flex-col md:flex-row gap-4"
         aria-label="Danh mục và slider"
       >
-        {/* Danh mục - Hiển thị full trên mobile, 1/4 trên desktop */}
         <aside
           className="w-full md:w-1/3 lg:w-1/5"
           aria-label="Danh mục sản phẩm"
@@ -21,8 +20,6 @@ const HomeSection = () => {
             <Category_Home />
           </div>
         </aside>
-
-        {/* Carousel và Gallery - Hiển thị full trên mobile, 3/4 trên desktop */}
         <div className="w-full md:w-2/3 lg:w-4/5">
           <div className="flex flex-col gap-4">
             <div aria-label="Trình chiếu hình ảnh chính">

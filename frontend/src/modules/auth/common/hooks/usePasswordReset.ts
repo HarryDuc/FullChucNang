@@ -33,7 +33,7 @@ export const usePasswordReset = (): UsePasswordResetReturn => {
     setError(null);
     setSuccess(false);
     try {
-      const response = await requestPasswordResetAPI(email, resetMethod);
+      const response: PasswordResetResponse = await requestPasswordResetAPI(email, resetMethod);
       setSuccess(true);
       return response;
     } catch (err: any) {
@@ -49,7 +49,7 @@ export const usePasswordReset = (): UsePasswordResetReturn => {
     setError(null);
     setSuccess(false);
     try {
-      const response = await verifyOtpAPI(email, otp);
+      const response: PasswordResetResponse = await verifyOtpAPI(email, otp);
       setSuccess(true);
       return response;
     } catch (err: any) {
@@ -65,7 +65,7 @@ export const usePasswordReset = (): UsePasswordResetReturn => {
     setError(null);
     setSuccess(false);
     try {
-      const response = await resetPasswordWithTokenAPI(token, newPassword);
+      const response: PasswordResetResponse = await resetPasswordWithTokenAPI(token, newPassword);
       setSuccess(true);
       return response;
     } catch (err: any) {
@@ -81,7 +81,7 @@ export const usePasswordReset = (): UsePasswordResetReturn => {
     setError(null);
     setSuccess(false);
     try {
-      const response = await resetPasswordWithOtpAPI(email, otp, newPassword);
+      const response: PasswordResetResponse = await resetPasswordWithOtpAPI(email, otp, newPassword);
       setSuccess(true);
       return response;
     } catch (err: any) {

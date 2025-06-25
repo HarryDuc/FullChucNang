@@ -7,6 +7,8 @@ import {
   Put,
   Body,
   Query,
+  Param,
+  Delete,
   HttpCode,
   HttpStatus,
   UseGuards,
@@ -27,6 +29,8 @@ import { ConfigService } from '@nestjs/config';
 import { RequestPasswordResetDto, ResetPasswordWithTokenDto, ResetPasswordWithOtpDto, VerifyOtpDto } from '../dtos/password-reset.dto';
 import { PermissionsService } from '../../permissions/services/permissions.service';
 import { Document } from 'mongoose';
+import { MetamaskAuthService } from '../services/metamask-auth.service';
+import { MetamaskNonceDto, MetamaskAuthDto, LinkMetamaskDto } from '../dtos/metamask-auth.dto';
 
 // Interface để định nghĩa kiểu dữ liệu của req.user
 interface RequestWithUser extends Request {
@@ -42,7 +46,7 @@ interface AuthError extends Error {
   message: string;
 }
 
-@Controller('auth')
+@Controller('authapi')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
@@ -51,6 +55,7 @@ export class AuthController {
     private readonly userService: UsersService,
     private readonly configService: ConfigService,
     private readonly permissionsService: PermissionsService,
+    private readonly metamaskAuthService: MetamaskAuthService,
   ) { }
 
   // Kiểm tra email trước khi submit
@@ -130,7 +135,7 @@ export class AuthController {
   @Get('me')
   @UseGuards(JwtAuthGuard)
   async getProfile(@Request() req: RequestWithUser) {
-    const userId = req.user?.userId; // Đổi từ `req.user.id` sang `req.user.userId`
+    const userId = req.user?.userId;
     this.logger.log(`👤 Đang lấy thông tin người dùng với ID: ${userId}`);
 
     if (!userId) {
@@ -323,5 +328,78 @@ export class AuthController {
     } catch (error) {
       throw new UnauthorizedException('Error checking permissions');
     }
+  }
+
+  // ============= Metamask Authentication Endpoints =============
+
+  /**
+   * 🔢 Get a nonce to sign with MetaMask
+   */
+  @Post('metamask/nonce')
+  async getNonce(@Body() dto: MetamaskNonceDto) {
+    this.logger.log(`🔢 Getting nonce for address: ${dto.address}`);
+    return this.metamaskAuthService.getNonce(dto);
+  }
+
+  /**
+   * 🔐 Authenticate with MetaMask
+   */
+  @Post('metamask/authenticate')
+  async authenticate(@Body() dto: MetamaskAuthDto) {
+    try {
+      this.logger.log(`🔐 Authenticating with MetaMask for address: ${dto.address}`);
+      this.logger.debug(`Signature length: ${dto.signature.length}, first chars: ${dto.signature.substring(0, 10)}...`);
+
+      const result = await this.metamaskAuthService.authenticate(dto);
+      this.logger.log(`✅ Authentication successful for address: ${dto.address}`);
+      return result;
+    } catch (error) {
+      this.logger.error(`❌ Authentication failed for address: ${dto.address}`, error.stack);
+      throw error;
+    }
+  }
+
+  /**
+   * 🔗 Link a MetaMask wallet to the current user account
+   */
+  @Post('metamask/link')
+  @UseGuards(JwtAuthGuard)
+  async linkWallet(@Request() req: RequestWithUser, @Body() dto: LinkMetamaskDto) {
+    const userId = req.user.userId;
+    this.logger.log(`🔗 Linking wallet address ${dto.address} to user ${userId}`);
+    return this.metamaskAuthService.linkWallet(userId, dto);
+  }
+
+  /**
+   * 📋 Get all wallets for the current user
+   */
+  @Get('metamask/wallets')
+  @UseGuards(JwtAuthGuard)
+  async getUserWallets(@Request() req: RequestWithUser) {
+    const userId = req.user.userId;
+    this.logger.log(`📋 Getting wallets for user ${userId}`);
+    return this.metamaskAuthService.getUserWallets(userId);
+  }
+
+  /**
+   * 🚫 Remove a wallet from the current user account
+   */
+  @Delete('metamask/wallets/:address')
+  @UseGuards(JwtAuthGuard)
+  async removeWallet(@Request() req: RequestWithUser, @Param('address') address: string) {
+    const userId = req.user.userId;
+    this.logger.log(`🚫 Removing wallet ${address} from user ${userId}`);
+    return this.metamaskAuthService.removeWallet(userId, address);
+  }
+
+  /**
+   * ⭐ Set a wallet as the primary wallet for the current user
+   */
+  @Post('metamask/wallets/:address/primary')
+  @UseGuards(JwtAuthGuard)
+  async setPrimaryWallet(@Request() req: RequestWithUser, @Param('address') address: string) {
+    const userId = req.user.userId;
+    this.logger.log(`⭐ Setting ${address} as primary wallet for user ${userId}`);
+    return this.metamaskAuthService.setPrimaryWallet(userId, address);
   }
 }

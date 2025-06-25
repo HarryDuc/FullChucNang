@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { loginAPI, registerAPI } from "../services/authService";
+import { AuthResponse, loginAPI, registerAPI } from "../services/authService";
 
 // Định nghĩa interface để tránh sử dụng any
 interface CustomAxiosError extends Error {
@@ -38,12 +38,12 @@ export const useAuth = () => {
     setError(null);
     try {
       console.log("Bắt đầu đăng nhập với email:", email);
-      const res: LoginResponse = await loginAPI(email, password);
+      const res: AuthResponse = await loginAPI(email, password);
       console.log("Đăng nhập thành công:", res);
 
       // Nếu có user thì cập nhật state
       if (res.user) {
-        setUser(res.user);
+        setUser(res.user as User);
       }
 
       // Đã loại bỏ việc lưu token vào localStorage

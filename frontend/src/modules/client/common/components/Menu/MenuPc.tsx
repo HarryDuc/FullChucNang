@@ -136,7 +136,7 @@ const MenuPC = () => {
               aria-label="Trang chủ Decor & More"
             >
               <img
-                src={contact?.logo || "/logo.png"}
+                src={contact?.logo || "/image/Logo_Decor-More.png"}
                 alt="Logo"
                 className="mr-2 w-16 h-16 object-contain"
                 loading="lazy"

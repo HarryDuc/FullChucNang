@@ -8,7 +8,7 @@ import { Roles } from '../../../common/decorators/roles.decorator';
 import { PermissionGuard } from '../../permissions/guards/permission.guard';
 import { RequirePermission } from 'src/common/decorators/permission.decorator';
 
-@Controller('roles')
+@Controller('rolesapi')
 export class RoleController {
   constructor(private readonly roleService: RoleService) { }
 

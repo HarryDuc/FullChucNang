@@ -4,7 +4,7 @@ import { CreatePaypalOrderDto } from '../dtos';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { Public } from 'src/common/decorators/public.decorator';
 
-@Controller('paypal')
+@Controller('paypalsapi')
 export class PaypalController {
   constructor(private readonly paypalService: PaypalPaymentService) { }
 

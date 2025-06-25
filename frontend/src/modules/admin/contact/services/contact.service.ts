@@ -1,7 +1,11 @@
 import axios from "axios";
+import { config } from "@/config/config";
+import { API_URL_CLIENT } from "@/config/apiRoutes";
+
+const API_URL = API_URL_CLIENT + config.ROUTES.CONTACTS.BASE;
 
 const axiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   }
@@ -74,7 +78,7 @@ export interface ICreateContact {
 }
 
 class ContactService {
-  private readonly baseUrl = '/contactsapi';
+  private readonly baseUrl = API_URL
 
   async getAllContacts(): Promise<IContact[]> {
     try {

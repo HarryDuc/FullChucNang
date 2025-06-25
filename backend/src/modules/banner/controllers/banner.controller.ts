@@ -18,7 +18,7 @@ import { Roles } from '../../../common/decorators/roles.decorator';
 import { PermissionGuard } from '../../permissions/guards/permission.guard';
 import { RequirePermission } from '../../../common/decorators/permission.decorator';
 
-@Controller('banners')
+@Controller('bannersapi')
 export class BannerController {
   constructor(private readonly bannerService: BannerService) { }
 

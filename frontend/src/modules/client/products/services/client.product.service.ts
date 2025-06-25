@@ -69,11 +69,12 @@ export interface Product {
   variants?: ProductVariant[];
 }
 
-const BASE_API = process.env.NEXT_PUBLIC_API_URL;
-const CATEGORIES_API = `${BASE_API}/categories-product`;
-const MAIN_CATEGORIES_API = `${BASE_API}/categories-product/main`;
-const SUB_CATEGORIES_API = `${BASE_API}/categories-product/sub`;
-const PRODUCT_API = `${BASE_API}/productapi`;
+import { config } from "@/config/config";
+import { API_URL_CLIENT } from "@/config/apiRoutes";
+const CATEGORIES_API = API_URL_CLIENT + config.ROUTES.CATEGORIES_PRODUCT.BASE;
+const MAIN_CATEGORIES_API = `${CATEGORIES_API}/main`;
+const SUB_CATEGORIES_API = `${CATEGORIES_API}/sub`;
+const PRODUCT_API = API_URL_CLIENT + config.ROUTES.PRODUCTS.BASE;
 
 /**
  * Hàm hỗ trợ gọi API và trả về dữ liệu dạng JSON với xử lý lỗi chung.

@@ -10,7 +10,7 @@ export const API_URL = envConfig.API_URL;
 export const config = {
     API_URL,
     APP_URL: envConfig.APP_URL,
-    ROUTES: apiRoutes,
+    ROUTES:  apiRoutes,
     DEFAULT_IMAGE_URL: '/images/default-thumbnail.png', // Ảnh mặc định nếu không có thumbnail
     MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
     SUPPORTED_IMAGE_FORMATS: ['image/jpg', 'image/jpeg', 'image/png'],

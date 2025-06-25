@@ -6,7 +6,10 @@ import {
   VoucherResponse
 } from '../models/voucher.model';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL + '/vouchers';
+import { config } from "@/config/config";
+import { API_URL_CLIENT } from "@/config/apiRoutes";
+
+const API_URL = API_URL_CLIENT + config.ROUTES.VOUCHERS.BASE;
 
 // Safe way to access localStorage in Next.js (works in both client and server)
 const getToken = () => {

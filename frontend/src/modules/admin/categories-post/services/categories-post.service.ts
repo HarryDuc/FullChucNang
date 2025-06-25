@@ -1,63 +1,49 @@
 // 📁 src/modules/categories-post/services/categories-post.service.ts
 
 import {
-    CategoryPost,
-    CategoryPostTree,
-    CreateCategoryPostDto,
-    UpdateCategoryPostDto,
-  } from "../models/categories-post.model";
+  CategoryPost,
+  CategoryPostTree,
+  CreateCategoryPostDto,
+  UpdateCategoryPostDto,
+} from "../models/categories-post.model";
 
-  const BASE_API = process.env.NEXT_PUBLIC_API_URL;
-  const CATEGORY_POST_API = `${BASE_API}/category-postsapi`;
+import { config } from '@/config/config';
+import api from '@/config/api';
+import { API_URL_CLIENT } from '@/config/apiRoutes';
 
-  const handleResponse = async <T>(response: Response): Promise<T> => {
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      console.log(errorData);
-      throw new Error(errorData?.message || "Lỗi từ máy chủ");
-    }
-    return response.json();
-  };
+const API_URL = API_URL_CLIENT + config.ROUTES.CATEGORIES_POST.BASE;
 
-  const fetchOptions = (method: string, data?: unknown): RequestInit => ({
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
-    body: data ? JSON.stringify(data) : undefined,
-  });
+export const CategoryPostService = {
+  create: async (dto: CreateCategoryPostDto): Promise<{ message: string; data: CategoryPost }> => {
+    const response = await api.post(API_URL + config.ROUTES.CATEGORIES_POST.CREATE, dto);
+    return response.data;
+  },
 
-  export const CategoryPostService = {
-    create: async (dto: CreateCategoryPostDto): Promise<{ message: string; data: CategoryPost }> => {
-      const res = await fetch(CATEGORY_POST_API, fetchOptions("POST", dto));
-      return handleResponse(res);
-    },
+  update: async (slug: string, dto: UpdateCategoryPostDto): Promise<{ message: string; data: CategoryPost }> => {
+    const response = await api.patch(API_URL + config.ROUTES.CATEGORIES_POST.UPDATE(slug), dto);
+    return response.data;
+  },
 
-    update: async (slug: string, dto: UpdateCategoryPostDto): Promise<{ message: string; data: CategoryPost }> => {
-      const res = await fetch(`${CATEGORY_POST_API}/${slug}`, fetchOptions("PATCH", dto));
-      return handleResponse(res);
-    },
+  getOne: async (slug: string): Promise<{ message: string; data: CategoryPostTree }> => {
+    const response = await api.get(API_URL + config.ROUTES.CATEGORIES_POST.GET_ONE(slug));
+    return response.data;
+  },
 
-    getOne: async (slug: string): Promise<{ message: string; data: CategoryPostTree }> => {
-      const res = await fetch(`${CATEGORY_POST_API}/${slug}`);
-      return handleResponse(res);
-    },
+  findAll: async (params?: { page?: number; limit?: number; search?: string }): Promise<{ message: string; data: CategoryPost[] }> => {
+    const url = API_URL + config.ROUTES.CATEGORIES_POST.GET_ALL(params);
+    const response = await api.get(url);
+    return response.data;
+  },
 
-    findAll: async (page = 1, limit = 10): Promise<{ message: string; data: CategoryPost[] }> => {
-      const res = await fetch(`${CATEGORY_POST_API}?page=${page}&limit=${limit}`);
-      return handleResponse(res);
-    },
+  softDelete: async (slug: string): Promise<{ message: string }> => {
+    const response = await api.patch(API_URL + config.ROUTES.CATEGORIES_POST.SOFT_DELETE(slug));
+    return response.data;
+  },
 
-    softDelete: async (slug: string): Promise<{ message: string }> => {
-      const res = await fetch(`${CATEGORY_POST_API}/${slug}/soft-delete`, fetchOptions("PATCH"));
-      return handleResponse(res);
-    },
+  hardDelete: async (slug: string): Promise<{ message: string }> => {
+    const response = await api.delete(API_URL + config.ROUTES.CATEGORIES_POST.DELETE(slug));
+    return response.data;
+  },
+};
 
-    hardDelete: async (slug: string): Promise<{ message: string }> => {
-      const res = await fetch(`${CATEGORY_POST_API}/${slug}`, fetchOptions("DELETE"));
-      return handleResponse(res);
-    },
-  };
-
-  export default CategoryPostService;
+export default CategoryPostService;

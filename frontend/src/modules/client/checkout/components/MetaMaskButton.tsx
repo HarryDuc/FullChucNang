@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
-import metamaskPaymentService from "../services/metamaskService";
+import metamaskPaymentService, {
+  PAYMENT_CURRENCY,
+} from "../services/metamaskService";
 import { toast } from "react-toastify";
 
 interface MetaMaskButtonProps {
@@ -48,29 +50,28 @@ const MetaMaskButton: React.FC<MetaMaskButtonProps> = ({
       setWalletAddress(address);
       console.log("Đã kết nối với ví:", address);
 
-      // 2. Chuyển đổi số tiền sang BNB (giả định 1 USD = 0.0033 BNB và 1 VND = 0.000042 USD)
+      // 2. Chuyển đổi số tiền sang USDT (giả định 1 USD = 1 USDT và 1 VND = 0.000042 USD)
       // Trong thực tế, bạn sẽ cần API chuyển đổi tỷ giá
-      const VND_TO_USD = 0.000038; // 1 VND = 0.000042 USD (xấp xỉ)
-      const USD_TO_BNB = 0.0015; // 1 USD = 0.0033 BNB (xấp xỉ)
-      const exchangeRate = VND_TO_USD * USD_TO_BNB;
+      const VND_TO_USD = 0.000042; // 1 VND = 0.000042 USD (xấp xỉ)
+      const amountInUSDT = (amount * VND_TO_USD).toFixed(6);
 
-      // Đảm bảo số tiền tối thiểu là 0.001 BNB để tránh giao dịch quá nhỏ
-      let amountInBNB = (amount * exchangeRate).toFixed(6);
-      const minAmountInBNB = 0.001;
+      // Đảm bảo số tiền tối thiểu là 0.1 USDT để tránh giao dịch quá nhỏ
+      const minAmountInUSDT = 0.1;
+      let finalAmount = amountInUSDT;
 
-      if (parseFloat(amountInBNB) < minAmountInBNB) {
+      if (parseFloat(amountInUSDT) < minAmountInUSDT) {
         console.log(
-          `Điều chỉnh số tiền từ ${amountInBNB} lên ${minAmountInBNB} BNB (số tiền tối thiểu)`
+          `Điều chỉnh số tiền từ ${amountInUSDT} lên ${minAmountInUSDT} USDT (số tiền tối thiểu)`
         );
-        amountInBNB = minAmountInBNB.toFixed(6);
+        finalAmount = minAmountInUSDT.toFixed(6);
       }
 
-      toast.info(`Đang chuẩn bị giao dịch thanh toán ${amountInBNB} BNB...`);
+      toast.info(`Đang chuẩn bị giao dịch thanh toán ${finalAmount} USDT...`);
 
       // 3. Thực hiện thanh toán
       const transactionHash = await metamaskPaymentService.makePayment(
         SHOP_WALLET_ADDRESS,
-        amountInBNB
+        finalAmount
       );
 
       toast.success("Giao dịch đã được gửi thành công!");
@@ -84,7 +85,7 @@ const MetaMaskButton: React.FC<MetaMaskButtonProps> = ({
       await metamaskPaymentService.verifyTransaction(
         checkoutSlug,
         transactionHash,
-        parseFloat(amountInBNB),
+        parseFloat(finalAmount),
         address
       );
 
@@ -93,7 +94,7 @@ const MetaMaskButton: React.FC<MetaMaskButtonProps> = ({
       // 5. Gọi callback thành công
       onSuccess(transactionHash);
     } catch (error: any) {
-      console.error("Lỗi thanh toán MetaMask:", error);
+      console.error("Lỗi thanh toán USDT:", error);
 
       // Kiểm tra lỗi user cancel
       if (error.code === 4001) {
@@ -129,6 +130,19 @@ const MetaMaskButton: React.FC<MetaMaskButtonProps> = ({
           )}
         </div>
       )}
+
+      <div className="mb-4 text-sm text-gray-600">
+        <p>
+          Token: {PAYMENT_CURRENCY.name} ({PAYMENT_CURRENCY.symbol})
+        </p>
+        <p>Mạng: {PAYMENT_CURRENCY.network}</p>
+        <p>
+          Contract: {PAYMENT_CURRENCY.contractAddress.substring(0, 6)}...
+          {PAYMENT_CURRENCY.contractAddress.substring(
+            PAYMENT_CURRENCY.contractAddress.length - 4
+          )}
+        </p>
+      </div>
 
       <button
         onClick={handleMetaMaskPayment}
@@ -170,7 +184,7 @@ const MetaMaskButton: React.FC<MetaMaskButtonProps> = ({
               alt="MetaMask"
               className="h-6 w-6 mr-2"
             />
-            <span>Thanh toán với MetaMask</span>
+            <span>Thanh toán với USDT</span>
           </>
         )}
       </button>

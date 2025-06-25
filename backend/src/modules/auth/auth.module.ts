@@ -19,7 +19,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { ManagerPermissionsModule } from '../manager-permissions/manager-permissions.module';
 import { Auth, AuthSchema } from './schemas/auth.schema';
 import { MetamaskAuthService } from './services/metamask-auth.service';
-import { MetamaskAuthController } from './controllers/metamask-auth.controller';
+// import { MetamaskAuthController } from './controllers/metamask-auth.controller';
 import { Wallet, WalletSchema } from './schemas/wallet.schema';
 
 @Module({
@@ -47,7 +47,7 @@ import { Wallet, WalletSchema } from './schemas/wallet.schema';
       { name: Wallet.name, schema: WalletSchema }, // Add WalletSchema for MetaMask authentication
     ]),
   ],
-  controllers: [AuthController, MetamaskAuthController], // Add MetamaskAuthController
+  controllers: [AuthController], // Add MetamaskAuthController
   providers: [
     AuthService,
     TokenService,

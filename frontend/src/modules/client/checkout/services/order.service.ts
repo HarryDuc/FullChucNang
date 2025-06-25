@@ -4,9 +4,10 @@ import {
   getAllCheckouts,
 } from "./checkoutService";
 import { Order } from "../models/order.models";
+import { config } from "@/config/config";
+import { API_URL_CLIENT } from "@/config/apiRoutes";
 
-const BASE_API = process.env.NEXT_PUBLIC_API_URL!;
-const ORDER_URL = `${BASE_API}/orders`;
+const ORDER_URL = API_URL_CLIENT + config.ROUTES.ORDERS.BASE;
 
 // Interface cho đơn hàng với thông tin checkout
 export interface OrderWithCheckout extends Order {

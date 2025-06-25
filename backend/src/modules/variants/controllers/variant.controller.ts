@@ -26,7 +26,7 @@ import { Variant } from '../schemas/variant.schema';
  * - [PATCH]   /variants/:slug/values      → Cập nhật thuộc tính biến thể.
  * - [PATCH]   /variants/:slug/slug        → Cập nhật slug biến thể.
  */
-@Controller('variants')
+@Controller('variantsapi')
 export class VariantController {
   constructor(private readonly variantService: VariantService) {}
 

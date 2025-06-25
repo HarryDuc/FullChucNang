@@ -95,7 +95,7 @@ const PaymentMethod = ({
                 height={24}
               />
               <span className="text-xs text-gray-500 ml-2">
-                (Thanh toán Ethereum)
+                (Thanh toán USDT)
               </span>
             </label>
           </div>

@@ -1,8 +1,10 @@
 "use client";
 import { useState } from "react";
 import axios from "axios";
+import { API_URL_CLIENT } from "@/config/apiRoutes";
+import { config } from "@/config/config";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = API_URL_CLIENT + config.ROUTES.AUTH.BASE;
 
 export const useAuth = () => {
     const [loading, setLoading] = useState(false);

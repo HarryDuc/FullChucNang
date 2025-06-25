@@ -18,7 +18,7 @@ import { RequirePermission } from 'src/common/decorators/permission.decorator';
 import { PermissionGuard } from 'src/modules/permissions/guards/permission.guard';
 import { Public } from 'src/common/decorators/public.decorator';
 
-@Controller('checkoutapi') // 👉 Có thể đổi thành 'api/checkouts' nếu theo chuẩn toàn hệ thống
+@Controller('checkoutsapi') // 👉 Có thể đổi thành 'api/checkouts' nếu theo chuẩn toàn hệ thống
 export class CheckoutController {
   constructor(private readonly checkoutService: CheckoutService) { }
 

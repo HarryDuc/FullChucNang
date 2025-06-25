@@ -1,8 +1,9 @@
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { config } from "@/config/config";
+import { API_URL_CLIENT } from "@/config/apiRoutes";
 
-console.log('API_URL:', API_URL); // Log API URL to check configuration
+const API_URL = API_URL_CLIENT + config.ROUTES.IMAGES.BASE;
 
 export interface ImageResponse {
   _id: string;
@@ -21,8 +22,8 @@ export const imagesService = {
   // Lấy tất cả ảnh
   getAllImages: async (): Promise<ImageResponse[]> => {
     try {
-      console.log('Calling API:', `${API_URL}/images`);
-      const response = await axios.get(`${API_URL}/images`);
+      console.log('Calling API:', `${API_URL}`);
+      const response = await axios.get(`${API_URL}`);
       console.log('API Response:', response.data);
       return response.data;
     } catch (error) {
@@ -36,7 +37,7 @@ export const imagesService = {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await axios.post(`${API_URL}/images/upload`, formData, {
+    const response = await axios.post(`${API_URL}/upload`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -51,7 +52,7 @@ export const imagesService = {
       formData.append('files', file);
     });
 
-    const response = await axios.post(`${API_URL}/images/upload-multiple`, formData, {
+    const response = await axios.post(`${API_URL}/upload-multiple`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -61,7 +62,7 @@ export const imagesService = {
 
   // Xóa ảnh theo slug
   deleteImage: async (slug: string): Promise<void> => {
-    await axios.delete(`${API_URL}/images/${slug}`);
+    await axios.delete(`${API_URL}/${slug}`);
   },
 
   // Upload ảnh cho SunEditor
@@ -69,7 +70,7 @@ export const imagesService = {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await axios.post(`${API_URL}/images/sunEditor`, formData, {
+    const response = await axios.post(`${API_URL}/sunEditor`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

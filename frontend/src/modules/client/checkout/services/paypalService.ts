@@ -1,4 +1,9 @@
-import api from "../../../../config/api";
+import api from "@/config/api";
+import { config } from "@/config/config";
+import { API_URL_CLIENT } from "@/config/apiRoutes";
+const API_URL = API_URL_CLIENT + config.ROUTES.PAYPAL.BASE;
+const ORDER_URL = API_URL_CLIENT + config.ROUTES.ORDERS.BASE;
+const CHECKOUT_URL = API_URL_CLIENT + config.ROUTES.CHECKOUTS.BASE;
 
 // Exchange rate from VND to USD - this should be updated regularly or fetched from an API
 // Default is approximately 23,000 VND to 1 USD
@@ -34,7 +39,7 @@ export const paypalService = {
       const token = localStorage.getItem("token");
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-      const response = await api.post("/paypal/create-order", {
+      const response = await api.post(`${API_URL}/create-order`, {
         intent: "CAPTURE",
         purchase_units: [
           {
@@ -72,7 +77,7 @@ export const paypalService = {
       const token = localStorage.getItem("token");
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-      const response = await api.post(`/paypal/order/${orderId}/capture`, {}, { headers });
+      const response = await api.post(`${API_URL}/order/${orderId}/capture`, {}, { headers });
       return response.data;
     } catch (error) {
       console.error("Error capturing PayPal payment:", error);
@@ -92,7 +97,7 @@ export const paypalService = {
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
       // Update order status
-      const orderResponse = await api.post(`/orders/${orderSlug}/update-payment-status`, {
+      const orderResponse = await api.post(`${ORDER_URL}/${orderSlug}/update-payment-status`, {
         paymentMethod: "paypal",
         paymentStatus: "paid",
         paymentInfo: {
@@ -101,7 +106,7 @@ export const paypalService = {
       }, { headers });
 
       // Update checkout status
-      const checkoutResponse = await api.put(`/checkoutapi/${orderSlug}-payment/payment-status`, {
+      const checkoutResponse = await api.put(`${CHECKOUT_URL}/${orderSlug}-payment/payment-status`, {
         paymentStatus: "paid"
       }, { headers });
 

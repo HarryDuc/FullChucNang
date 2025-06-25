@@ -7,7 +7,7 @@ import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { PermissionGuard } from 'src/modules/permissions/guards/permission.guard';
 
-@Controller('vietqr-configapi')
+@Controller('vietqr-configsapi')
 export class VietQRConfigController {
   constructor(private readonly vietQRConfigService: VietQRConfigService) { }
 

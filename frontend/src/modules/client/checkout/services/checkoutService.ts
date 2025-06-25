@@ -1,4 +1,6 @@
-const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/checkoutapi`;
+import { config } from "@/config/config";
+import { API_URL_CLIENT } from "@/config/apiRoutes";
+const API_URL = API_URL_CLIENT + config.ROUTES.CHECKOUTS.BASE;
 
 export interface Checkout {
   _id?: string;

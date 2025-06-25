@@ -1,4 +1,8 @@
 import api from '@/common/utils/api';
+import { config } from '@/config/config';
+import { API_URL_CLIENT } from '@/config/apiRoutes';
+
+const API_URL = API_URL_CLIENT
 
 export interface Permission {
   id: string;
@@ -16,7 +20,7 @@ export class PermissionService {
   private baseUrl: string;
 
   private constructor() {
-    this.baseUrl = process.env.NEXT_PUBLIC_API_URL + '/permissionsapi';
+    this.baseUrl = API_URL + config.ROUTES.PERMISSIONS.BASE;
   }
 
   public static getInstance(): PermissionService {

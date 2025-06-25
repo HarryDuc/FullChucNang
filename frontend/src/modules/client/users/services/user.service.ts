@@ -1,8 +1,9 @@
 import { User, UserSettings } from "../models/user.model";
+import { config } from "@/config/config";
+import { API_URL_CLIENT } from "@/config/apiRoutes";
 
-const BASE_API = process.env.NEXT_PUBLIC_API_URL!;
-const AUTH_API = `${BASE_API}/auth`;
-const IMAGE_UPLOAD_API = `${BASE_API}/images/upload`;
+const AUTH_API = API_URL_CLIENT + config.ROUTES.AUTH.BASE;
+const IMAGE_UPLOAD_API = API_URL_CLIENT + config.ROUTES.IMAGES.UPLOAD;
 
 // 🔄 Hàm helper lấy token từ localStorage hoặc cookies
 const getAuthToken = () => {

@@ -13,7 +13,10 @@ interface CustomAxiosError extends Error {
 }
 
 // 🌐 Lấy API_URL từ biến môi trường .env hoặc sử dụng giá trị mặc định
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { config } from "@/config/config";
+import { API_URL_CLIENT } from "@/config/apiRoutes";
+
+const API_URL = API_URL_CLIENT + config.ROUTES.AUTH.BASE;
 
 // 🆕 Định nghĩa kiểu dữ liệu cho tham số đăng nhập
 interface LoginParams {
@@ -46,7 +49,7 @@ export const login = async ({
 }: LoginParams): Promise<LoginResponse> => {
   try {
     const response: AxiosResponse<LoginResponse> = await axios.post(
-      `${API_URL}/auth/login`,
+      `${API_URL}/login`,
       {
         email,
         password,
@@ -79,7 +82,7 @@ export const register = async (
   role: UserRole = "user"
 ) => {
   try {
-    const response = await axios.post(`${API_URL}/auth/register`, {
+    const response = await axios.post(`${API_URL}/register`, {
       email,
       password,
       role,

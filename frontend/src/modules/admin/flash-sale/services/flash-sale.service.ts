@@ -1,8 +1,10 @@
 import { ClientProduct } from "@/common/models/product.model";
 import { Product } from "../../products/models/product.model";
 
-const BASE_API = process.env.NEXT_PUBLIC_API_URL!;
-const PRODUCT_API = `${BASE_API}/productapi`;
+import { config } from "@/config/config";
+import { API_URL_CLIENT } from "@/config/apiRoutes";
+
+const PRODUCT_API = API_URL_CLIENT + config.ROUTES.PRODUCTS.BASE;
 
 // Hàm xử lý phản hồi từ API
 const handleResponse = async (response: Response) => {

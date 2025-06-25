@@ -1,7 +1,9 @@
-import axiosInstance from '@/common/utils/axios';
 import { Banner } from '@/modules/client/home/models/banner.model';
+import { config } from '@/config/config';
+import api from '@/config/api';
+import { API_URL_CLIENT } from '@/config/apiRoutes';
 
-const API_URL = '/banners';
+const API_URL = API_URL_CLIENT + config.ROUTES.BANNERS.BASE;
 
 export interface CreateBannerDto {
   imagePath: string;
@@ -24,7 +26,7 @@ export const AdminBannerService = {
     if (type) params.append('type', type);
     if (isActive !== undefined) params.append('isActive', String(isActive));
 
-    const response = await axiosInstance.get(`${API_URL}?${params.toString()}`);
+    const response = await api.get(`${API_URL}?${params.toString()}`);
     return response.data;
   },
 
@@ -32,7 +34,7 @@ export const AdminBannerService = {
    * Lấy chi tiết banner
    */
   async getBannerById(id: string): Promise<Banner> {
-    const response = await axiosInstance.get(`${API_URL}/${id}`);
+    const response = await api.get(`${API_URL}/${id}`);
     return response.data;
   },
 
@@ -40,7 +42,7 @@ export const AdminBannerService = {
    * Tạo banner mới
    */
   async createBanner(data: CreateBannerDto): Promise<Banner> {
-    const response = await axiosInstance.post(API_URL, data);
+    const response = await api.post(API_URL, data);
     return response.data;
   },
 
@@ -48,7 +50,7 @@ export const AdminBannerService = {
    * Cập nhật banner
    */
   async updateBanner(id: string, data: UpdateBannerDto): Promise<Banner> {
-    const response = await axiosInstance.patch(`${API_URL}/${id}`, data);
+    const response = await api.patch(`${API_URL}/${id}`, data);
     return response.data;
   },
 
@@ -56,7 +58,7 @@ export const AdminBannerService = {
    * Cập nhật thứ tự banner
    */
   async updateBannerOrder(id: string, order: number): Promise<Banner> {
-    const response = await axiosInstance.patch(`${API_URL}/${id}/order`, { order });
+    const response = await api.patch(`${API_URL}/${id}/order`, { order });
     return response.data;
   },
 
@@ -64,7 +66,7 @@ export const AdminBannerService = {
    * Bật/tắt trạng thái banner
    */
   async toggleBannerActive(id: string): Promise<Banner> {
-    const response = await axiosInstance.patch(`${API_URL}/${id}/toggle-active`, {});
+    const response = await api.patch(`${API_URL}/${id}/toggle-active`, {});
     return response.data;
   },
 
@@ -72,6 +74,6 @@ export const AdminBannerService = {
    * Xóa banner
    */
   async deleteBanner(id: string): Promise<void> {
-    await axiosInstance.delete(`${API_URL}/${id}`);
+    await api.delete(`${API_URL}/${id}`);
   }
 };

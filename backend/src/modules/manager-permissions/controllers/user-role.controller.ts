@@ -8,7 +8,7 @@ import { AuthService } from '../../auth/services/auth.service';
 import { AssignRoleDto } from '../dtos/assign-role.dto';
 import { RoleService } from '../services/role.service';
 
-@Controller('user-roles')
+@Controller('user-rolesapi')
 export class UserRoleController {
   constructor(
     private readonly authService: AuthService,

@@ -1,7 +1,9 @@
 import axios from 'axios';
 import { Banner } from '../models/banner.model';
 
-const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/banners`;
+import { config } from "@/config/config";
+import { API_URL_CLIENT } from "@/config/apiRoutes";
+const API_URL = API_URL_CLIENT + config.ROUTES.BANNERS.BASE;
 
 export const BannerService = {
   /**

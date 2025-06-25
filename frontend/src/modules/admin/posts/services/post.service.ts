@@ -1,9 +1,11 @@
 import { Post, PostStatus } from "../models/post.model";
 import { Category } from "../models/post.model";
 
-const BASE_API = process.env.NEXT_PUBLIC_API_URL!;
-const POST_API = `${BASE_API}/postapi`;
-const CATEGORY_POST_API = `${BASE_API}/categories-postapi`;
+import { config } from "@/config/config";
+import { API_URL_CLIENT } from "@/config/apiRoutes";
+
+const POST_API = API_URL_CLIENT + config.ROUTES.POSTS.BASE;
+const CATEGORY_POST_API = API_URL_CLIENT + config.ROUTES.CATEGORIES_POST.BASE;
 
 // 🔧 Hàm xử lý phản hồi trả về từ API
 const handleResponse = async (response: Response) => {

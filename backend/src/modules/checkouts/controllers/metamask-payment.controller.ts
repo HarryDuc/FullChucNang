@@ -14,7 +14,7 @@ import {
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { Public } from '../../../common/decorators/public.decorator';
 
-@Controller('checkoutapi/metamask')
+@Controller('checkoutsapi/metamask')
 export class MetamaskPaymentController {
   private readonly logger = new Logger(MetamaskPaymentController.name);
 

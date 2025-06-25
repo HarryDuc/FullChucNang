@@ -1,11 +1,12 @@
 // 📁 src/modules/posts/services/post.service.ts
 
 import { Post } from "../models/post.model";
+import { config } from "@/config/config";
+import { API_URL_CLIENT } from "@/config/apiRoutes";
 
-const BASE_API = process.env.NEXT_PUBLIC_API_URL!;
-const POST_API = `${BASE_API}/postsapi`;
-const IMAGE_UPLOAD_API = `${BASE_API}/images/upload`;
-const CATEGORY_POST_API = `${BASE_API}/category-postsapi`;
+const POST_API = API_URL_CLIENT + config.ROUTES.POSTS.BASE;
+const IMAGE_UPLOAD_API = API_URL_CLIENT + config.ROUTES.IMAGES.UPLOAD;
+const CATEGORY_POST_API = API_URL_CLIENT + config.ROUTES.CATEGORIES_POST.BASE;
 
 // 🔧 Hàm xử lý phản hồi trả về từ API
 const handleResponse = async (response: Response) => {

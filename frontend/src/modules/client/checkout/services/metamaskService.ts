@@ -1,9 +1,18 @@
 import { ethers } from 'ethers';
 import api from '@/config/api';
+import { config } from "@/config/config";
+import { API_URL_CLIENT } from "@/config/apiRoutes";
+const API_URL = API_URL_CLIENT + config.ROUTES.CHECKOUTS.BASE;
 
 // Cấu hình mạng BSC
 const BSC_CHAIN_ID = '0x38'; // Mainnet BSC
 const BSC_TESTNET_CHAIN_ID = '0x61'; // Testnet BSC
+
+// USDT Contract Addresses
+const USDT_CONTRACT_ADDRESS = {
+  mainnet: '0x55d398326f99059fF775485246999027B3197955', // BSC Mainnet USDT
+  testnet: '0x337610d27c682E347C9cD60BD4b3b107C9d34dDd'  // BSC Testnet USDT
+};
 
 const BSC_NETWORK_PARAMS = {
   chainId: BSC_CHAIN_ID,
@@ -32,9 +41,19 @@ const BSC_TESTNET_PARAMS = {
 // Sử dụng testnet trong môi trường phát triển, mainnet trong môi trường sản phẩm
 const NETWORK_PARAMS = process.env.NODE_ENV === 'production' ? BSC_NETWORK_PARAMS : BSC_TESTNET_PARAMS;
 const CHAIN_ID = process.env.NODE_ENV === 'production' ? BSC_CHAIN_ID : BSC_TESTNET_CHAIN_ID;
+const USDT_ADDRESS = process.env.NODE_ENV === 'production' ? USDT_CONTRACT_ADDRESS.mainnet : USDT_CONTRACT_ADDRESS.testnet;
+
+// USDT Token ABI - chỉ include các function cần thiết
+const USDT_ABI = [
+  'function approve(address spender, uint256 amount) returns (bool)',
+  'function transfer(address recipient, uint256 amount) returns (bool)',
+  'function balanceOf(address account) view returns (uint256)',
+  'function decimals() view returns (uint8)',
+];
 
 class MetamaskPaymentService {
   private provider: ethers.providers.Web3Provider | null = null;
+  private usdtContract: ethers.Contract | null = null;
 
   /**
    * Kiểm tra xem MetaMask đã được cài đặt chưa
@@ -102,6 +121,10 @@ class MetamaskPaymentService {
         throw new Error('Không tìm thấy tài khoản MetaMask.');
       }
 
+      // Khởi tạo USDT contract
+      const signer = this.provider.getSigner();
+      this.usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer);
+
       // Kiểm tra lại xem đã chuyển sang mạng BSC chưa
       const network = await this.provider.getNetwork();
       const chainIdHex = `0x${network.chainId.toString(16)}`;
@@ -133,7 +156,7 @@ class MetamaskPaymentService {
    */
   async getPaymentInfo(checkoutSlug: string, receivingAddress: string): Promise<any> {
     try {
-      const response = await api.post(`/checkoutapi/metamask/${checkoutSlug}/payment-info`, {
+      const response = await api.post(`${API_URL}/metamask/${checkoutSlug}/payment-info`, {
         receivingAddress
       });
 
@@ -145,11 +168,11 @@ class MetamaskPaymentService {
   }
 
   /**
-   * Thực hiện thanh toán qua MetaMask
+   * Thực hiện thanh toán USDT qua MetaMask
    */
-  async makePayment(receivingAddress: string, amountInBNB: string): Promise<string> {
-    if (!this.provider) {
-      throw new Error('Chưa kết nối với MetaMask.');
+  async makePayment(receivingAddress: string, amountInUSDT: string): Promise<string> {
+    if (!this.provider || !this.usdtContract) {
+      throw new Error('Chưa kết nối với MetaMask hoặc khởi tạo USDT contract.');
     }
 
     try {
@@ -159,34 +182,37 @@ class MetamaskPaymentService {
       const signer = this.provider.getSigner();
       const walletAddress = await signer.getAddress();
 
-      // Chuyển đổi số tiền sang wei (1 BNB = 10^18 wei)
-      const amountInWei = ethers.utils.parseEther(amountInBNB);
+      // Kiểm tra số dư USDT
+      const balance = await this.usdtContract.balanceOf(walletAddress);
+      const decimals = await this.usdtContract.decimals();
+      const amountInWei = ethers.utils.parseUnits(amountInUSDT, decimals);
 
-      // Thực hiện giao dịch
-      const tx = await signer.sendTransaction({
-        to: receivingAddress,
-        value: amountInWei,
-      });
+      if (balance.lt(amountInWei)) {
+        throw new Error('Số dư USDT không đủ để thực hiện giao dịch.');
+      }
 
-      console.log('Giao dịch đã được gửi:', tx);
+      // Thực hiện chuyển USDT
+      const tx = await this.usdtContract.transfer(receivingAddress, amountInWei);
+
+      console.log('Giao dịch USDT đã được gửi:', tx);
       console.log('Xem giao dịch trên BSCScan:',
         `${NETWORK_PARAMS.blockExplorerUrls[0]}tx/${tx.hash}`);
 
       // Chờ giao dịch được xác nhận
       const receipt = await tx.wait();
-      console.log('Giao dịch đã được xác nhận:', receipt);
+      console.log('Giao dịch USDT đã được xác nhận:', receipt);
 
       return tx.hash;
     } catch (error: any) {
-      console.error('Lỗi khi thanh toán qua MetaMask:', error);
+      console.error('Lỗi khi thanh toán USDT qua MetaMask:', error);
 
       // Xử lý các lỗi thường gặp
       if (error.code === 4001) {
         throw new Error('Bạn đã từ chối giao dịch.');
       } else if (error.code === -32603) {
-        throw new Error('Lỗi nội bộ từ MetaMask. Vui lòng kiểm tra số dư BNB và thử lại.');
+        throw new Error('Lỗi nội bộ từ MetaMask. Vui lòng kiểm tra số dư USDT và thử lại.');
       } else if (error.code === -32000) {
-        throw new Error('Số dư BNB không đủ để thực hiện giao dịch. Vui lòng nạp thêm BNB vào ví của bạn.');
+        throw new Error('Số dư USDT không đủ để thực hiện giao dịch. Vui lòng nạp thêm USDT vào ví của bạn.');
       }
 
       throw error;
@@ -206,7 +232,7 @@ class MetamaskPaymentService {
       const network = await this.provider.getNetwork();
       const networkName = CHAIN_ID === BSC_CHAIN_ID ? 'BSC Mainnet' : 'BSC Testnet';
 
-      const response = await api.post(`/checkoutapi/metamask/${checkoutSlug}/verify`, {
+      const response = await api.post(`${API_URL}/metamask/${checkoutSlug}/verify`, {
         transactionHash,
         amount,
         walletAddress,
@@ -217,7 +243,7 @@ class MetamaskPaymentService {
 
       return response.data;
     } catch (error) {
-      console.error('Lỗi khi xác minh giao dịch MetaMask:', error);
+      console.error('Lỗi khi xác minh giao dịch USDT:', error);
       throw error;
     }
   }
@@ -243,8 +269,10 @@ export default metamaskPaymentService;
 
 // Expose payment currency info
 export const PAYMENT_CURRENCY = {
-  name: "BNB",
-  symbol: "BNB",
+  name: "USDT",
+  symbol: "USDT",
+  decimals: 18,
+  contractAddress: USDT_ADDRESS,
   network: process.env.NODE_ENV === 'production' ? 'BSC Mainnet' : 'BSC Testnet',
   blockExplorer: process.env.NODE_ENV === 'production'
     ? 'https://bscscan.com/'

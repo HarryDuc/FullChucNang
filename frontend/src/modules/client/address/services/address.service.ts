@@ -1,9 +1,11 @@
 import { User, UserAddress, UserSettings } from "../models/address.model";
 
-const BASE_API = process.env.NEXT_PUBLIC_API_URL!;
-const USER_API = `${BASE_API}/users`;
-const AUTH_API = `${BASE_API}/auth`;
-const IMAGE_UPLOAD_API = `${BASE_API}/images/upload`;
+import { config } from "@/config/config";
+import { API_URL_CLIENT } from "@/config/apiRoutes";
+
+const USER_API = API_URL_CLIENT + config.ROUTES.USERS.BASE;
+const AUTH_API = API_URL_CLIENT + config.ROUTES.AUTH.BASE;
+const IMAGE_UPLOAD_API = API_URL_CLIENT + config.ROUTES.IMAGES.UPLOAD;
 
 // 🔄 Hàm helper xử lý phản hồi từ API
 const handleResponse = async (response: Response) => {
