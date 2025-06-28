@@ -1,98 +1,132 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  getPosts,
-  getPostBySlug,
-  createPost,
-  updatePost,
-  softDeletePost,
-  hardDeletePost,
-  uploadImage,
-  PostService,
-} from "../services/post.service";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
+import { CategoryPostService, getPostBySlug, getPosts } from "../services/post.service";
+import type { PaginatedPosts } from "../models/post.model";
+import { CategoryPostTree } from "../models/categories-post.model";
 
-import { Post, UpdatePostDto, CreatePostDto } from "../models/post.model";
+/** ✨ Hook lấy chi tiết 1 bài viết theo slug (chỉ lấy bài đã duyệt và hiển thị) */
+export const usePostBySlug = (slug: string) =>
+  useQuery({
+    queryKey: ["post", slug],
+    queryFn: () => getPostBySlug(slug),
+    enabled: !!slug,
+    staleTime: 1000 * 60 * 5,
+    retry: (failureCount, error) => {
+      if (
+        error instanceof Error &&
+        error.message.includes("không tồn tại hoặc chưa được phê duyệt")
+      ) {
+        return false;
+      }
+      return failureCount < 3;
+    },
+  });
 
 /**
- * 🎯 Hook quản lý tất cả thao tác liên quan đến bài viết:
- * - Lấy danh sách bài viết
- * - Tạo mới
- * - Cập nhật
- * - Xóa mềm / Xóa vĩnh viễn
- * - Upload ảnh bài viết
- * - Lấy danh mục bài viết
+ * 📦 Hook lấy danh sách bài viết có phân trang (chỉ lấy bài đã duyệt và hiển thị)
  */
-export const usePosts = () => {
-  const queryClient = useQueryClient();
-
-  // ✅ Lấy danh sách bài viết
-  const postsQuery = useQuery<Post[]>({
-    queryKey: ["posts"],
-    queryFn: getPosts,
+export const usePaginatedPosts = (page: number = 1, limit: number = 10) =>
+  useQuery<PaginatedPosts, Error>({
+    queryKey: ["posts", page, limit],
+    queryFn: () => getPosts(page, limit),
+    staleTime: 1000 * 60 * 5,
   });
 
-  // ✅ Tạo bài viết mới
-  const createMutation = useMutation({
-    mutationFn: (data: CreatePostDto) => createPost(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
+/**
+ * 📦 Hook lấy tất cả bài viết với infinite scroll
+ */
+export const useInfinitePosts = (limit: number = 12) => {
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    error,
+  } = useInfiniteQuery<PaginatedPosts, Error>({
+    queryKey: ["infinite-posts", limit],
+    initialPageParam: 1,
+    queryFn: async (context) => {
+      // context.pageParam is unknown, so cast to number with fallback
+      const pageParam = typeof context.pageParam === "number" ? context.pageParam : 1;
+      const result = await getPosts(pageParam, limit);
+      return {
+        ...result,
+        currentPage: pageParam,
+      };
     },
-  });
-
-  // ✅ Cập nhật bài viết theo slug
-  const updateMutation = useMutation({
-    mutationFn: ({ slug, data }: { slug: string; data: UpdatePostDto }) =>
-      updatePost(slug, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
+    getNextPageParam: (lastPage) => {
+      if (!lastPage.data.length) return undefined;
+      const nextPage = (lastPage.currentPage || 0) + 1;
+      return nextPage <= Math.ceil(lastPage.total / limit) ? nextPage : undefined;
     },
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
-  // ✅ Upload ảnh bài viết
-  const uploadImageMutation = useMutation({
-    mutationFn: uploadImage,
-  });
+  // Tổng hợp tất cả bài viết từ các trang
+  const posts =
+    data?.pages?.flatMap((page) => (page as PaginatedPosts).data) || [];
 
-  // ✅ Xóa mềm bài viết
-  const softDeleteMutation = useMutation({
-    mutationFn: (slug: string) => softDeletePost(slug),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-    },
-  });
-
-  // ✅ Xóa vĩnh viễn bài viết
-  const hardDeleteMutation = useMutation({
-    mutationFn: (slug: string) => hardDeletePost(slug),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-    },
-  });
-
-  // ✅ Lấy tất cả danh mục bài viết (category-posts)
-  const categoriesQuery = useQuery({
-    queryKey: ["category-posts"],
-    queryFn: PostService.getAllCategories,
-  });
+  // Lấy tổng số bài viết từ response đầu tiên
+  const total = data?.pages?.[0]
+    ? (data.pages[0] as PaginatedPosts).total
+    : 0;
 
   return {
-    postsQuery,
-    createMutation,
-    updateMutation,
-    softDeleteMutation,
-    hardDeleteMutation,
-    uploadImageMutation,
-    categoriesQuery,
+    data: posts,
+    total,
+    isLoading,
+    error,
+    fetchNextPage,
+    hasNextPage: posts.length < total,
+    isFetchingNextPage,
   };
 };
 
 /**
- * 🔍 Hook lấy chi tiết bài viết theo slug.
- * - enabled: false nếu slug chưa sẵn sàng
+ * 📦 Hook lấy tất cả bài viết đã duyệt và hiển thị (legacy - giữ lại để tương thích ngược)
+ * @deprecated Sử dụng useInfinitePosts thay thế
  */
-export const usePostBySlug = (slug: string) => {
-  return useQuery<Post>({
-    queryKey: ["post", slug],
-    queryFn: () => getPostBySlug(slug),
-    enabled: !!slug,
+export const useAllPosts = (limit: number = 12) => {
+  const { data, isLoading, error } = usePaginatedPosts(1, limit);
+
+  return {
+    data: data?.data || [],
+    total: data?.total || 0,
+    isLoading,
+    error,
+  };
+};
+
+interface CategoryPostsData {
+  categories: CategoryPostTree[];
+  flatCategories: CategoryPostTree[];
+  total: number;
+}
+
+/**
+ * 📦 Hook lấy danh mục bài viết (hỗ trợ cả cây và danh sách phẳng)
+ */
+export const useCategoryPosts = () => {
+  const { data, isLoading, isError } = useQuery<CategoryPostsData>({
+    queryKey: ["category-posts"],
+    queryFn: async () => {
+      const result = await CategoryPostService.findAll();
+      const flatCategories = CategoryPostService.flattenCategories(result.data);
+
+      return {
+        categories: result.data,
+        flatCategories,
+        total: result.total || result.data.length
+      };
+    },
+    staleTime: 1000 * 60 * 5,
   });
+
+  return {
+    categories: data?.categories || [],
+    flatCategories: data?.flatCategories || [],
+    total: data?.total || 0,
+    isLoading,
+    isError,
+  };
 };

@@ -2,6 +2,7 @@ import { ethers } from 'ethers';
 import api from '@/config/api';
 import { config } from "@/config/config";
 import { API_URL_CLIENT } from "@/config/apiRoutes";
+import { envConfig } from "@/config/envConfig";
 const API_URL = API_URL_CLIENT + config.ROUTES.CHECKOUTS.BASE;
 
 // Cấu hình mạng BSC
@@ -38,10 +39,10 @@ const BSC_TESTNET_PARAMS = {
   blockExplorerUrls: ['https://testnet.bscscan.com/'],
 };
 
-// Sử dụng testnet trong môi trường phát triển, mainnet trong môi trường sản phẩm
-const NETWORK_PARAMS = process.env.NODE_ENV === 'production' ? BSC_NETWORK_PARAMS : BSC_TESTNET_PARAMS;
-const CHAIN_ID = process.env.NODE_ENV === 'production' ? BSC_CHAIN_ID : BSC_TESTNET_CHAIN_ID;
-const USDT_ADDRESS = process.env.NODE_ENV === 'production' ? USDT_CONTRACT_ADDRESS.mainnet : USDT_CONTRACT_ADDRESS.testnet;
+// Sử dụng biến môi trường mới từ envConfig
+const NETWORK_PARAMS = envConfig.METAMASK_ENVIRONMENT === 'production' ? BSC_NETWORK_PARAMS : BSC_TESTNET_PARAMS;
+const CHAIN_ID = envConfig.METAMASK_ENVIRONMENT === 'production' ? BSC_CHAIN_ID : BSC_TESTNET_CHAIN_ID;
+const USDT_ADDRESS = envConfig.METAMASK_ENVIRONMENT === 'production' ? USDT_CONTRACT_ADDRESS.mainnet : USDT_CONTRACT_ADDRESS.testnet;
 
 // USDT Token ABI - chỉ include các function cần thiết
 const USDT_ABI = [
@@ -273,8 +274,8 @@ export const PAYMENT_CURRENCY = {
   symbol: "USDT",
   decimals: 18,
   contractAddress: USDT_ADDRESS,
-  network: process.env.NODE_ENV === 'production' ? 'BSC Mainnet' : 'BSC Testnet',
-  blockExplorer: process.env.NODE_ENV === 'production'
+  network: envConfig.METAMASK_ENVIRONMENT === 'production' ? 'BSC Mainnet' : 'BSC Testnet',
+  blockExplorer: envConfig.METAMASK_ENVIRONMENT === 'production'
     ? 'https://bscscan.com/'
     : 'https://testnet.bscscan.com/'
 };

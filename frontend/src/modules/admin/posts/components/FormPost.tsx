@@ -41,7 +41,7 @@ const PostForm: React.FC<Props> = ({ initialData, isEdit = false }) => {
   const router = useRouter();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [name, setName] = useState(initialData?.name || "");
+  const [title, setTitle] = useState(initialData?.title || "");
   const [excerpt, setExcerpt] = useState("");
   const [postData, setPostData] = useState("");
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
@@ -53,7 +53,7 @@ const PostForm: React.FC<Props> = ({ initialData, isEdit = false }) => {
     isEdit && initialData?.slug ? initialData.slug : ""
   );
   const [, setFormData] = useState<Partial<Post>>({
-    name: "",
+    title: "",
     excerpt: "",
     postData: "",
     author: user?.fullName || "",
@@ -125,7 +125,7 @@ const PostForm: React.FC<Props> = ({ initialData, isEdit = false }) => {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) {
+    if (!title.trim()) {
       alert("❌ Tiêu đề không được để trống!");
       return;
     }
@@ -177,7 +177,7 @@ const PostForm: React.FC<Props> = ({ initialData, isEdit = false }) => {
 
     // các field chung
     const common = {
-      name: name.trim(),
+      title: title.trim(),
       excerpt: removeDomain(excerpt),
       postData: removeDomain(postData),
       author: user?.fullName || user?.email || "Admin",
@@ -198,6 +198,9 @@ const PostForm: React.FC<Props> = ({ initialData, isEdit = false }) => {
           slug: initialData.slug,
           data: payload,
         });
+        // Không chuyển trang, chỉ thông báo thành công
+        alert("✅ Cập nhật bài viết thành công!");
+        setIsSubmitting(false);
       } else {
         // Create: ép luôn id="" & slug=""
         const payload: CreatePostDto = {
@@ -206,8 +209,10 @@ const PostForm: React.FC<Props> = ({ initialData, isEdit = false }) => {
           ...common,
         };
         await createMutation.mutateAsync(payload);
+        // Không chuyển trang, chỉ thông báo thành công
+        alert("✅ Tạo bài viết thành công!");
+        setIsSubmitting(false);
       }
-      router.push("/admin/posts");
     } catch {
       alert("❌ Gửi form thất bại");
       setIsSubmitting(false);
@@ -224,8 +229,8 @@ const PostForm: React.FC<Props> = ({ initialData, isEdit = false }) => {
             <label className="block font-medium mb-1">Tiêu đề</label>
             <input
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               className="w-full border px-3 py-2 rounded"
               required
             />
@@ -245,10 +250,21 @@ const PostForm: React.FC<Props> = ({ initialData, isEdit = false }) => {
             </div>
           )}
 
+          <div>
+            <label className="block font-medium mb-1">Tóm tắt</label>
+            <SunEditerUploadImage
+              postData={excerpt}
+              setPostData={setExcerpt}
+            />
+          </div>
+
           {/* Nội dung */}
           <div>
             <label className="block font-medium mb-1">Nội dung</label>
-            <SunEditerUploadImage postData={postData} setPostData={setPostData} />
+            <SunEditerUploadImage
+              postData={postData}
+              setPostData={setPostData}
+            />
           </div>
 
           {/* Ngày giờ */}
@@ -358,7 +374,6 @@ const PostForm: React.FC<Props> = ({ initialData, isEdit = false }) => {
       <div className="fixed bottom-6 right-6 z-50 flex gap-4">
         <button
           type="button"
-          onClick={() => router.push("/admin/posts")}
           disabled={isSubmitting}
           className="px-4 py-2 bg-gray-300 rounded shadow-lg"
         >

@@ -8,7 +8,7 @@ import {
   usePostsByStatus,
 } from "@/modules/admin/posts/hooks/usePosts";
 import { Post, PostStatus } from "@/modules/admin/posts/models/post.model";
-import SearchProducts from "./SearchProducts";
+import SearchProducts from "./SearchPost";
 import { useAuth } from "@/context/AuthContext";
 import { PaginatedPosts } from "../../manager-posts/services/manager-posts.service";
 import { useSearchPosts } from "../../manager-posts/hooks/useManagerPosts";
@@ -65,6 +65,18 @@ const getStatusLabel = (
   }
 };
 
+// Loading Skeleton Component
+const LoadingSkeleton = () => (
+  <div className="animate-pulse">
+    <div className="h-12 bg-gray-200 rounded mb-4"></div>
+    <div className="space-y-3">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <div key={i} className="h-16 bg-gray-200 rounded"></div>
+      ))}
+    </div>
+  </div>
+);
+
 const PostList: React.FC = () => {
   const activeTab = useState<"all" | "my">("all");
   const {
@@ -72,10 +84,12 @@ const PostList: React.FC = () => {
     hardDeleteMutation,
     updateVisibilityMutation,
     updateStatusMutation,
+    page: allPostsPage,
     setPage: setAllPostsPage,
     includeHidden,
     setIncludeHidden,
     statusFilter,
+    setStatusFilter,
   } = usePosts();
   const { user, hasPermission } = useAuth();
   const {
@@ -145,7 +159,7 @@ const PostList: React.FC = () => {
           ...rawData,
           data: rawData.data?.filter(
             (post: Post) =>
-              post.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              post.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
               post.excerpt?.toLowerCase().includes(searchTerm.toLowerCase())
           ),
         }
@@ -217,13 +231,34 @@ const PostList: React.FC = () => {
           alert(`Đã ${isVisible ? "hiện" : "ẩn"} bài viết`);
         },
         onError: (error) => {
-          console.log(error);
           alert("Có lỗi xảy ra khi cập nhật trạng thái hiển thị bài viết");
         },
       }
     );
   };
 
+  // Xử lý toggle hiển thị bài viết
+  const handleToggleVisibility = async (
+    slug: string,
+    currentVisibility: boolean
+  ) => {
+    if (!canPublish) {
+      alert("Bạn không có quyền thay đổi trạng thái hiển thị bài viết");
+      return;
+    }
+
+    try {
+      await updateVisibilityMutation.mutateAsync({
+        slug,
+        isVisible: !currentVisibility,
+      });
+
+      // Cập nhật cache để hiển thị thay đổi ngay lập tức
+      refreshData();
+    } catch (error) {
+      console.error("Lỗi khi thay đổi trạng thái hiển thị:", error);
+    }
+  };
 
   // Xử lý cập nhật trạng thái phê duyệt
   const handleUpdateStatus = async (slug: string, newStatus: PostStatus) => {
@@ -451,7 +486,7 @@ const PostList: React.FC = () => {
                       {(currentPage - 1) * limit + index + 1}
                     </td>
                     <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 max-w-[320px] truncate">
-                      {post.name}
+                      {post.title}
                     </td>
                     <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-500 max-w-[80px] truncate">
                       {post.author || "Không rõ"}

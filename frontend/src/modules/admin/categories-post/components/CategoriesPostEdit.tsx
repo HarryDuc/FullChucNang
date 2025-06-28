@@ -11,7 +11,7 @@ const CategoriesPostEdit = () => {
   const slug = params?.slug as string;
 
   const handleSuccess = () => {
-    router.push("/admin/categories-post");
+    router.push("/admin/categories-posts");
   };
 
   if (!slug) return <p className="text-red-500 p-4">❌ Không tìm thấy slug.</p>;

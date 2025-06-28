@@ -13,35 +13,46 @@ import { API_URL_CLIENT } from '@/config/apiRoutes';
 
 const API_URL = API_URL_CLIENT + config.ROUTES.CATEGORIES_POST.BASE;
 
+export interface CategoryPostResponse<T> {
+  message: string;
+  data: T;
+  total?: number;
+}
+
 export const CategoryPostService = {
-  create: async (dto: CreateCategoryPostDto): Promise<{ message: string; data: CategoryPost }> => {
-    const response = await api.post(API_URL + config.ROUTES.CATEGORIES_POST.CREATE, dto);
+  create: async (dto: CreateCategoryPostDto): Promise<CategoryPostResponse<CategoryPost>> => {
+    const response = await api.post(API_URL, dto);
     return response.data;
   },
 
-  update: async (slug: string, dto: UpdateCategoryPostDto): Promise<{ message: string; data: CategoryPost }> => {
-    const response = await api.patch(API_URL + config.ROUTES.CATEGORIES_POST.UPDATE(slug), dto);
+  update: async (slug: string, dto: UpdateCategoryPostDto): Promise<CategoryPostResponse<CategoryPost>> => {
+    const response = await api.patch(`${API_URL}/${slug}`, dto);
     return response.data;
   },
 
-  getOne: async (slug: string): Promise<{ message: string; data: CategoryPostTree }> => {
-    const response = await api.get(API_URL + config.ROUTES.CATEGORIES_POST.GET_ONE(slug));
+  getOne: async (slug: string): Promise<CategoryPostResponse<CategoryPostTree>> => {
+    const response = await api.get(`${API_URL}/${slug}`);
     return response.data;
   },
 
-  findAll: async (params?: { page?: number; limit?: number; search?: string }): Promise<{ message: string; data: CategoryPost[] }> => {
-    const url = API_URL + config.ROUTES.CATEGORIES_POST.GET_ALL(params);
+  findAll: async (params?: { page?: number; limit?: number; search?: string }): Promise<CategoryPostResponse<CategoryPostTree[]>> => {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.search) queryParams.append('search', params.search);
+
+    const url = `${API_URL}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     const response = await api.get(url);
     return response.data;
   },
 
-  softDelete: async (slug: string): Promise<{ message: string }> => {
-    const response = await api.patch(API_URL + config.ROUTES.CATEGORIES_POST.SOFT_DELETE(slug));
+  softDelete: async (slug: string): Promise<CategoryPostResponse<void>> => {
+    const response = await api.patch(`${API_URL}/${slug}/soft-delete`);
     return response.data;
   },
 
-  hardDelete: async (slug: string): Promise<{ message: string }> => {
-    const response = await api.delete(API_URL + config.ROUTES.CATEGORIES_POST.DELETE(slug));
+  hardDelete: async (slug: string): Promise<CategoryPostResponse<void>> => {
+    const response = await api.delete(`${API_URL}/${slug}`);
     return response.data;
   },
 };

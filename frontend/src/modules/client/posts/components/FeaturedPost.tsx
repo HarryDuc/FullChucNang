@@ -15,14 +15,13 @@ const FeaturedPost: FC<FeaturedPostProps> = ({ post, getThumbnailPath }) => {
 
   return (
     <div
-      className="relative overflow-hidden rounded-xl mb-10 group cursor-pointer"
+      className="overflow-hidden rounded-xl mb-10 group cursor-pointer bg-white"
       onClick={handleClick}
       tabIndex={0}
       aria-label={post.title}
       onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleClick(); }}
     >
       <div className="relative h-[500px] w-full">
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
         <img
           src={imageUrl || "/placeholder.svg"}
           alt={post.title}
@@ -31,12 +30,9 @@ const FeaturedPost: FC<FeaturedPostProps> = ({ post, getThumbnailPath }) => {
           loading="lazy"
         />
       </div>
-      <div className="absolute bottom-0 left-0 right-0 p-6 z-20 text-white">
-        <div className="inline-block bg-[#021737] text-white text-xs font-semibold px-3 py-1 rounded-sm mb-3">
-          Nổi Bật
-        </div>
+      <div className="p-6">
         <h2 className="text-3xl font-bold mb-3 leading-tight">{post.title}</h2>
-        <div className="flex items-center text-sm mb-4 text-gray-200">
+        <div className="flex items-center text-sm mb-4 text-gray-600">
           <span>{new Date(post.publishedDate).toLocaleDateString("vi-VN")}</span>
           <span className="mx-2">•</span>
           <span>{post.author}</span>
@@ -44,7 +40,7 @@ const FeaturedPost: FC<FeaturedPostProps> = ({ post, getThumbnailPath }) => {
         <Link
           href={`/posts/${post.slug}`}
           onClick={e => e.stopPropagation()}
-          className="inline-block bg-white text-black px-4 py-2 font-medium rounded-sm hover:bg-gray-100 transition-colors"
+          className="inline-block bg-[#021737] text-white px-4 py-2 font-medium rounded-sm hover:bg-[#193a6a] transition-colors"
         >
           Đọc tiếp
         </Link>

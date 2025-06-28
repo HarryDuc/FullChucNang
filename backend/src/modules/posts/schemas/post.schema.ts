@@ -35,7 +35,8 @@ export class Post {
   @Prop() approvedBy: string;
 
   // 📝 Nội dung
-  @Prop({ required: true }) name: string;
+  @Prop({ required: true }) title: string;
+  @Prop({ required: true }) normalizedTitle: string;
   @Prop() excerpt: string;
   @Prop() postData: string;
   @Prop() coverVideo?: string;
@@ -86,7 +87,18 @@ export const PostSchema = SchemaFactory.createForClass(Post);
 // 📌 Indexes tối ưu hoá
 
 // 🔍 Tìm kiếm văn bản (chỉ có 1 text index cho toàn collection)
-PostSchema.index({ name: 'text', author: 'text' });
+PostSchema.index({ normalizedTitle: 1 });
+PostSchema.index({
+  title: 'text',
+  excerpt: 'text',
+  author: 'text'
+}, {
+  weights: {
+    title: 10,    // Title có trọng số cao nhất
+    excerpt: 5,   // Excerpt có trọng số thấp hơn
+    author: 3     // Author có trọng số thấp nhất
+  }
+});
 
 // 📂 Truy vấn theo phân loại và trạng thái
 PostSchema.index({

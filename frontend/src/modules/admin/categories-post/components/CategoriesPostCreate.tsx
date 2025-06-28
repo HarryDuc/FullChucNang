@@ -8,7 +8,7 @@ const CategoriesPostCreate = () => {
   const router = useRouter();
 
   const handleSuccess = () => {
-    router.push("/admin/categories-post");
+    router.push("/admin/categories-posts");
   };
 
   return (

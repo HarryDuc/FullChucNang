@@ -1,12 +1,12 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
-import { useCategoryPosts } from "@/modules/admin/categories-post/hooks/useCategoriesPost";
-import type { CategoryPost } from "../models/categories-post.model";
+import type { CategoryPostTree } from "@/modules/admin/categories-post/models/categories-post.model";
 import { GoChevronDown, GoChevronRight } from "react-icons/go";
+import { useCategoryPosts } from "@/modules/admin/categories-post/hooks/useCategoriesPost";
 
 const SidebarCategoryPost: React.FC = () => {
-  const { listQuery: categoriesQuery } = useCategoryPosts(1, 100);
+  const { categories, isLoading, isError } = useCategoryPosts();
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
 
   // Skeleton for sidebar
@@ -26,13 +26,11 @@ const SidebarCategoryPost: React.FC = () => {
     </div>
   );
 
-  if (categoriesQuery.isLoading) {
-    return (
-      <SidebarCategorySkeleton />
-    );
+  if (isLoading) {
+    return <SidebarCategorySkeleton />;
   }
 
-  if (categoriesQuery.isError) {
+  if (isError) {
     return (
       <div className="text-center py-2">
         <p className="text-red-500 text-sm">
@@ -42,9 +40,13 @@ const SidebarCategoryPost: React.FC = () => {
     );
   }
 
-  const categories = Array.isArray(categoriesQuery.data)
-    ? categoriesQuery.data
-    : [];
+  if (!categories || categories.length === 0) {
+    return (
+      <div className="text-center py-2">
+        <p className="text-gray-500 text-sm">Chưa có danh mục nào.</p>
+      </div>
+    );
+  }
 
   const toggleCategory = (categoryId: string) => {
     setExpandedCategories((prev) =>
@@ -55,17 +57,10 @@ const SidebarCategoryPost: React.FC = () => {
   };
 
   // Hàm đệ quy hiển thị node
-  const renderNode = (category: CategoryPost): React.ReactNode => {
-    // Tìm children
-    const children = categories.filter(
-      (cat) =>
-        cat.parent === category._id && cat.level === (category.level || 0) + 1
-    );
-
-    const hasChildren = children.length > 0;
+  const renderNode = (category: CategoryPostTree): React.ReactNode => {
+    const hasChildren = category.children && category.children.length > 0;
     const isExpanded = expandedCategories.includes(category._id);
 
-    // Hiển thị icon mũi tên nếu có con
     const arrowIcon = hasChildren ? (
       isExpanded ? (
         <GoChevronDown className="text-gray-600" />
@@ -75,12 +70,11 @@ const SidebarCategoryPost: React.FC = () => {
     ) : null;
 
     return (
-      <li key={category._id}>
-        <div className="flex items-center">
+      <li key={category._id} className="py-1">
+        <div className="flex items-center group">
           <Link
-            // href={`/posts/category/${category.slug}`}
             href="#"
-            className="text-gray-700 hover:text-[#021737] transition-colors flex items-center flex-grow"
+            className="text-gray-700 hover:text-[#021737] transition-colors flex items-center flex-grow group-hover:font-medium"
           >
             <span>{category.name}</span>
           </Link>
@@ -90,17 +84,16 @@ const SidebarCategoryPost: React.FC = () => {
                 e.preventDefault();
                 toggleCategory(category._id);
               }}
-              className="ml-2 p-1"
+              className="ml-2 p-1 opacity-60 hover:opacity-100 transition-opacity"
             >
               {arrowIcon}
             </button>
           )}
         </div>
 
-        {/* Render danh mục con nếu node được mở */}
         {hasChildren && isExpanded && (
-          <ul className="ml-6 mt-1 space-y-2">
-            {children.map((child) => (
+          <ul className="ml-4 mt-1 space-y-1 border-l border-gray-200 pl-2">
+            {category.children.map((child: CategoryPostTree) => (
               <React.Fragment key={child._id}>
                 {renderNode(child)}
               </React.Fragment>
@@ -112,22 +105,33 @@ const SidebarCategoryPost: React.FC = () => {
   };
 
   // Lấy danh mục top-level: level=0
-  const topCategories = categories.filter((cat) => cat.level === 0);
+  const topCategories = categories.filter(
+    (cat: CategoryPostTree) => cat.level === 0 && !cat.isDeleted
+  );
 
   return (
     <div className="bg-gray-50 p-6 rounded-lg mb-8">
-      <h3 className="text-lg font-bold mb-4 border-b pb-2">Danh Mục</h3>
-      <ul className="space-y-2">
-        {topCategories.map((cat) => (
-          <React.Fragment key={cat._id}>{renderNode(cat)}</React.Fragment>
-        ))}
-      </ul>
+      <h3 className="text-lg font-bold mb-4 border-b pb-2 text-[#021737]">
+        Danh Mục Bài Viết
+      </h3>
+      {topCategories.length > 0 ? (
+        <ul className="space-y-1">
+          {topCategories.map((cat: CategoryPostTree) => (
+            <React.Fragment key={cat._id}>{renderNode(cat)}</React.Fragment>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-gray-500 text-sm text-center">
+          Chưa có danh mục nào.
+        </p>
+      )}
       <div className="mt-4 pt-2 border-t">
         <Link
           href="#"
-          className="text-[#021737] hover:underline text-sm font-medium"
+          className="text-[#021737] hover:underline text-sm font-medium inline-flex items-center"
         >
-          Xem tất cả danh mục →
+          Xem tất cả bài viết
+          <span className="ml-1">→</span>
         </Link>
       </div>
     </div>

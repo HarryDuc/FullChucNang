@@ -1,21 +1,24 @@
-// ✅ Interface cho danh mục bài viết
-export interface Category {
-  _id: string;
-  name: string;
-  slug: string; // slug danh mục bài viết
-  parent: string | null; // danh mục cha
-  level: number;
-}
+// src/models/post.model.ts
 
-// ✅ Interface cho thông tin danh mục trong bài viết
+// ℹ️ Thông tin phân loại trong bài viết (nếu bạn cần hiện category)
 export interface CategoryInfo {
-  main: string[];
-  sub: string[];
+  main: string[]; // danh mục cấp chính
+  sub: string[]; // danh mục cấp phụ
 }
 
+// ✅ Enum cho trạng thái phê duyệt bài viết
+export enum PostStatus {
+  Draft = 'draft',
+  Pending = 'pending',
+  Approved = 'approved',
+  Rejected = 'rejected',
+}
+
+// 📝 Mô hình dữ liệu bài viết
 export interface Post {
+  _id: string;
   id: string;
-  slug: string; // slug bài viết
+  slug: string;
   title: string;
   excerpt: string;
   postData: string;
@@ -23,20 +26,15 @@ export interface Post {
   thumbnail: string;
   publishedDate: string;
   category?: CategoryInfo;
+  status: PostStatus; // trạng thái phê duyệt
+  isVisible: boolean; // trạng thái hiển thị
+  approvedBy?: string; // người phê duyệt
+  approvedDate?: string; // ngày phê duyệt
 }
 
-// ✅ Định nghĩa DTO tạo bài viết
-export interface CreatePostDto {
-  title: string;
-  excerpt: string;
-  postData: string;
-  author: string;
-  thumbnail: string;
-  publishedDate: string;
-  category?: CategoryInfo;
-}
-
-// ✅ Định nghĩa DTO cập nhật bài viết
-export interface UpdatePostDto extends CreatePostDto {
-  id: string;
+export interface PaginatedPosts {
+  data: Post[]; // Danh sách bài viết
+  total: number; // Tổng số lượng bài viết (dùng để phân trang)
+  currentPage?: number; // Trang hiện tại
+  totalPages?: number; // Tổng số trang
 }

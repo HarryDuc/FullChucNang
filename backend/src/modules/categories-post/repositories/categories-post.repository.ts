@@ -11,7 +11,7 @@ export class CategoryPostRepository {
   constructor(
     @InjectModel(CategoryPost.name)
     private readonly model: Model<CategoryPostDocument>,
-  ) {}
+  ) { }
 
   /**
    * Tạo mới một danh mục bài viết.
@@ -87,15 +87,18 @@ export class CategoryPostRepository {
   /**
    * Truy vấn danh mục (phân trang).
    * @param skip Số lượng bỏ qua
-   * @param limit Số lượng lấy về
+   * @param limit Số lượng lấy về (0 = không giới hạn)
    */
   async findAll(skip: number, limit: number): Promise<CategoryPostDocument[]> {
-    return this.model
+    const query = this.model
       .find({ isDeleted: false })
-      .skip(skip)
-      .limit(limit)
-      .sort({ sortOrder: 1, createdAt: -1 })
-      .exec();
+      .sort({ sortOrder: 1, createdAt: -1 });
+
+    if (limit > 0) {
+      query.skip(skip).limit(limit);
+    }
+
+    return query.exec();
   }
 
   /**

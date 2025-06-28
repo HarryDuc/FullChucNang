@@ -24,7 +24,7 @@ export enum PostStatus {
 export interface Post {
   id: string;
   slug: string; // slug bài viết
-  name: string;
+  title: string;
   excerpt: string;
   postData: string;
   author: string;
@@ -40,7 +40,7 @@ export interface Post {
 // ✅ Định nghĩa DTO tạo bài viết
 export interface CreatePostDto {
   id: string;
-  name: string;
+  title: string;
   excerpt: string;
   postData: string;
   author: string;

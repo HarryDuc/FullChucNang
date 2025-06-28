@@ -41,7 +41,7 @@ interface CategoryPostObject
 
 @Injectable()
 export class CategoryPostService {
-  constructor(private readonly repository: CategoryPostRepository) {}
+  constructor(private readonly repository: CategoryPostRepository) { }
 
   /**
    * ✅ Tính toán path + level dựa vào parentId
@@ -205,9 +205,26 @@ export class CategoryPostService {
    * 📋 Truy vấn toàn bộ danh mục với phân trang.
    */
   async findAll(page = 1, limit = 10) {
-    const skip = (page - 1) * limit;
-    const items = await this.repository.findAll(skip, limit);
-    return { message: 'Truy vấn danh mục thành công', data: items };
+    // Get all categories without pagination first
+    const allItems = await this.repository.findAll(0, 0); // 0 limit means no limit
+
+    // Build complete tree structure starting from root categories
+    const rootCategories = allItems.filter(cat => !cat.parent);
+    const categoriesWithChildren = await Promise.all(
+      rootCategories.map(root => this.buildCategoryTree(root))
+    );
+
+    // Apply pagination to the root categories if needed
+    const start = (page - 1) * limit;
+    const paginatedItems = limit > 0
+      ? categoriesWithChildren.slice(start, start + limit)
+      : categoriesWithChildren;
+
+    return {
+      message: 'Truy vấn danh mục thành công',
+      data: paginatedItems,
+      total: categoriesWithChildren.length
+    };
   }
 
   /**

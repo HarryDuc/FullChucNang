@@ -179,6 +179,43 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
             )}
           </div>
         )}
+        <div
+          className="text-gray-800 mb-6 p-4 pb-2 bg-gray-50"
+          dangerouslySetInnerHTML={{
+            __html:
+              product?.shortDescription || product?.description
+                ? (product?.shortDescription || product?.description)
+                    .replace(/src="([^"]+)"/g, (match: string, src: string) =>
+                      src.startsWith("http")
+                        ? match
+                        : `src="${process.env.NEXT_PUBLIC_API_URL}${src}"`
+                    )
+                    .replace(
+                      /data-src="([^"]+)"/g,
+                      (match: string, src: string) =>
+                        src.startsWith("http")
+                          ? match
+                          : `data-src="${process.env.NEXT_PUBLIC_API_URL}${src}"`
+                    )
+                    .replace(
+                      /data-srcset="([^"]+)"/g,
+                      (match: string, srcset: string) => {
+                        if (srcset.includes("http")) return match;
+                        const newSrcset = srcset
+                          .split(",")
+                          .map(
+                            (s: string) =>
+                              `${process.env.NEXT_PUBLIC_API_URL}${s.trim()}`
+                          )
+                          .join(", ");
+                        return `data-srcset="${newSrcset}"`;
+                      }
+                    )
+                    .replace(/<p>&nbsp;<\/p>/g, "")
+                : "",
+          }}
+          itemProp="description"
+        />
         {selectedVariant && (
           <div className="mt-4 space-y-2">
             <p className="text-sm text-gray-600">

@@ -34,7 +34,12 @@ export const AdminBannerService = {
    * Lấy chi tiết banner
    */
   async getBannerById(id: string): Promise<Banner> {
-    const response = await api.get(`${API_URL}/${id}`);
+    const response = await api.get(`${API_URL}/${id}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+    });
     return response.data;
   },
 
@@ -42,7 +47,12 @@ export const AdminBannerService = {
    * Tạo banner mới
    */
   async createBanner(data: CreateBannerDto): Promise<Banner> {
-    const response = await api.post(API_URL, data);
+    const response = await api.post(API_URL, data, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+    });
     return response.data;
   },
 
@@ -50,7 +60,12 @@ export const AdminBannerService = {
    * Cập nhật banner
    */
   async updateBanner(id: string, data: UpdateBannerDto): Promise<Banner> {
-    const response = await api.patch(`${API_URL}/${id}`, data);
+    const response = await api.patch(`${API_URL}/${id}`, data, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+    });
     return response.data;
   },
 
@@ -58,7 +73,12 @@ export const AdminBannerService = {
    * Cập nhật thứ tự banner
    */
   async updateBannerOrder(id: string, order: number): Promise<Banner> {
-    const response = await api.patch(`${API_URL}/${id}/order`, { order });
+    const response = await api.patch(`${API_URL}/${id}/order`, { order }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+    });
     return response.data;
   },
 
@@ -66,7 +86,12 @@ export const AdminBannerService = {
    * Bật/tắt trạng thái banner
    */
   async toggleBannerActive(id: string): Promise<Banner> {
-    const response = await api.patch(`${API_URL}/${id}/toggle-active`, {});
+    const response = await api.patch(`${API_URL}/${id}/toggle-active`, {}, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+    });
     return response.data;
   },
 
@@ -74,6 +99,11 @@ export const AdminBannerService = {
    * Xóa banner
    */
   async deleteBanner(id: string): Promise<void> {
-    await api.delete(`${API_URL}/${id}`);
+    await api.delete(`${API_URL}/${id}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+    });
   }
 };

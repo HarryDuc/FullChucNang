@@ -99,14 +99,27 @@ const MenuPC = () => {
   };
   const handleCartClick = () => setIsCartOpen((open) => !open);
 
-  const categories: string[] = [
-    "Gối sofa",
-    "Mô hình xe",
-    "Vintage",
-    "Đồng hồ",
-    "Trang trí để bàn",
-    "Khung ảnh",
-    "Tượng",
+  const categories: { label: string; href: string }[] = [
+    {
+      label: "Gối Sofa",
+      href: "/category/goi-sofa"
+    },
+    {
+      label: "Mô hình xe Vintage",
+      href: "/category/mo-hinh-xe-vintage"
+    },
+    {
+      label: "Đồng hồ trang trí",
+      href: "/category/dong-ho-trang-tri"
+    },
+    {
+      label: "Tranh Canvas",
+      href: "/category/tranh-canvas"
+    },
+    {
+      label: "Quà tặng nghệ thuật",
+      href: "/category/qua-tang-nghe-thuat"
+    }
   ];
 
   // Hide InfoBar when not at top
@@ -152,15 +165,15 @@ const MenuPC = () => {
           {/* Grid item 3: Category menu */}
           <div className="col-span-2 col-start-2 row-start-2">
             <div className="flex flex-wrap items-center space-x-2 md:space-x-6 px-0 border-t border-b border-gray-100 bg-white h-10 w-full overflow-x-auto">
-              {categories.map((category: string) => (
+              {categories.map((category) => (
                 <a
-                  key={category}
-                  href={`/search?q=${category}`}
+                  key={category.label}
+                  href={category.href}
                   className="text-gray-700 text-xs md:text-sm font-medium hover:text-blue-600 focus:text-blue-600 transition-colors outline-none whitespace-nowrap px-2 md:px-0"
                   tabIndex={0}
-                  aria-label={category}
+                  aria-label={category.label}
                 >
-                  {category}
+                  {category.label}
                 </a>
               ))}
             </div>

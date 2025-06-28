@@ -1,151 +1,190 @@
-// 📁 src/modules/posts/services/post.service.ts
-
-import { Post } from "../models/post.model";
-import { config } from "@/config/config";
+import { Post, PostStatus } from "../models/post.model";
 import { API_URL_CLIENT } from "@/config/apiRoutes";
+import { config } from "@/config/config";
+import { CategoryPostTree } from "../models/categories-post.model";
 
 const POST_API = API_URL_CLIENT + config.ROUTES.POSTS.BASE;
-const IMAGE_UPLOAD_API = API_URL_CLIENT + config.ROUTES.IMAGES.UPLOAD;
 const CATEGORY_POST_API = API_URL_CLIENT + config.ROUTES.CATEGORIES_POST.BASE;
 
-// 🔧 Hàm xử lý phản hồi trả về từ API
+// 🔧 Xử lý response từ server
 const handleResponse = async (response: Response) => {
   if (!response.ok) {
-    const errorData = await response.json().catch(() => null);
-    throw new Error(errorData?.message || "Lỗi từ máy chủ");
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.message || "Lỗi từ máy chủ");
   }
   return response.json();
 };
 
-// 🔧 Hàm tạo options fetch chung
-const fetchOptions = (method: string, data?: any) => ({
-  method,
-  headers: {
+// 🛡️ Sinh header tại runtime, client-only
+function getAuthHeaders(): Record<string, string> {
+  // Nếu chạy trên server, chỉ trả Content-Type
+  if (typeof window === "undefined") {
+    return {
+      "Content-Type": "application/json",
+    };
+  }
+  // Trình duyệt rồi, thoải mái lấy token
+  const token = localStorage.getItem("token") || "";
+  return {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${localStorage.getItem("token")}`,
-  },
-  body: data ? JSON.stringify(data) : undefined,
-});
+    Authorization: `Bearer ${token}`,
+  };
+}
 
-// 📦 Service quản lý bài viết
+// 📚 Kiểu dữ liệu phân trang
+export interface PaginatedPosts {
+  data: Post[];
+  total: number;
+  currentPage: number;
+  totalPages: number;
+}
+
 export const PostService = {
   /**
-   * 📤 Tạo bài viết mới
-   * @param post Dữ liệu bài viết (CreatePostDto)
-   * @returns Bài viết đã tạo
+   * 🔍 Lấy bài viết có phân trang (chỉ lấy bài đã duyệt và hiển thị)
    */
-  create: async (post: Partial<Post>): Promise<Post> => {
-    const response = await fetch(POST_API, fetchOptions("POST", post));
-    return handleResponse(response);
-  },
+  getPosts: async (
+    page: number = 1,
+    limit: number = 10
+  ): Promise<PaginatedPosts> => {
+    try {
+      // Đảm bảo page và limit là số hợp lệ
+      const validPage = Math.max(1, page);
+      const validLimit = Math.max(1, Math.min(100, limit));
 
-  /**
-   * 📋 Lấy danh sách tất cả bài viết chưa bị xóa mềm
-   * @returns Mảng bài viết
-   */
-  getAll: async (): Promise<Post[]> => {
-    const response = await fetch(POST_API);
-    return handleResponse(response);
-  },
+      // Chỉ lấy bài viết đã duyệt và đang hiển thị
+      const url = `${POST_API}?page=${validPage}&limit=${validLimit}&includeHidden=false&status=${PostStatus.Approved}&sort=-publishedDate`;
 
-  /**
-   * 🔍 Lấy chi tiết một bài viết theo slug
-   * @param slug Slug bài viết
-   * @returns Bài viết tương ứng
-   */
-  getOne: async (slug: string): Promise<Post> => {
-    const response = await fetch(`${POST_API}/${slug}`);
-    return handleResponse(response);
-  },
+      const res = await fetch(url, {
+        method: "GET",
+        headers: getAuthHeaders(),
+        cache: 'no-store', // Disable caching to ensure fresh data
+      });
 
-  /**
-   * ✏️ Cập nhật bài viết theo slug
-   * @param slug Slug bài viết
-   * @param post Dữ liệu cập nhật (UpdatePostDto)
-   * @returns Bài viết đã cập nhật
-   */
-  update: async (slug: string, post: Partial<Post>): Promise<Post> => {
-    const response = await fetch(
-      `${POST_API}/${slug}`,
-      fetchOptions("PATCH", post)
-    );
-    return handleResponse(response);
-  },
+      if (!res.ok) {
+        throw new Error('Failed to fetch posts');
+      }
 
-  /**
-   * 🗑️ Xóa mềm bài viết theo slug
-   * @param slug Slug bài viết
-   */
-  softDelete: async (slug: string): Promise<void> => {
-    const response = await fetch(`${POST_API}/${slug}`, fetchOptions("DELETE"));
-    return handleResponse(response);
-  },
+      const result = await handleResponse(res);
 
-  /**
-   * ❌ Xóa vĩnh viễn bài viết khỏi hệ thống
-   * @param slug Slug bài viết
-   */
-  hardDelete: async (slug: string): Promise<void> => {
-    const response = await fetch(
-      `${POST_API}/${slug}/force`,
-      fetchOptions("DELETE")
-    );
-    return handleResponse(response);
-  },
+      // Validate response structure
+      if (!Array.isArray(result.data)) {
+        console.error('Invalid response structure:', result);
+        throw new Error('Invalid response structure from server');
+      }
 
-  /**
-   * 🖼️ Upload ảnh bài viết (cover, nội dung, etc.)
-   * @param file File ảnh cần upload
-   * @returns URL ảnh đã upload (relative path)
-   */
-  uploadImage: async (file: File): Promise<{ url: string }> => {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const response = await fetch(IMAGE_UPLOAD_API, {
-      method: "POST",
-      body: formData,
-    });
-
-    const result = await handleResponse(response);
-    if (!result.imageUrl) throw new Error("Không tìm thấy URL ảnh");
-
-    return { url: result.imageUrl };
-  },
-
-  // Lấy danh sách danh mục sản phẩm
-  getAllCategories: async () => {
-    const allCategories: any[] = [];
-    let page = 1;
-    const limit = 10; // sử dụng đúng limit mặc định của backend
-
-    while (true) {
-      const response = await fetch(
-        `${CATEGORY_POST_API}?page=${page}&limit=${limit}`
+      // Lọc để đảm bảo chỉ lấy bài đã duyệt và đang hiển thị
+      const filteredData = result.data.filter(
+        (post: Post) => post.status === PostStatus.Approved && post.isVisible === true
       );
-      const result = await handleResponse(response);
 
-      if (!result?.data || !Array.isArray(result.data)) break;
+      return {
+        data: filteredData,
+        total: result.total || 0,
+        currentPage: validPage,
+        totalPages: Math.ceil((result.total || 0) / validLimit),
+      };
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+      throw error;
+    }
+  },
 
-      allCategories.push(...result.data);
+  /**
+   * 🔍 Lấy bài viết theo slug (chỉ lấy bài đã duyệt và hiển thị)
+   */
+  getPostBySlug: async (slug: string): Promise<Post> => {
+    // includeHidden=false để chỉ lấy bài đang hiển thị
+    const url = `${POST_API}/${slug}?includeHidden=false`;
+    const res = await fetch(url, {
+      method: "GET",
+      headers: getAuthHeaders(),
+    });
+    const data = await handleResponse(res);
 
-      // Nếu số lượng trả về ít hơn limit thì đã hết dữ liệu
-      if (result.data.length < limit) break;
-
-      page++;
+    // Kiểm tra nếu bài viết không được duyệt hoặc không hiển thị
+    if (data.status !== PostStatus.Approved || data.isVisible !== true) {
+      throw new Error("Bài viết không tồn tại hoặc chưa được phê duyệt");
     }
 
-    return {
-      data: allCategories,
-    };
+    return data as Post;
   },
 };
 
-// 👇 Export từng hàm để các hook có thể sử dụng trực tiếp
-export const createPost = PostService.create;
-export const getPosts = PostService.getAll;
-export const getPostBySlug = PostService.getOne;
-export const updatePost = PostService.update;
-export const softDeletePost = PostService.softDelete;
-export const hardDeletePost = PostService.hardDelete;
-export const uploadImage = PostService.uploadImage;
+interface CategoryPostResponse {
+  message: string;
+  data: CategoryPostTree[];
+  total?: number;
+}
+
+export const CategoryPostService = {
+  findAll: async (): Promise<CategoryPostResponse> => {
+    const res = await fetch(CATEGORY_POST_API, {
+      method: "GET",
+      headers: getAuthHeaders(),
+    });
+    const result = await handleResponse(res);
+    return result;
+  },
+
+  // Hàm tiện ích để làm phẳng cây danh mục
+  flattenCategories: (categories: CategoryPostTree[]): CategoryPostTree[] => {
+    return categories.reduce((acc: CategoryPostTree[], category) => {
+      acc.push(category);
+      if (category.children?.length) {
+        acc.push(...CategoryPostService.flattenCategories(category.children));
+      }
+      return acc;
+    }, []);
+  }
+};
+
+/**
+ * 🔍 Tìm kiếm bài viết theo tiêu đề
+ */
+export const searchPosts = async (
+  searchTerm: string,
+  page: number = 1,
+  limit: number = 10
+): Promise<PaginatedPosts> => {
+  try {
+    // Đảm bảo page và limit là số hợp lệ
+    const validPage = Math.max(1, page);
+    const validLimit = Math.max(1, Math.min(100, limit));
+
+    // Đường dẫn API với tham số tìm kiếm
+    const url = `${POST_API}?page=${validPage}&limit=${validLimit}&search=${encodeURIComponent(searchTerm)}`;
+
+    const res = await fetch(url, {
+      method: "GET",
+      headers: getAuthHeaders(),
+      cache: 'no-store', // Disable caching to ensure fresh data
+    });
+
+    if (!res.ok) {
+      throw new Error('Failed to search posts');
+    }
+
+    const result = await handleResponse(res);
+
+    // Validate response structure
+    if (!Array.isArray(result.data)) {
+      console.error('Invalid response structure:', result);
+      throw new Error('Invalid response structure from server');
+    }
+
+    return {
+      data: result.data,
+      total: result.total || 0,
+      currentPage: validPage,
+      totalPages: Math.ceil((result.total || 0) / validLimit),
+    };
+  } catch (error) {
+    console.error("Error searching posts:", error);
+    throw error;
+  }
+}
+
+// 👇 Xuất thẳng cho hook dùng
+export const getPosts = PostService.getPosts;
+export const getPostBySlug = PostService.getPostBySlug;

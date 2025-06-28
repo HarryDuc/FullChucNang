@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { usePostBySlug, usePosts } from "./hooks/usePosts";
+import { usePostBySlug, usePaginatedPosts } from "./hooks/usePosts";
 import { transformSunEditorHtml } from "@/common/utils/transformSunEditorHtml"; // ✅ Import hàm xử lý ảnh
 import BackToPostsLink from "./components/BackToPostsLink";
 import PostMeta from "./components/PostMeta";
@@ -16,8 +16,8 @@ interface PostDetailProps {
 
 export default function PostDetailClient({ slug }: PostDetailProps) {
   const { data: post, isLoading, isError } = usePostBySlug(slug);
-  const { postsQuery } = usePosts();
-  const recentPosts = postsQuery.data?.slice(0, 5) || [];
+  const { data: paginatedPosts } = usePaginatedPosts(1, 5);
+  const recentPosts = paginatedPosts?.data || [];
 
   if (isLoading) {
     return (
@@ -65,16 +65,24 @@ export default function PostDetailClient({ slug }: PostDetailProps) {
       <div className="md:col-span-2">
         <BackToPostsLink />
         <article>
-          <h1 className="text-3xl font-bold mb-4">{post.title}</h1>
+          <div className="flex items-center justify-between mb-2">
+            <h1 className="text-3xl font-bold mb-2">{post.title}</h1>
+          </div>
           <PostMeta publishedDate={post.publishedDate} author={post.author} />
-          <PostThumbnail src={getThumbnailPath(post.thumbnail) || "/placeholder.svg?height=800&width=1200"} alt={post.title} />
+          <PostThumbnail
+            src={
+              getThumbnailPath(post.thumbnail) ||
+              "/placeholder.svg?height=800&width=1200"
+            }
+            alt={post.title}
+          />
           <PostExcerpt html={transformSunEditorHtml(post.excerpt)} />
           <PostContent
             html={
               post.postData && typeof post.postData === "string"
                 ? transformSunEditorHtml(
-                  post.postData.replace(/<p>Mô tả ngắn<\/p>/g, "")
-                )
+                    post.postData.replace(/<p>Mô tả ngắn<\/p>/g, "")
+                  )
                 : ""
             }
           />
@@ -83,8 +91,12 @@ export default function PostDetailClient({ slug }: PostDetailProps) {
 
       {/* Sidebar - Bên phải */}
       <aside className="md:col-span-1">
-        <div className="sticky ">
-          <RecentPostsList posts={recentPosts} currentSlug={slug} getThumbnailPath={getThumbnailPath} />
+        <div className="sticky top-32">
+          <RecentPostsList
+            posts={recentPosts}
+            currentSlug={slug}
+            getThumbnailPath={getThumbnailPath}
+          />
           <TagList />
         </div>
       </aside>

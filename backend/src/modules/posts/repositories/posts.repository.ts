@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import { Post, PostDocument, PostStatus } from '../schemas/post.schema';
 import { CreatePostDto } from '../dtos/create-posts.dto';
 import { UpdatePostDto } from '../dtos/update-posts.dto';
+import { normalizeForSearch } from '../../../common/utils/normalizeForSearch';
 
 @Injectable()
 export class PostRepository {
@@ -13,7 +14,11 @@ export class PostRepository {
    * Tạo bài viết mới
    */
   create(dto: CreatePostDto) {
-    return this.model.create(dto);
+    const { normalized } = normalizeForSearch(dto.title);
+    return this.model.create({
+      ...dto,
+      normalizedTitle: normalized
+    });
   }
 
   /**
@@ -31,7 +36,7 @@ export class PostRepository {
       .find(query)
       .skip(skip)
       .limit(limit)
-      .sort({ sortOrder: 1, createdAt: -1 }) // 👈 Ưu tiên sortOrder
+      .sort({ createdAt: -1 }) // 👈 Ưu tiên sortOrder
       .exec();
   }
 
@@ -61,19 +66,19 @@ export class PostRepository {
   }
 
   /**
-   * Cập nhật bài viết theo slug
+   * Cập nhật bài viết
    */
-  updateBySlug(slug: string, dto: UpdatePostDto) {
-    const { category, ...rest } = dto;
+  update(slug: string, dto: UpdatePostDto) {
+    const update: any = { ...dto };
+
+    if (dto.title) {
+      const { normalized } = normalizeForSearch(dto.title);
+      update.normalizedTitle = normalized;
+    }
+
     return this.model.findOneAndUpdate(
       { slug, isDeleted: false },
-      {
-        $set: {
-          ...rest,
-          category, // ✅ rõ ràng gán lại field lồng nhau
-          updatedAt: new Date(),
-        },
-      },
+      { $set: update },
       { new: true },
     );
   }
@@ -108,7 +113,19 @@ export class PostRepository {
    * Tìm kiếm bài viết theo tên (và/hoặc tác giả), có phân trang
    */
   async searchByName(name: string, skip = 0, limit = 10, includeHidden = false) {
-    const query = { $text: { $search: name }, isDeleted: false };
+    const { normalized: normalizedSearch } = normalizeForSearch(name || '');
+
+    // Tạo query với điều kiện OR để tìm kiếm linh hoạt hơn
+    const query = {
+      isDeleted: false,
+      $or: [
+        { normalizedTitle: { $regex: normalizedSearch, $options: 'i' } },
+        { title: { $regex: name, $options: 'i' } }
+      ]
+    };
+
+    // Chỉ tìm kiếm bài viết đã được duyệt
+    query['status'] = PostStatus.Approved;
 
     // Nếu không bao gồm bài viết ẩn, thêm điều kiện isVisible = true
     if (!includeHidden) {
@@ -119,13 +136,37 @@ export class PostRepository {
       .find(query)
       .skip(skip)
       .limit(limit)
-      .sort({ score: { $meta: 'textScore' }, createdAt: -1 })
-      .select({ score: { $meta: 'textScore' } })
+      .sort({
+        publishedDate: -1,  // Sắp xếp theo ngày xuất bản
+        _id: -1             // Đảm bảo thứ tự ổn định
+      })
+      .select({
+        title: 1,
+        excerpt: 1,
+        author: 1,
+        slug: 1,
+        publishedDate: 1,
+        thumbnail: 1,
+        isVisible: 1,
+        status: 1
+      })
       .exec();
   }
 
   async countSearchByName(name: string, includeHidden = false) {
-    const query = { $text: { $search: name }, isDeleted: false };
+    const { normalized: normalizedSearch } = normalizeForSearch(name || '');
+
+    // Tạo query với điều kiện OR để tìm kiếm linh hoạt hơn
+    const query = {
+      isDeleted: false,
+      $or: [
+        { normalizedTitle: { $regex: normalizedSearch, $options: 'i' } },
+        { title: { $regex: name, $options: 'i' } }
+      ]
+    };
+
+    // Chỉ đếm các bài viết đã được duyệt
+    query['status'] = PostStatus.Approved;
 
     // Nếu không bao gồm bài viết ẩn, thêm điều kiện isVisible = true
     if (!includeHidden) {
@@ -143,7 +184,7 @@ export class PostRepository {
       .find({ userId, isDeleted: false })
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: -1, _id: -1 })
       .exec();
   }
 
@@ -212,7 +253,7 @@ export class PostRepository {
       .find(query)
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: -1, _id: -1 })
       .exec();
   }
 

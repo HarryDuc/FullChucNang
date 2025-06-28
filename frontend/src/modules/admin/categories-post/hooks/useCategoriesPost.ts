@@ -6,13 +6,18 @@ import {
   useQueryClient,
   UseQueryResult,
 } from "@tanstack/react-query";
-import CategoryPostService from "../services/categories-post.service";
+import CategoryPostService, { CategoryPostResponse } from "../services/categories-post.service";
 import {
   CategoryPost,
   CategoryPostTree,
   CreateCategoryPostDto,
   UpdateCategoryPostDto,
 } from "../models/categories-post.model";
+
+interface CategoryPostsData {
+  categories: CategoryPostTree[];
+  total: number;
+}
 
 /**
  * ✅ Hook lấy cây danh mục theo slug (đệ quy)
@@ -36,11 +41,14 @@ export const useCategoryPostTree = (
 export const useCategoryPosts = (page = 1, limit = 10) => {
   const queryClient = useQueryClient();
 
-  const listQuery = useQuery<CategoryPost[]>({
+  const listQuery = useQuery<CategoryPostsData>({
     queryKey: ["category-posts", page, limit],
     queryFn: async () => {
-      const res = await CategoryPostService.findAll(page, limit);
-      return res.data;
+      const res = await CategoryPostService.findAll({ page, limit });
+      return {
+        categories: res.data,
+        total: res.total || 0
+      };
     },
   });
 
@@ -84,5 +92,10 @@ export const useCategoryPosts = (page = 1, limit = 10) => {
     updateMutation,
     softDeleteMutation,
     hardDeleteMutation,
+    total: listQuery.data?.total || 0,
+    categories: listQuery.data?.categories || [],
+    isLoading: listQuery.isLoading,
+    isError: listQuery.isError,
+    error: listQuery.error,
   };
 };

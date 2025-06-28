@@ -50,7 +50,7 @@ export class CreatePostDto {
   // 📝 Nội dung chính
   // @Transform(({ value }) => safeTrim(value))
   @IsString({ message: 'Tiêu đề không được để trống và phải là chuỗi.' })
-  name: string;
+  title: string;
 
   @IsOptional()
   // @Transform(({ value }) => safeTrim(value))

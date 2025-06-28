@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   useQuery,
   useMutation,
@@ -50,21 +50,38 @@ export const usePosts = () => {
   const limit = 10;
   const { uploadImage: uploadImageHook, error: uploadError } = useImages();
 
+  // Reset page when search term changes
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, statusFilter]);
+
   // Query lấy danh sách hoặc tìm kiếm hoặc lọc theo trạng thái
   const postsQuery = useQuery({
     queryKey: ["posts", page, limit, searchTerm, includeHidden, statusFilter],
-    queryFn: () => {
-      if (statusFilter) {
-        return getPostsByStatus(statusFilter, page, limit, includeHidden);
+    queryFn: async () => {
+      try {
+        if (statusFilter) {
+          return await getPostsByStatus(statusFilter, page, limit, includeHidden);
+        }
+        // Chỉ gọi searchPosts khi có searchTerm
+        if (searchTerm.trim()) {
+          return await searchPosts(searchTerm.trim(), page, limit, includeHidden);
+        }
+        return await getPosts(page, limit, includeHidden);
+      } catch (error) {
+        console.error("Lỗi khi lấy dữ liệu:", error);
+        throw new Error("Không thể tải dữ liệu. Vui lòng thử lại sau.");
       }
-      if (searchTerm) {
-        return searchPosts(searchTerm, page, limit, includeHidden);
-      }
-      return getPosts(page, limit, includeHidden);
     },
     keepPreviousData: true,
     staleTime: 1000 * 60 * 5,
   } as UseQueryOptions<GetPostsResponse, Error, GetPostsResponse, [string, number, number, string, boolean, PostStatus | null]>);
+
+  // Handle search with status filter reset
+  const handleSearch = useCallback((term: string) => {
+    setSearchTerm(term);
+    setStatusFilter(null); // Reset status filter when searching
+  }, []);
 
   // ✅ Upload ảnh bài viết với xử lý lỗi tốt hơn
   const uploadImageMutation = useMutation({
@@ -152,16 +169,17 @@ export const usePosts = () => {
     setPage,
     limit,
     searchTerm,
-    setSearchTerm,
+    setSearchTerm: handleSearch,
     includeHidden,
     setIncludeHidden,
     statusFilter,
     setStatusFilter,
+    isLoading: postsQuery.isLoading || postsQuery.isFetching,
   };
 };
 
 /**
- * 👤 Hook lấy danh sách bài viết của user đang đăng nhập
+ * �� Hook lấy danh sách bài viết của user đang đăng nhập
  */
 export const useMyPosts = (userId: string) => {
   const [page, setPage] = useState(1);

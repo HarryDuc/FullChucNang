@@ -1,14 +1,17 @@
 "use client";
 
 import { useCategoryPosts } from "../hooks/useCategoriesPost";
-import { CategoryPost } from "../models/categories-post.model";
+import { CategoryPostTree } from "../models/categories-post.model";
 import { useState } from "react";
 
 const CategoriesPostList = () => {
   const [page, setPage] = useState(1);
   const limit = 10;
 
-  const { listQuery, hardDeleteMutation } = useCategoryPosts(page, limit);
+  const { categories, total, isLoading, hardDeleteMutation } = useCategoryPosts(
+    page,
+    limit
+  );
 
   const handleDelete = async (slug: string) => {
     if (!slug) return alert("❌ Không thể xoá vì thiếu slug!");
@@ -25,11 +28,28 @@ const CategoriesPostList = () => {
     }
   };
 
-  if (listQuery.isLoading) {
+  if (isLoading) {
     return <p className="p-4 text-gray-600">Đang tải danh mục bài viết...</p>;
   }
 
-  const hasNextPage = !!listQuery.data && listQuery.data.length >= limit;
+  // Calculate total pages
+  const totalPages = Math.ceil(total / limit);
+  const hasNextPage = page < totalPages;
+
+  // Flatten the tree structure for display
+  const flattenCategories = (
+    categories: CategoryPostTree[]
+  ): CategoryPostTree[] => {
+    return categories.reduce((acc: CategoryPostTree[], category) => {
+      acc.push(category);
+      if (category.children?.length) {
+        acc.push(...flattenCategories(category.children));
+      }
+      return acc;
+    }, []);
+  };
+
+  const flatCategories = flattenCategories(categories);
 
   return (
     <div className="max-w-6xl mx-auto p-6">
@@ -39,7 +59,7 @@ const CategoriesPostList = () => {
 
       <div className="mb-4">
         <a
-          href="/admin/categories-post/create"
+          href="/admin/categories-posts/create"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-block bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
@@ -60,52 +80,52 @@ const CategoriesPostList = () => {
             </tr>
           </thead>
           <tbody>
-            {listQuery.data && listQuery.data.length > 0 ? (
-              listQuery.data.map((category: CategoryPost, index: number) => {
-                // Tìm danh mục cha (nếu có)
-                const parentCategory = category.parent
-                  ? listQuery.data.find(
-                      (cat: CategoryPost) => cat._id === category.parent
-                    )
-                  : null;
+            {flatCategories.length > 0 ? (
+              flatCategories.map(
+                (category: CategoryPostTree, index: number) => {
+                  // Find parent category
+                  const parentCategory = flatCategories.find(
+                    (cat) => cat._id === category.parent
+                  );
 
-                return (
-                  <tr key={category._id} className="hover:bg-gray-50">
-                    <td className="py-3 px-4 border-b">
-                      {(page - 1) * limit + index + 1}
-                    </td>
-                    <td className="py-3 px-4 border-b font-medium">
-                      {category.name}
-                    </td>
-                    <td className="py-3 px-4 border-b text-gray-600">
-                      {parentCategory ? parentCategory.name : "Không có"}
-                    </td>
-                    <td className="py-3 px-4 border-b text-gray-500">
-                      {category.slug}
-                    </td>
-                    <td className="py-3 px-4 border-b text-center space-x-2">
-                      <a
-                        href={`/admin/categories-post/edit/${category.slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 text-sm rounded inline-block"
-                      >
-                        ✏️ Sửa
-                      </a>
+                  return (
+                    <tr key={category._id} className="hover:bg-gray-50">
+                      <td className="py-3 px-4 border-b">
+                        {(page - 1) * limit + index + 1}
+                      </td>
+                      <td className="py-3 px-4 border-b font-medium">
+                        {category.name}
+                      </td>
+                      <td className="py-3 px-4 border-b text-gray-600">
+                        {parentCategory ? parentCategory.name : "Không có"}
+                      </td>
+                      <td className="py-3 px-4 border-b text-gray-500">
+                        {category.slug}
+                      </td>
+                      <td className="py-3 px-4 border-b text-center space-x-2">
+                        <a
+                          href={`/admin/categories-posts/edit/${category.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 text-sm rounded inline-block"
+                        >
+                          ✏️ Sửa
+                        </a>
 
-                      <button
-                        onClick={() => handleDelete(category.slug)}
-                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-sm rounded"
-                      >
-                        🗑️ Xoá
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })
+                        <button
+                          onClick={() => handleDelete(category.slug)}
+                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-sm rounded"
+                        >
+                          🗑️ Xoá
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                }
+              )
             ) : (
               <tr>
-                <td colSpan={5} className="text-center py-4 text-gray-500">
+                <td colSpan={6} className="text-center py-4 text-gray-500">
                   Không có danh mục nào.
                 </td>
               </tr>
@@ -115,7 +135,7 @@ const CategoriesPostList = () => {
       </div>
 
       {/* PHÂN TRANG */}
-      <div className="flex justify-center items-center mt-6 gap-4">
+      {/* <div className="flex justify-center items-center mt-6 gap-4">
         <button
           disabled={page === 1}
           onClick={() => setPage((prev) => prev - 1)}
@@ -123,7 +143,9 @@ const CategoriesPostList = () => {
         >
           ← Trước
         </button>
-        <span className="text-sm">Trang {page}</span>
+        <span className="text-sm">
+          Trang {page} / {totalPages}
+        </span>
         <button
           disabled={!hasNextPage}
           onClick={() => setPage((prev) => prev + 1)}
@@ -131,7 +153,7 @@ const CategoriesPostList = () => {
         >
           Sau →
         </button>
-      </div>
+      </div> */}
     </div>
   );
 };

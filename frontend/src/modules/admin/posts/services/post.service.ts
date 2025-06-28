@@ -145,10 +145,25 @@ export const PostService = {
     limit = 10,
     includeHidden = false
   ): Promise<{ data: Post[]; total: number }> => {
-    const response = await fetch(
-      `${POST_API}?page=${page}&limit=${limit}&search=${encodeURIComponent(searchTerm)}&includeHidden=${includeHidden}`
-    );
-    return handleResponse(response);
+    // Nếu searchTerm trống, trả về danh sách bài viết bình thường
+    if (!searchTerm?.trim()) {
+      return PostService.getAll(page, limit, includeHidden);
+    }
+
+    try {
+      const response = await fetch(
+        `${POST_API}?page=${page}&limit=${limit}&search=${encodeURIComponent(searchTerm.trim())}&includeHidden=${includeHidden}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      return handleResponse(response);
+    } catch (error) {
+      console.error("Lỗi khi tìm kiếm bài viết:", error);
+      throw new Error("Không thể tìm kiếm bài viết. Vui lòng thử lại sau.");
+    }
   },
 
   /**

@@ -1,13 +1,15 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useAdminBanner } from "../hooks/useBanner";
 import { Banner } from "@/modules/client/home/models/banner.model";
 import { useForm } from "react-hook-form";
+import { useImages } from "@/common/hooks/useImages";
+import Image from "next/image";
 
 interface BannerFormData {
   title: string;
   description?: string;
   imagePath: string;
-  link: string;
+  link?: string;
   type: "main" | "sub" | "mobile";
   order: number;
   isActive: boolean;
@@ -20,6 +22,7 @@ interface BannerFormProps {
 }
 
 const isValidUrl = (url: string) => {
+  if (!url) return true;
   try {
     new URL(url);
     return true;
@@ -36,27 +39,83 @@ export const BannerForm: React.FC<BannerFormProps> = ({
   const { useCreateBanner, useUpdateBanner } = useAdminBanner();
   const { mutate: createBanner } = useCreateBanner();
   const { mutate: updateBanner } = useUpdateBanner();
+  const { uploadImage, loading: uploadingImage } = useImages();
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [isUploaded, setIsUploaded] = useState(false);
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<BannerFormData>({
     defaultValues: {
       isActive: true,
       type: "main",
       order: 0,
+      imagePath: "",
+      link: "",
     },
   });
+
+  const imagePath = watch("imagePath");
 
   useEffect(() => {
     if (banner) {
       reset(banner);
+      setPreviewImage(banner.imagePath);
+      setIsUploaded(!!banner.imagePath);
     }
   }, [banner, reset]);
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const result = await uploadImage(file);
+      console.log("Upload result:", result); // Debug log
+
+      if (result) {
+        // Lấy URL từ các trường có thể chứa URL
+        const imageUrl = result.imageUrl || result.url || result.path;
+
+        if (imageUrl) {
+          console.log("Setting image URL:", imageUrl); // Debug log
+          setValue("imagePath", imageUrl, {
+            shouldValidate: true,
+            shouldDirty: true,
+          });
+          setPreviewImage(imageUrl);
+          setIsUploaded(true);
+        } else {
+          console.error("No valid image URL found in response:", result);
+        }
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error);
+    }
+  };
+
+  const handleManualUrlInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const url = e.target.value;
+    setValue("imagePath", url);
+    if (isValidUrl(url)) {
+      setPreviewImage(url);
+    }
+  };
+
   const onSubmit = (data: BannerFormData) => {
+    if (!data.imagePath) {
+      return;
+    }
+
+    if (data.link && !isValidUrl(data.link)) {
+      return;
+    }
+
     if (banner?._id) {
       updateBanner({ id: banner._id, data });
     } else {
@@ -106,25 +165,57 @@ export const BannerForm: React.FC<BannerFormProps> = ({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Đường dẫn ảnh
+              Hình ảnh <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
-              {...register("imagePath", {
-                required: "Đường dẫn ảnh không được để trống",
-                validate: {
-                  isValidUrl: (value) =>
-                    isValidUrl(value) || "Đường dẫn ảnh phải là một URL hợp lệ",
-                },
-              })}
-              placeholder="https://example.com/image.jpg"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {errors.imagePath && (
-              <p className="mt-1 text-sm text-red-600">
-                {errors.imagePath.message}
-              </p>
-            )}
+            <div className="space-y-2">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="w-full"
+              />
+
+              {!isUploaded && (
+                <div className="mt-2">
+                  <label className="block text-sm text-gray-600 mb-1">
+                    Hoặc nhập URL hình ảnh
+                  </label>
+                  <input
+                    type="text"
+                    {...register("imagePath", {
+                      required: "Vui lòng upload ảnh hoặc nhập URL hình ảnh",
+                    })}
+                    onChange={handleManualUrlInput}
+                    placeholder="https://example.com/image.jpg"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              )}
+
+              {uploadingImage && (
+                <p className="text-sm text-blue-600">Đang tải ảnh lên...</p>
+              )}
+
+              {errors.imagePath && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.imagePath.message}
+                </p>
+              )}
+
+              {previewImage && (
+                <div className="mt-2">
+                  <p className="text-sm text-gray-600 mb-1">Xem trước:</p>
+                  <div className="relative w-full h-48">
+                    <Image
+                      src={previewImage}
+                      alt="Preview"
+                      fill
+                      className="object-contain rounded-md"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <div>
@@ -134,10 +225,9 @@ export const BannerForm: React.FC<BannerFormProps> = ({
             <input
               type="text"
               {...register("link", {
-                required: "Link không được để trống",
                 validate: {
-                  isValidUrl: (value) =>
-                    isValidUrl(value) || "Link phải là một URL hợp lệ",
+                  validUrl: (value) =>
+                    !value || isValidUrl(value) || "URL không hợp lệ",
                 },
               })}
               placeholder="https://example.com"

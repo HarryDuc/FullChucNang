@@ -27,7 +27,7 @@ export class PostService {
    * Tạo bài viết mới, tự động xử lý slug không dấu và tránh trùng lặp
    */
   async create(dto: CreatePostDto, user: { fullName?: string; userId?: string }) {
-    const rawSlug = dto.slug || dto.name;
+    const rawSlug = dto.slug || dto.title;
     const finalSlug = await generateUniqueSlug(rawSlug, this.postModel);
 
     dto.slug = finalSlug;
@@ -74,10 +74,10 @@ export class PostService {
     return this.postRepo.findBySlug(slug, includeHidden);
   }
 
-    /**
-   * Cập nhật bài viết và xử lý slug nếu bị thay đổi
-   * Tự động tạo redirect nếu slug thay đổi
-   */
+  /**
+ * Cập nhật bài viết và xử lý slug nếu bị thay đổi
+ * Tự động tạo redirect nếu slug thay đổi
+ */
   // async updateBySlug(slug: string, dto: UpdatePostDto) {
   //   if (dto.slug) {
   //     const newSlug = removeVietnameseTones(dto.slug);
@@ -92,61 +92,61 @@ export class PostService {
   //   return this.postRepo.updateBySlug(slug, dto);
   // }
 
-    /**
-   * Cập nhật bài viết và xử lý slug nếu bị thay đổi
-   * Tự động tạo redirect nếu slug thay đổi
-   */
-    async updateBySlug(slug: string, dto: UpdatePostDto) {
-      let oldSlug = slug;
-      let newSlug = slug;
-      let needRedirect = false;
+  /**
+ * Cập nhật bài viết và xử lý slug nếu bị thay đổi
+ * Tự động tạo redirect nếu slug thay đổi
+ */
+  async updateBySlug(slug: string, dto: UpdatePostDto) {
+    let oldSlug = slug;
+    let newSlug = slug;
+    let needRedirect = false;
 
-      if (dto.slug) {
-        newSlug = removeVietnameseTones(dto.slug);
-        if (newSlug !== slug) {
-          // Kiểm tra xem slug mới có tồn tại không
-          const existed = await this.postRepo.existsBySlug(newSlug);
-          if (existed) {
-            throw new BadRequestException(`Slug "${newSlug}" đã tồn tại.`);
-          }
-          dto.slug = newSlug;
-          needRedirect = true;
+    if (dto.slug) {
+      newSlug = removeVietnameseTones(dto.slug);
+      if (newSlug !== slug) {
+        // Kiểm tra xem slug mới có tồn tại không
+        const existed = await this.postRepo.existsBySlug(newSlug);
+        if (existed) {
+          throw new BadRequestException(`Slug "${newSlug}" đã tồn tại.`);
         }
+        dto.slug = newSlug;
+        needRedirect = true;
       }
-
-      // Cập nhật bài viết
-      const updatedPost = await this.postRepo.updateBySlug(oldSlug, dto);
-
-      if (!updatedPost) {
-        throw new NotFoundException(`Không tìm thấy bài viết với slug ${oldSlug}`);
-      }
-
-      // Nếu slug đã thay đổi, tạo redirect từ slug cũ sang slug mới
-      if (needRedirect && this.redirectsService) {
-        try {
-          // Sử dụng cấu hình đường dẫn từ routes.config
-          const oldPath = FRONTEND_ROUTES.POSTS.DETAIL(oldSlug);
-          const newPath = FRONTEND_ROUTES.POSTS.DETAIL(newSlug);
-
-          // Tạo redirect trong hệ thống
-          await this.redirectsService.create({
-            oldPath,
-            newPath,
-            type: 'post',
-            isActive: true,
-            statusCode: 301,
-          });
-
-          console.log(`Đã tạo redirect từ ${oldPath} sang ${newPath}`);
-        } catch (redirectError) {
-          console.error('Lỗi khi tạo redirect:', redirectError);
-        }
-      }
-
-      return updatedPost;
     }
 
-    
+    // Cập nhật bài viết
+    const updatedPost = await this.postRepo.update(oldSlug, dto);
+
+    if (!updatedPost) {
+      throw new NotFoundException(`Không tìm thấy bài viết với slug ${oldSlug}`);
+    }
+
+    // Nếu slug đã thay đổi, tạo redirect từ slug cũ sang slug mới
+    if (needRedirect && this.redirectsService) {
+      try {
+        // Sử dụng cấu hình đường dẫn từ routes.config
+        const oldPath = FRONTEND_ROUTES.POSTS.DETAIL(oldSlug);
+        const newPath = FRONTEND_ROUTES.POSTS.DETAIL(newSlug);
+
+        // Tạo redirect trong hệ thống
+        await this.redirectsService.create({
+          oldPath,
+          newPath,
+          type: 'post',
+          isActive: true,
+          statusCode: 301,
+        });
+
+        console.log(`Đã tạo redirect từ ${oldPath} sang ${newPath}`);
+      } catch (redirectError) {
+        console.error('Lỗi khi tạo redirect:', redirectError);
+      }
+    }
+
+    return updatedPost;
+  }
+
+
   /**
    * Xóa mềm bài viết
    */
@@ -281,61 +281,61 @@ export class PostService {
 
     return this.postRepo.updateVisibility(slug, isVisible);
   }
-    /**
-   * Cập nhật riêng slug của bài viết
-   * Tự động tạo redirect từ slug cũ sang slug mới
-   * @param slug Slug hiện tại của bài viết
-   * @param newSlug Slug mới cho bài viết
-   */
-    async updateSlug(slug: string, newSlug: string): Promise<Post | null> {
-      // Kiểm tra xem slug mới có hợp lệ không
-      if (!newSlug || newSlug.trim() === '') {
-        throw new BadRequestException('Slug mới không được để trống!');
-      }
-
-      // Chuẩn hóa slug mới
-      const finalNewSlug = removeVietnameseTones(newSlug);
-
-      // Kiểm tra slug mới có giống với slug cũ không
-      if (finalNewSlug === slug) {
-        return this.findBySlug(slug);
-      }
-
-      // Kiểm tra xem slug mới đã tồn tại chưa
-      const existed = await this.postRepo.existsBySlug(finalNewSlug);
-      if (existed) {
-        throw new BadRequestException(`Slug "${finalNewSlug}" đã tồn tại.`);
-      }
-
-      // Cập nhật slug mới
-      const updatedPost = await this.postRepo.updateBySlug(slug, { slug: finalNewSlug });
-
-      if (!updatedPost) {
-        throw new NotFoundException(`Không tìm thấy bài viết với slug ${slug}`);
-      }
-
-      // Tạo redirect từ slug cũ sang slug mới
-      if (this.redirectsService) {
-        try {
-          // Sử dụng cấu hình đường dẫn từ routes.config
-          const oldPath = FRONTEND_ROUTES.POSTS.DETAIL(slug);
-          const newPath = FRONTEND_ROUTES.POSTS.DETAIL(finalNewSlug);
-
-          // Tạo redirect trong hệ thống
-          await this.redirectsService.create({
-            oldPath,
-            newPath,
-            type: 'post',
-            isActive: true,
-            statusCode: 301,
-          });
-
-          console.log(`Đã tạo redirect từ ${oldPath} sang ${newPath}`);
-        } catch (redirectError) {
-          console.error('Lỗi khi tạo redirect:', redirectError);
-        }
-      }
-
-      return updatedPost;
+  /**
+ * Cập nhật riêng slug của bài viết
+ * Tự động tạo redirect từ slug cũ sang slug mới
+ * @param slug Slug hiện tại của bài viết
+ * @param newSlug Slug mới cho bài viết
+ */
+  async updateSlug(slug: string, newSlug: string): Promise<Post | null> {
+    // Kiểm tra xem slug mới có hợp lệ không
+    if (!newSlug || newSlug.trim() === '') {
+      throw new BadRequestException('Slug mới không được để trống!');
     }
+
+    // Chuẩn hóa slug mới
+    const finalNewSlug = removeVietnameseTones(newSlug);
+
+    // Kiểm tra slug mới có giống với slug cũ không
+    if (finalNewSlug === slug) {
+      return this.findBySlug(slug);
+    }
+
+    // Kiểm tra xem slug mới đã tồn tại chưa
+    const existed = await this.postRepo.existsBySlug(finalNewSlug);
+    if (existed) {
+      throw new BadRequestException(`Slug "${finalNewSlug}" đã tồn tại.`);
+    }
+
+    // Cập nhật slug mới
+    const updatedPost = await this.postRepo.update(slug, { slug: finalNewSlug });
+
+    if (!updatedPost) {
+      throw new NotFoundException(`Không tìm thấy bài viết với slug ${slug}`);
+    }
+
+    // Tạo redirect từ slug cũ sang slug mới
+    if (this.redirectsService) {
+      try {
+        // Sử dụng cấu hình đường dẫn từ routes.config
+        const oldPath = FRONTEND_ROUTES.POSTS.DETAIL(slug);
+        const newPath = FRONTEND_ROUTES.POSTS.DETAIL(finalNewSlug);
+
+        // Tạo redirect trong hệ thống
+        await this.redirectsService.create({
+          oldPath,
+          newPath,
+          type: 'post',
+          isActive: true,
+          statusCode: 301,
+        });
+
+        console.log(`Đã tạo redirect từ ${oldPath} sang ${newPath}`);
+      } catch (redirectError) {
+        console.error('Lỗi khi tạo redirect:', redirectError);
+      }
+    }
+
+    return updatedPost;
+  }
 }

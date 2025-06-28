@@ -2,7 +2,6 @@ import { IsString, IsEnum, IsBoolean, IsNumber, IsOptional, IsUrl } from 'class-
 
 export class CreateBannerDto {
   @IsString()
-  @IsUrl()
   imagePath: string;
 
   @IsEnum(['main', 'sub', 'mobile'])
@@ -17,7 +16,6 @@ export class CreateBannerDto {
 
   @IsString()
   @IsOptional()
-  @IsUrl()
   link?: string;
 
   @IsString()
@@ -31,7 +29,6 @@ export class CreateBannerDto {
 
 export class UpdateBannerDto {
   @IsString()
-  @IsUrl()
   @IsOptional()
   imagePath?: string;
 
@@ -49,7 +46,6 @@ export class UpdateBannerDto {
 
   @IsString()
   @IsOptional()
-  @IsUrl()
   link?: string;
 
   @IsString()
