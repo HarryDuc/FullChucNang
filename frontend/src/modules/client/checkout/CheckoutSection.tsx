@@ -34,6 +34,8 @@ import VoucherInput from "../voucher/components/VoucherInput";
 import { Voucher } from "../voucher/models/voucher.model";
 import PayPalButton from "./components/PayPalButton";
 import MetaMaskButton from "./components/MetaMaskButton";
+import { useAuth } from "@/context/AuthContext";
+import router from "next/router";
 
 // Interface cho dữ liệu tạo checkout dựa trên DTO trong backend
 interface CreateCheckoutData {
@@ -108,6 +110,13 @@ const CheckoutSection = () => {
     useState<boolean>(false);
   const [payPalOrderRef, setPayPalOrderRef] = useState<string>("");
   const [metamaskOrderRef, setMetamaskOrderRef] = useState<string>("");
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated]);
 
   // Lấy thông tin profile từ API
   useEffect(() => {
@@ -411,16 +420,6 @@ const CheckoutSection = () => {
       districtName,
       wardName,
     };
-  };
-
-  const handleVoucherApplied = (voucher: Voucher, amount: number) => {
-    setAppliedVoucher(voucher);
-    setDiscountAmount(amount);
-  };
-
-  const handleVoucherRemoved = () => {
-    setAppliedVoucher(null);
-    setDiscountAmount(0);
   };
 
   // Separate mappings for different APIs

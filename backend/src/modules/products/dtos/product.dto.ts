@@ -237,6 +237,36 @@ export class PromotionDto {
 /**
  * DTO để tạo sản phẩm mới
  */
+export class SpecificationGroupDto {
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TechnicalSpecDto)
+  specs: TechnicalSpecDto[];
+}
+
+export class SpecificationDto {
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SpecificationGroupDto)
+  groups: SpecificationGroupDto[];
+}
+
+export class TechnicalSpecDto {
+  @IsString()
+  name: string;
+
+  @IsString()
+  value: string;
+}
+
 export class CreateProductDto {
   @IsString()
   name: string;
@@ -297,6 +327,11 @@ export class CreateProductDto {
 
   @IsBoolean()
   hasVariants: boolean;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => SpecificationDto)
+  specification?: SpecificationDto;
 
   @IsOptional()
   @IsArray()
@@ -500,6 +535,11 @@ export class UpdateProductDto implements Partial<CreateProductDto> {
   @ValidateNested()
   @Type(() => PromotionDto)
   promotion?: PromotionDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => SpecificationDto)
+  specification?: SpecificationDto;
 }
 
 /**

@@ -1,13 +1,23 @@
 import React, { useState } from "react";
 import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
-import {
-  useProductReviews,
-  useCreateReview,
-} from "../hooks/useReviews";
+import { useProductReviews, useCreateReview } from "../hooks/useReviews";
 import { toast } from "react-hot-toast";
 import { useUser } from "../../users/hooks/useUser";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
+
+interface SpecificationGroup {
+  title: string;
+  specs: {
+    name: string;
+    value: string;
+  }[];
+}
+
+interface Specification {
+  title: string;
+  groups: SpecificationGroup[];
+}
 
 interface ProductTabsProps {
   activeTab: string;
@@ -18,6 +28,7 @@ interface ProductTabsProps {
   setShowAllImages: (show: boolean) => void;
   productName: string;
   productSlug: string;
+  specification?: Specification;
 }
 
 const ProductTabs: React.FC<ProductTabsProps> = ({
@@ -29,10 +40,10 @@ const ProductTabs: React.FC<ProductTabsProps> = ({
   setShowAllImages,
   productName,
   productSlug,
+  specification,
 }) => {
   const { isAuthenticated } = useAuth();
   const { user } = useUser();
-  console.log(user);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [hoveredStar, setHoveredStar] = useState(0);
@@ -45,7 +56,6 @@ const ProductTabs: React.FC<ProductTabsProps> = ({
 
   const handleSubmitReview = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Product slug:", productSlug);
 
     if (!productSlug) {
       toast.error("Không tìm thấy thông tin sản phẩm");
@@ -86,12 +96,12 @@ const ProductTabs: React.FC<ProductTabsProps> = ({
 
     createReview({
       productSlug,
-      userId: user.id, // ✓ correct ID field
-      userName: user.fullName, // ✓ correct name field
-      userEmail: user.email, // ✓ correct email field
-      userAvatar: user.avatar, // ✓ optional field
-      rating, // ✓ validated (1-5)
-      comment: comment.trim(), // ✓ validated (non-empty)
+      userId: user.id,
+      userName: user.fullName,
+      userEmail: user.email,
+      userAvatar: user.avatar,
+      rating,
+      comment: comment.trim(),
     });
   };
 
@@ -113,6 +123,35 @@ const ProductTabs: React.FC<ProductTabsProps> = ({
     ));
   };
 
+  const renderSpecifications = () => {
+    if (!specification || !specification.groups) return null;
+
+    return (
+      <div className="mt-8">
+        <h3 className="text-xl font-bold mb-4">{specification.title}</h3>
+        <div className="space-y-6">
+          {specification.groups.map((group, groupIndex) => (
+            <div key={groupIndex} className="bg-white rounded-lg shadow-sm">
+              <div className="bg-gray-50 px-4 py-3 rounded-t-lg">
+                <h4 className="font-semibold text-gray-800">{group.title}</h4>
+              </div>
+              <div className="p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {group.specs.map((spec, specIndex) => (
+                    <div key={specIndex} className="flex">
+                      <div className="w-1/2 text-gray-600">{spec.name}</div>
+                      <div className="w-1/2 text-gray-900">{spec.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <section className="mt-12 border-t border-gray-200 pt-8">
       <div className="border-b border-gray-200 bg-white rounded-t-lg shadow-sm">
@@ -130,6 +169,20 @@ const ProductTabs: React.FC<ProductTabsProps> = ({
             id="description-tab"
           >
             Mô tả
+          </button>
+          <button
+            className={`px-8 py-4 font-semibold text-lg rounded-t-lg focus:outline-none transition-all duration-200 ${
+              activeTab === "specification"
+                ? "border-b-4 border-blue-900 text-blue-900 bg-blue-50"
+                : "text-gray-600 hover:text-blue-900 bg-transparent"
+            }`}
+            onClick={() => setActiveTab("specification")}
+            role="tab"
+            aria-selected={activeTab === "specification"}
+            aria-controls="specification-panel"
+            id="specification-tab"
+          >
+            Thông số kỹ thuật
           </button>
           <button
             className={`px-8 py-4 font-semibold text-lg rounded-t-lg focus:outline-none transition-all duration-200 ${
@@ -156,7 +209,7 @@ const ProductTabs: React.FC<ProductTabsProps> = ({
           >
             <h2 className="text-2xl font-bold mb-4">{productName}</h2>
             <div
-              className="text-gray-600 mb-2 bg-gray-50 overflow-hidden product-description-container p-4 rounded-lg"
+              className="text-gray-600 mb-6 bg-gray-50 overflow-hidden product-description-container p-4 rounded-lg"
               dangerouslySetInnerHTML={{ __html: processedDescription }}
             />
             {hasMultipleImages && (
@@ -180,6 +233,14 @@ const ProductTabs: React.FC<ProductTabsProps> = ({
                 </button>
               </div>
             )}
+          </div>
+        ) : activeTab === "specification" ? (
+          <div
+            role="tabpanel"
+            id="specification-panel"
+            aria-labelledby="specification-tab"
+          >
+            {renderSpecifications()}
           </div>
         ) : (
           <div role="tabpanel" id="reviews-panel" aria-labelledby="reviews-tab">
@@ -220,7 +281,7 @@ const ProductTabs: React.FC<ProductTabsProps> = ({
               <p className="text-gray-600 mb-4">Chưa có đánh giá nào.</p>
             )}
 
-            {/* Form đánh giá - chỉ hiển thị nếu user đã đăng nhập và đã mua sản phẩm */}
+            {/* Form đánh giá */}
             {isAuthenticated && user ? (
               <form onSubmit={handleSubmitReview} className="mt-8">
                 <h3 className="text-lg font-semibold mb-4">

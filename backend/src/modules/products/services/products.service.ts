@@ -241,6 +241,7 @@ export class ProductService {
           'stock',
           'sold',
           'hasVariants',
+          'specification',
           'createdAt',
           'updatedAt',
           'publishedAt'

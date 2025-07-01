@@ -18,12 +18,26 @@ export interface ImageResponse {
   updatedAt: string;
 }
 
+export interface PaginatedImageResponse {
+  images: ImageResponse[];
+  total: number;
+  hasMore: boolean;
+}
+
 export const imagesService = {
-  // Lấy tất cả ảnh
-  getAllImages: async (): Promise<ImageResponse[]> => {
+  // Lấy ảnh theo trang
+  getAllImages: async (page: number = 1, limit: number = 40): Promise<PaginatedImageResponse> => {
     try {
-      console.log('Calling API:', `${API_URL}`);
-      const response = await axios.get(`${API_URL}`);
+      console.log('Calling API:', `${API_URL}?page=${page}&limit=${limit}`);
+      const response = await axios.get(`${API_URL}`, {
+        params: {
+          page,
+          limit
+        },
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
       console.log('API Response:', response.data);
       return response.data;
     } catch (error) {
@@ -40,6 +54,7 @@ export const imagesService = {
     const response = await axios.post(`${API_URL}/upload`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
     });
     return response.data;
@@ -55,6 +70,7 @@ export const imagesService = {
     const response = await axios.post(`${API_URL}/upload-multiple`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
     });
     return response.data;
@@ -62,7 +78,11 @@ export const imagesService = {
 
   // Xóa ảnh theo slug
   deleteImage: async (slug: string): Promise<void> => {
-    await axios.delete(`${API_URL}/${slug}`);
+    await axios.delete(`${API_URL}/${slug}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
   },
 
   // Upload ảnh cho SunEditor
@@ -73,6 +93,7 @@ export const imagesService = {
     const response = await axios.post(`${API_URL}/sunEditor`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
     });
     return response.data;

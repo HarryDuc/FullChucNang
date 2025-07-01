@@ -184,7 +184,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
           dangerouslySetInnerHTML={{
             __html:
               product?.shortDescription || product?.description
-                ? (product?.shortDescription || product?.description)
+                ? (product?.shortDescription || product?.description || "")
                     .replace(/src="([^"]+)"/g, (match: string, src: string) =>
                       src.startsWith("http")
                         ? match

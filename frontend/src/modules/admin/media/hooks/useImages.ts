@@ -1,21 +1,24 @@
-import { useMutation, useQuery, useQueryClient, UseMutationResult } from '@tanstack/react-query';
-import { imagesService, ImageResponse } from '@/modules/admin/media/services/images.service';
+import { useMutation, useInfiniteQuery, useQueryClient, UseMutationResult, InfiniteData } from '@tanstack/react-query';
+import { imagesService, ImageResponse, PaginatedImageResponse } from '@/modules/admin/media/services/images.service';
 import { toast } from 'react-hot-toast';
 
 export const useImages = () => {
   const queryClient = useQueryClient();
 
-  // Query để lấy tất cả ảnh
+  // Query để lấy ảnh với infinite scroll
   const {
-    data: images = [],
+    data,
     isLoading: isLoadingImages,
     error: imagesError,
-  } = useQuery<ImageResponse[]>({
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery<PaginatedImageResponse, Error, InfiniteData<PaginatedImageResponse>, string[], number>({
     queryKey: ['images'],
-    queryFn: async () => {
+    queryFn: async ({ pageParam = 1 }) => {
       try {
-        console.log('Fetching images...');
-        const result = await imagesService.getAllImages();
+        console.log('Fetching images page:', pageParam);
+        const result = await imagesService.getAllImages(pageParam);
         console.log('Fetched images:', result);
         return result;
       } catch (error) {
@@ -23,7 +26,15 @@ export const useImages = () => {
         throw error;
       }
     },
+    getNextPageParam: (lastPage: PaginatedImageResponse, allPages: PaginatedImageResponse[]): number | undefined => {
+      if (!lastPage.hasMore) return undefined;
+      return allPages.length + 1;
+    },
+    initialPageParam: 1,
   });
+
+  // Tổng hợp tất cả ảnh từ các trang
+  const images = data?.pages.flatMap(page => page.images) ?? [];
 
   // Mutation để upload một ảnh
   const {
@@ -88,6 +99,9 @@ export const useImages = () => {
   return {
     // Data
     images,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
 
     // Loading states
     isLoadingImages,

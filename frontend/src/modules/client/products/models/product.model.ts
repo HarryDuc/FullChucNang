@@ -92,6 +92,24 @@ export interface PromotionInfo {
 }
 
 /**
+ * Interface cho thông số kỹ thuật
+ */
+export interface TechnicalSpec {
+  name: string;
+  value: string;
+}
+
+export interface SpecificationGroup {
+  title: string;
+  specs: TechnicalSpec[];
+}
+
+export interface Specification {
+  title: string;
+  groups: SpecificationGroup[];
+}
+
+/**
  * Interface chính cho sản phẩm
  */
 export interface Product {
@@ -139,6 +157,9 @@ export interface Product {
   displayOrder?: number;
   viewCount?: number;
   promotion?: PromotionInfo;
+
+  // Thông số kỹ thuật
+  specification?: Specification;
 
   // Thông tin thời gian
   publishedAt?: string;

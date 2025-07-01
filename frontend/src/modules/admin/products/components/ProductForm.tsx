@@ -6,6 +6,9 @@ import {
   VariantAttribute,
   ProductVariant,
   StockInfo,
+  Specification,
+  SpecificationGroup,
+  TechnicalSpec,
 } from "../models/product.model";
 import { useProducts } from "../hooks/useProducts";
 import CategoryTree, { Category } from "./CategoryTree";
@@ -73,6 +76,12 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const [variants, setVariants] = useState<ProductVariant[]>(
     initialData?.variants || []
   );
+
+  // Specifications
+  const [specification, setSpecification] = useState<Specification>({
+    title: initialData?.specification?.title || "",
+    groups: initialData?.specification?.groups || [],
+  });
 
   // Status and Visibility
   const [status, setStatus] = useState<
@@ -250,6 +259,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         },
         variantAttributes,
         variants,
+        specification:
+          specification.title || specification.groups.length > 0
+            ? specification
+            : undefined,
         seo: {
           title: seoTitle,
           description: seoDescription,
@@ -540,6 +553,151 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           />
         </div>
       )}
+
+      {/* Thông số kỹ thuật */}
+      <div className="bg-white rounded-xl shadow p-6 space-y-4">
+        <h3 className="text-lg font-bold mb-2">Thông số kỹ thuật</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block mb-1">Tiêu đề chung</label>
+            <input
+              type="text"
+              value={specification.title}
+              onChange={(e) =>
+                setSpecification((prev) => ({ ...prev, title: e.target.value }))
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded"
+              placeholder="Ví dụ: Thông số kỹ thuật"
+            />
+          </div>
+
+          {specification.groups.map((group, groupIndex) => (
+            <div key={groupIndex} className="border rounded-lg p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <label className="block mb-1">Tiêu đề nhóm</label>
+                  <input
+                    type="text"
+                    value={group.title}
+                    onChange={(e) => {
+                      const newGroups = [...specification.groups];
+                      newGroups[groupIndex].title = e.target.value;
+                      setSpecification((prev) => ({
+                        ...prev,
+                        groups: newGroups,
+                      }));
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded"
+                    placeholder="Ví dụ: Kích thước & Trọng lượng"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newGroups = specification.groups.filter(
+                      (_, i) => i !== groupIndex
+                    );
+                    setSpecification((prev) => ({
+                      ...prev,
+                      groups: newGroups,
+                    }));
+                  }}
+                  className="ml-2 px-2 py-2 text-red-600 hover:text-red-800"
+                >
+                  Xóa nhóm
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                {group.specs.map((spec, specIndex) => (
+                  <div key={specIndex} className="flex gap-2 items-start">
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={spec.name}
+                        onChange={(e) => {
+                          const newGroups = [...specification.groups];
+                          newGroups[groupIndex].specs[specIndex].name =
+                            e.target.value;
+                          setSpecification((prev) => ({
+                            ...prev,
+                            groups: newGroups,
+                          }));
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded"
+                        placeholder="Tên thông số"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={spec.value}
+                        onChange={(e) => {
+                          const newGroups = [...specification.groups];
+                          newGroups[groupIndex].specs[specIndex].value =
+                            e.target.value;
+                          setSpecification((prev) => ({
+                            ...prev,
+                            groups: newGroups,
+                          }));
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded"
+                        placeholder="Giá trị"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newGroups = [...specification.groups];
+                        newGroups[groupIndex].specs = newGroups[
+                          groupIndex
+                        ].specs.filter((_, i) => i !== specIndex);
+                        setSpecification((prev) => ({
+                          ...prev,
+                          groups: newGroups,
+                        }));
+                      }}
+                      className="px-2 py-2 text-red-600 hover:text-red-800"
+                    >
+                      Xóa
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newGroups = [...specification.groups];
+                    newGroups[groupIndex].specs.push({ name: "", value: "" });
+                    setSpecification((prev) => ({
+                      ...prev,
+                      groups: newGroups,
+                    }));
+                  }}
+                  className="mt-2 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  + Thêm thông số
+                </button>
+              </div>
+            </div>
+          ))}
+
+          <button
+            type="button"
+            onClick={() => {
+              setSpecification((prev) => ({
+                ...prev,
+                groups: [
+                  ...prev.groups,
+                  { title: "", specs: [], _id: undefined },
+                ],
+              }));
+            }}
+            className="mt-4 px-4 py-2 text-sm bg-indigo-50 text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-100"
+          >
+            + Thêm nhóm thông số
+          </button>
+        </div>
+      </div>
 
       {/* Trạng thái */}
       <div className="bg-white rounded-xl shadow p-6 space-y-4">

@@ -6,7 +6,7 @@ import { useImages } from "@/common/hooks/useImages";
 import Image from "next/image";
 
 interface BannerFormData {
-  title: string;
+  title?: string;
   description?: string;
   imagePath: string;
   link?: string;
@@ -60,7 +60,6 @@ export const BannerForm: React.FC<BannerFormProps> = ({
     },
   });
 
-  const imagePath = watch("imagePath");
 
   useEffect(() => {
     if (banner) {
@@ -127,7 +126,7 @@ export const BannerForm: React.FC<BannerFormProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 max-h-screen overflow-y-auto">
       <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
         <h2 className="text-2xl font-semibold mb-6">
           {banner ? "Chỉnh sửa banner" : "Thêm banner mới"}
@@ -140,9 +139,9 @@ export const BannerForm: React.FC<BannerFormProps> = ({
             </label>
             <input
               type="text"
-              {...register("title", {
-                required: "Tiêu đề không được để trống",
-              })}
+              // {...register("title", {
+              //   required: "Tiêu đề không được để trống",
+              // })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {errors.title && (

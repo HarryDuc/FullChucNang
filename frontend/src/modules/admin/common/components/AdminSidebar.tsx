@@ -275,11 +275,11 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
           collapsed ? "items-center" : ""
         } border-b border-gray-100 flex`}
       >
-          <div className="flex items-center justify-center ml-1 w-10 h-10 rounded-lg bg-white text-black">
-            <MdOutlineSpaceDashboard className="text-2xl" />
+          <div className="flex items-center justify-center ml-1 w-8 h-8 rounded-lg bg-[#fcf8a9] text-black">
+            <MdOutlineSpaceDashboard className="text-xl" />
             <button
               onClick={toggleSidebar}
-              className="p-2 rounded-lg hover:bg-gray-100 focus:outline-none"
+              className="p-2 rounded-lg hover:bg-[#fcf8a9] focus:outline-none"
               aria-label={collapsed ? "Expand menu" : "Collapse menu"}
             >
               <svg
@@ -299,8 +299,8 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
           </div>
           {!collapsed && (
         <Link href="/admin" className="flex items-center gap-2 no-underline ml-5">
-            <span className="font-semibold text-white text-lg">
-              Admin Panel
+            <span className="font-semibold text-[#fcf8a9] text-lg">
+              <img src="/logo-yaviet/logo yaviet nen toi mau sang.png" alt="logo" className="w-full h-10" />
             </span>
         </Link>
           )}
@@ -311,7 +311,7 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
         {Object.entries(groupedItems).map(([group, items]) => (
           <div key={group} className="mb-6">
             {!collapsed && items.length > 0 && (
-              <h3 className="px-4 text-xs font-semibold text-white uppercase tracking-wider mb-2">
+              <h3 className="px-4 text-xs font-semibold text-[#fcf8a9] uppercase tracking-wider mb-2">
                 {group}
               </h3>
             )}
@@ -329,8 +329,8 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
                       href={item.href}
                       className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                         isActive
-                          ? "bg-blue-50 text-blue-600"
-                          : "text-white hover:bg-gray-50 hover:text-gray-900"
+                          ? "bg-[#fcf8a9] text-black"
+                          : "text-[#fcf8a9] hover:bg-[#fcf8a9] hover:text-black"
                       } no-underline ${collapsed ? "justify-center" : ""}`}
                       title={collapsed ? item.label : ""}
                     >

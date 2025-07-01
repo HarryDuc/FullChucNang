@@ -6,9 +6,15 @@ import { removeVietnameseTones } from '../utils/image.utils';
 import * as fs from 'fs';
 import * as path from 'path';
 
+export interface PaginatedImages {
+  images: Image[];
+  total: number;
+  hasMore: boolean;
+}
+
 @Injectable()
 export class ImagesService {
-  constructor(@InjectModel(Image.name) private imageModel: Model<Image>) {}
+  constructor(@InjectModel(Image.name) private imageModel: Model<Image>) { }
 
   /**
    * ✅ Tạo slug duy nhất (không đổi tên file)
@@ -118,10 +124,27 @@ export class ImagesService {
   }
 
   /**
-   * ✅ Lấy danh sách tất cả hình ảnh
+   * ✅ Lấy danh sách hình ảnh có phân trang
    */
-  async getAllImages(): Promise<Image[]> {
-    return this.imageModel.find();
+  async getAllImages(page: number = 1, limit: number = 60): Promise<PaginatedImages> {
+    const skip = (page - 1) * limit;
+
+    const [images, total] = await Promise.all([
+      this.imageModel.find()
+        .sort({ createdAt: -1 }) // Sắp xếp theo thời gian tạo, mới nhất lên đầu
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.imageModel.countDocuments()
+    ]);
+
+    const hasMore = total > skip + images.length;
+
+    return {
+      images,
+      total,
+      hasMore
+    };
   }
 
   /**

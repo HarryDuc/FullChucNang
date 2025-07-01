@@ -8,6 +8,7 @@ import {
   UploadedFiles,
   UseInterceptors,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -123,11 +124,14 @@ export class ImagesController {
   }
 
   /**
-   * ✅ API: Lấy tất cả ảnh
+   * ✅ API: Lấy danh sách ảnh có phân trang
    */
   @Get()
-  async getAllImages() {
-    return this.imagesService.getAllImages();
+  async getAllImages(
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '60'
+  ) {
+    return this.imagesService.getAllImages(+page, +limit);
   }
 
   /**

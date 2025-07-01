@@ -15,7 +15,7 @@ const ProductImages: React.FC<ProductImagesProps> = ({
 }) => {
   return (
     <div className="relative">
-      <div className="md:sticky md:top-4 space-y-4">
+      <div className="md:sticky md:top-32 space-y-4">
         <div className="mb-4 border border-gray-200 p-2 bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg">
           <div className="relative h-96 w-full flex items-center justify-center bg-gray-50 rounded-lg">
             <img

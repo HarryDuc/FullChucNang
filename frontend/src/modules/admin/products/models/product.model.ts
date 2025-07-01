@@ -91,6 +91,32 @@ export interface PromotionInfo {
 }
 
 /**
+ * Interface cho thông số kỹ thuật
+ */
+export interface TechnicalSpec {
+  name: string;
+  value: string;
+  _id?: string;
+}
+
+/**
+ * Interface cho nhóm thông số kỹ thuật
+ */
+export interface SpecificationGroup {
+  title: string;
+  specs: TechnicalSpec[];
+  _id?: string;
+}
+
+/**
+ * Interface cho toàn bộ thông số kỹ thuật
+ */
+export interface Specification {
+  title: string;
+  groups: SpecificationGroup[];
+}
+
+/**
  * Interface chính cho sản phẩm
  */
 export interface Product {
@@ -130,6 +156,9 @@ export interface Product {
   // Thông tin biến thể
   variantAttributes?: VariantAttribute[];
   variants?: ProductVariant[];
+
+  // Thông số kỹ thuật
+  specification?: Specification;
 
   // Thông tin bổ sung
   seo?: SeoInfo;

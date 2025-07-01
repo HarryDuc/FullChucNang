@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Schema as MongooseSchema } from 'mongoose';
 
 export type ProductDocument = Product & Document;
 
@@ -78,27 +78,38 @@ export class ProductVariant {
   variantThumbnail?: string;
 
   @Prop({ type: [String], default: [] })
-  variantGalleries?: string[];
+  variantGalleries?: string[]
 }
 
 /**
  * Schema cho thông số kỹ thuật
  */
-@Schema()
-export class TechnicalSpec {
-  @Prop()
-  name: string;
+export const TechnicalSpecSchema = new MongooseSchema(
+  {
+    name: { type: String, required: true },
+    value: { type: String, required: true }
+  },
+  { _id: false }
+);
 
-  @Prop()
+export class TechnicalSpec {
+  name: string;
   value: string;
 }
 
-@Schema()
-export class SpecificationGroup {
-  @Prop()
-  title: string;
+/**
+ * Schema cho nhóm thông số kỹ thuật
+ */
+export const SpecificationGroupSchema = new MongooseSchema(
+  {
+    title: { type: String },
+    specs: { type: [TechnicalSpecSchema], default: [] }
+  },
+  { _id: false }
+);
 
-  @Prop([TechnicalSpec])
+export class SpecificationGroup {
+  title: string;
   specs: TechnicalSpec[];
 }
 
@@ -168,7 +179,19 @@ export class Product {
   @Prop({ default: false })
   isFeatured?: boolean;
 
-  @Prop({ default: false })
+  @Prop({
+    type: {
+      title: { type: String },
+      groups: { type: [SpecificationGroupSchema], default: [] }
+    },
+    _id: false
+  })
+  specification?: {
+    title: string;
+    groups: SpecificationGroup[];
+  };
+
+  @Prop({ default: false, description: 'Xác định sản phẩm có sử dụng biến thể hay không' })
   isNewArrival?: boolean;
 
   @Prop({ default: false })
