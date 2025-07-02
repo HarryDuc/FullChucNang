@@ -38,7 +38,10 @@ export class OrderItemDto {
  * DTO để tạo mới đơn hàng.
  * - slug: Định danh duy nhất cho đơn hàng; nếu không truyền vào thì service sẽ tự tạo.
  * - orderItems: Danh sách các mặt hàng.
- * - totalPrice: Tổng giá trị đơn hàng (có thể tính sau).
+ * - subtotalPrice: Tổng giá trị đơn hàng trước khi áp dụng giảm giá.
+ * - voucherCode: Mã voucher được áp dụng.
+ * - discountAmount: Số tiền giảm giá từ voucher.
+ * - totalPrice: Tổng giá trị đơn hàng sau khi áp dụng giảm giá.
  * - status: Trạng thái đơn hàng, mặc định là 'pending'.
  */
 export class CreateOrderDto {
@@ -51,6 +54,18 @@ export class CreateOrderDto {
   @IsArray()
   @Type(() => OrderItemDto)
   orderItems?: OrderItemDto[];
+
+  @IsOptional()
+  @IsNumber()
+  subtotalPrice?: number;
+
+  @IsOptional()
+  @IsString()
+  voucherCode?: string;
+
+  @IsOptional()
+  @IsNumber()
+  discountAmount?: number;
 
   @IsOptional()
   @IsNumber()
@@ -76,6 +91,18 @@ export class UpdateOrderDto {
   @IsArray()
   @Type(() => OrderItemDto)
   orderItems?: OrderItemDto[];
+
+  @IsOptional()
+  @IsNumber()
+  subtotalPrice?: number;
+
+  @IsOptional()
+  @IsString()
+  voucherCode?: string;
+
+  @IsOptional()
+  @IsNumber()
+  discountAmount?: number;
 
   @IsOptional()
   @IsNumber()

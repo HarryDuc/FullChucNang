@@ -23,6 +23,10 @@ interface DisplayProduct {
   sku?: string;
   hasVariants?: boolean;
   basePrice?: number;
+  variants?: Array<{
+    variantCurrentPrice?: number;
+    variantDiscountPrice?: number;
+  }>;
 }
 
 const Search = () => {
@@ -37,18 +41,50 @@ const Search = () => {
 
   const observerRef = useRef<HTMLDivElement | null>(null);
 
+  // Thêm hàm tính giá thấp nhất từ variants
+  const getLowestVariantPrices = (product: DisplayProduct) => {
+    if (!product.variants || product.variants.length === 0) {
+      return { lowest: product.basePrice || 0, lowestDiscount: undefined };
+    }
+
+    let lowest = Infinity;
+    let lowestDiscount = Infinity;
+
+    product.variants.forEach((variant) => {
+      // Cập nhật giá gốc thấp nhất
+      if (
+        variant.variantCurrentPrice !== undefined &&
+        variant.variantCurrentPrice < lowest
+      ) {
+        lowest = variant.variantCurrentPrice;
+      }
+      // Cập nhật giá khuyến mãi thấp nhất
+      if (
+        variant.variantDiscountPrice !== undefined &&
+        variant.variantDiscountPrice < lowestDiscount
+      ) {
+        lowestDiscount = variant.variantDiscountPrice;
+      }
+    });
+
+    return {
+      lowest: lowest === Infinity ? product.basePrice || 0 : lowest,
+      lowestDiscount: lowestDiscount === Infinity ? undefined : lowestDiscount,
+    };
+  };
+
   // Xử lý thêm vào giỏ hàng
   const handleAddToCart = (product: DisplayProduct) => {
-    const displayPrice = product.hasVariants
-      ? product.basePrice || 0
-      : product.originalPrice || 0;
+    // Xác định giá hiển thị dựa trên việc có variant hay không
+    const { lowest, lowestDiscount } = product.hasVariants
+      ? getLowestVariantPrices(product) // Có variant -> lấy giá thấp nhất từ variants
+      : {
+          lowest: product.originalPrice || 0,
+          lowestDiscount: product.salePrice,
+        }; // Không có variant -> giữ nguyên logic cũ
 
-    const displayDiscountPrice = product.hasVariants
-      ? undefined
-      : product.salePrice !== product.originalPrice
-      ? product.salePrice
-      : undefined;
-
+    const displayPrice = lowest;
+    const displayDiscountPrice = lowestDiscount;
     const finalPrice = displayDiscountPrice || displayPrice;
 
     const productData: CartItem = {
@@ -159,12 +195,26 @@ const Search = () => {
                       imageUrl={product.thumbnail || ""}
                       currentPrice={
                         product.hasVariants
-                          ? product.basePrice
+                          ? getLowestVariantPrices({
+                              ...product,
+                              id: product._id || "",
+                              originalPrice: product.currentPrice,
+                              salePrice: product.discountPrice,
+                              image: product.thumbnail || "",
+                              discountPercent: 0,
+                            }).lowest
                           : product.currentPrice
                       }
                       discountPrice={
                         product.hasVariants
-                          ? undefined
+                          ? getLowestVariantPrices({
+                              ...product,
+                              id: product._id || "",
+                              originalPrice: product.currentPrice,
+                              salePrice: product.discountPrice,
+                              image: product.thumbnail || "",
+                              discountPercent: 0,
+                            }).lowestDiscount
                           : product.discountPrice
                       }
                       onAddToCart={() =>
@@ -179,6 +229,7 @@ const Search = () => {
                           sku: product.sku,
                           hasVariants: product.hasVariants,
                           basePrice: product.basePrice,
+                          variants: product.variants,
                         })
                       }
                     />

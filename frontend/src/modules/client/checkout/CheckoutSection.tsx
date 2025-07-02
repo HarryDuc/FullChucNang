@@ -35,7 +35,7 @@ import { Voucher } from "../voucher/models/voucher.model";
 import PayPalButton from "./components/PayPalButton";
 import MetaMaskButton from "./components/MetaMaskButton";
 import { useAuth } from "@/context/AuthContext";
-import router from "next/router";
+import { useRouter } from "next/navigation";
 
 // Interface cho dữ liệu tạo checkout dựa trên DTO trong backend
 interface CreateCheckoutData {
@@ -111,7 +111,7 @@ const CheckoutSection = () => {
   const [payPalOrderRef, setPayPalOrderRef] = useState<string>("");
   const [metamaskOrderRef, setMetamaskOrderRef] = useState<string>("");
   const { isAuthenticated } = useAuth();
-
+  const router = useRouter();
   useEffect(() => {
     if (!isAuthenticated) {
       router.push("/login");
@@ -255,7 +255,13 @@ const CheckoutSection = () => {
   };
 
   const getTotal = () => {
-    return getSubtotal() + getShippingFee() - discountAmount;
+    const subtotal = getSubtotal();
+    const shipping = getShippingFee();
+    const totalAfterDiscount = subtotal + shipping - discountAmount;
+    console.log(
+      `Calculating total: ${subtotal} + ${shipping} - ${discountAmount} = ${totalAfterDiscount}`
+    );
+    return totalAfterDiscount;
   };
 
   const validateField = (
@@ -540,6 +546,14 @@ const CheckoutSection = () => {
     setIsMetaMaskProcessing(false);
   };
 
+  // Handler for voucher application
+  const handleVoucherApplied = (voucher: Voucher, discount: number) => {
+    console.log("Voucher applied:", voucher);
+    console.log("Discount amount:", discount);
+    setAppliedVoucher(voucher);
+    setDiscountAmount(discount);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -605,11 +619,8 @@ const CheckoutSection = () => {
       };
 
       console.log("Creating checkout with data:", checkoutData);
-      const [res] = await Promise.all([
-        createCheckout(checkoutData),
-        Promise.resolve(slug),
-      ]);
-      console.log("Checkout response:", res);
+      const checkoutResponse = await createCheckout(checkoutData);
+      console.log("Checkout response:", checkoutResponse);
 
       // Lưu thông tin đơn hàng vào localStorage
       const orderInfo = {
@@ -626,7 +637,7 @@ const CheckoutSection = () => {
       localStorage.setItem("orderSlug", slug);
       localStorage.setItem("orderInfo", JSON.stringify(orderInfo));
 
-      // For PayPal or MetaMask, we'll show the appropriate button and wait for user to complete payment
+      // Handle different payment methods
       if (paymentMethod === "paypal") {
         console.log("PayPal selected, showing PayPal button...");
         setShowPayPalButton(true);
@@ -642,29 +653,30 @@ const CheckoutSection = () => {
       }
 
       if (paymentMethod === "bankTransfer") {
-        console.log(
-          "Bank transfer selected, QR URL:",
-          res.paymentMethodInfo?.qrImageUrl
-        );
-        if (res.paymentMethodInfo?.qrImageUrl) {
-          localStorage.setItem("qrUrl", res.paymentMethodInfo.qrImageUrl);
-          console.log("Redirecting to bank page...");
-          window.location.href = "/checkout/bank";
+        console.log("Bank transfer selected, checking QR URL...");
+        if (checkoutResponse?.paymentMethodInfo?.qrImageUrl) {
+          const qrUrl = checkoutResponse.paymentMethodInfo.qrImageUrl;
+          console.log("QR URL received:", qrUrl);
+          localStorage.setItem("qrUrl", qrUrl);
+          localStorage.setItem("bankOrderSlug", slug);
+          router.push("/checkout/bank");
           return;
         } else {
-          throw new Error("Không nhận được thông tin QR code");
+          throw new Error("Không nhận được thông tin QR code thanh toán");
         }
       }
 
       // Chỉ xóa giỏ hàng và hiển thị thành công nếu là COD
-      console.log("COD payment, clearing cart...");
-      setIsOrderSent(true);
-      clearCart();
+      if (paymentMethod === "cod") {
+        console.log("COD payment, clearing cart...");
+        setIsOrderSent(true);
+        clearCart();
+      }
     } catch (error) {
       console.error("Error processing order:", error);
       alert("Đã xảy ra lỗi khi đặt hàng. Vui lòng thử lại sau.");
     } finally {
-      if (paymentMethod !== "paypal" && paymentMethod !== "metamask") {
+      if (!["paypal", "metamask", "bankTransfer"].includes(paymentMethod)) {
         setIsSubmitting(false);
       }
     }
@@ -753,15 +765,7 @@ const CheckoutSection = () => {
                     onPaymentMethodChange={setPaymentMethod}
                   />
 
-                  {/* <VoucherInput
-                    productSlug={cartItems[0]?.slug}
-                    userId={getUserIdFromToken() || undefined}
-                    paymentMethod={getVoucherPaymentMethod(paymentMethod)}
-                    totalAmount={getSubtotal()}
-                    onApply={handleVoucherApplied}
-                  /> */}
-
-                  {/* <div className="mt-8">
+                  <div className="mt-8">
                     <button
                       type="submit"
                       className={`w-full bg-blue-700 text-white py-3 px-4 rounded-md font-medium hover:bg-blue-800 transition-colors ${
@@ -771,7 +775,7 @@ const CheckoutSection = () => {
                     >
                       {isSubmitting ? "ĐANG XỬ LÝ..." : "HOÀN TẤT ĐƠN HÀNG"}
                     </button>
-                  </div> */}
+                  </div>
                 </form>
               )}
             </div>
@@ -789,6 +793,7 @@ const CheckoutSection = () => {
                   onSubmit={handleSubmit}
                   getSubtotal={getSubtotal}
                   paymentMethod={paymentMethod}
+                  onVoucherApply={handleVoucherApplied}
                 />
               </div>
             </div>

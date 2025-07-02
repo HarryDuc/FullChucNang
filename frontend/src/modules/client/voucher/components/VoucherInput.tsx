@@ -31,6 +31,8 @@ export default function VoucherInput({
       cod: "COD",
       bankTransfer: "BANK",
       cash: "COD",
+      paypal: "PAYPAL",
+      metamask: "METAMASK",
     };
 
     return methodMap[method] || method.toUpperCase();
@@ -45,6 +47,7 @@ export default function VoucherInput({
     checkVoucher,
     removeVoucher,
     updateTotalAmount,
+    currentPaymentMethod,
   } = useVoucher(totalAmount);
 
   // Use useEffect to update total amount when it changes
@@ -53,6 +56,61 @@ export default function VoucherInput({
       updateTotalAmount(totalAmount);
     }
   }, [totalAmount, updateTotalAmount]);
+
+  // Ensure parent component is updated with voucher data on mount
+  useEffect(() => {
+    if (appliedVoucher && onApply && Object.keys(appliedVoucher).length > 0) {
+      console.log("Applying saved voucher on mount:", appliedVoucher);
+      console.log("Discount amount:", discountAmount);
+      onApply(appliedVoucher, discountAmount);
+    }
+  }, [appliedVoucher, onApply, discountAmount]);
+
+  // Load saved voucher from localStorage on component mount
+  useEffect(() => {
+    const storedVoucherCode = localStorage.getItem("appliedVoucherCode");
+    if (storedVoucherCode) {
+      setCode(storedVoucherCode);
+    }
+  }, []);
+
+  // Check if payment method has changed and revalidate voucher
+  useEffect(() => {
+    const mappedPaymentMethod = mapPaymentMethod(paymentMethod);
+
+    // If we have an applied voucher and payment method changes, we need to revalidate
+    if (
+      appliedVoucher &&
+      voucherCode &&
+      mappedPaymentMethod &&
+      currentPaymentMethod !== mappedPaymentMethod
+    ) {
+      console.log("Payment method changed, revalidating voucher:", {
+        current: currentPaymentMethod,
+        new: mappedPaymentMethod,
+      });
+
+      // Re-check the voucher with the new payment method
+      checkVoucher(voucherCode, productSlug, userId, mappedPaymentMethod)
+        .then((success) => {
+          if (success && onApply && appliedVoucher) {
+            onApply(appliedVoucher, discountAmount);
+          } else if (!success && onApply) {
+            // If voucher is no longer valid with new payment method, remove it
+            removeVoucher();
+            onApply({} as Voucher, 0);
+          }
+        })
+        .catch((err) => {
+          console.error(
+            "Error revalidating voucher after payment method change:",
+            err
+          );
+          removeVoucher();
+          if (onApply) onApply({} as Voucher, 0);
+        });
+    }
+  }, [paymentMethod, appliedVoucher, voucherCode]);
 
   const handleApplyVoucher = async () => {
     setError(null);

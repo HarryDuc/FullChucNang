@@ -657,7 +657,7 @@ export class ProductService {
     // ✅ Lấy toàn bộ sản phẩm với thêm trường SKU
     const allProducts = await this.productModel
       .find()
-      .select('name slug basePrice thumbnail sku')
+      .select('name slug basePrice currentPrice discountPrice hasVariants variants thumbnail sku')
       .lean();
 
     // ✅ Lọc sản phẩm với tìm kiếm chính xác hơn

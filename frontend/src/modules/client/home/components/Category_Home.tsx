@@ -2,59 +2,59 @@ import Link from "next/link";
 
 const categories = [
   {
-    label: "Home Decor",
+    label: "Camera",
     icon: "/image/2.png",
-    href: "/category/home-decor",
+    href: "/category/camera",
   },
   {
-    label: "Decor Cao Cấp",
+    label: "Đồng hồ",
     icon: "/image/1.png",
-    href: "/category/decor-cao-cap",
+    href: "/category/dong-ho",
   },
   {
-    label: "Đồng Hồ Trang Trí",
+    label: "Điện thoại",
     icon: "/image/3.png",
-    href: "/category/dong-ho-trang-tri",
+    href: "/category/dien-thoai",
   },
   {
-    label: "Mô Hình Xe Vintage",
+    label: "Laptop",
     icon: "/image/5.png",
-    href: "/category/mo-hinh-xe-vintage",
+    href: "/category/laptop",
   },
   {
-    label: "Quà tặng Nghệ thuật",
+    label: "PC",
     icon: "/image/4.png",
-    href: "/category/qua-tang-nghe-thuat",
+    href: "/category/pc",
   },
   {
-    label: "Gối Sofa",
+    label: "Máy in",
     icon: "/image/6.png",
-    href: "/category/goi-sofa",
+    href: "/category/may-in",
   },
   {
-    label: "Quả Địa Cầu",
+    label: "Máy tính bảng",
     icon: "/image/7.png",
-    href: "/category/qua-dia-cau",
+    href: "/category/may-tinh-bang",
   },
   {
-    label: "Đồ Phong Thủy",
+    label: "Mic thu âm",
     icon: "/image/8.png",
-    href: "/category/do-phong-thuy",
+    href: "/category/mic-thu-am",
   },
   {
-    label: "Tranh Canvas",
+    label: "Màn hình",
     icon: "/image/10.png",
-    href: "/category/tranh-canvas",
+    href: "/category/man-hinh",
   },
   {
-    label: "Đồ Gia Dụng",
+    label: "Đồ gia dụng",
     icon: "/image/11.png",
-    href: "/category/ke-tu",
+    href: "/category/do-gia-dung",
   },
   {
-    label: "Sản Phẩm Khác",
+    label: "Đồng hồ",
     icon: "/image/12.png",
-    href: "/category/san-pham-khac",
+    href: "/category/dong-ho",
   },
 ];
 

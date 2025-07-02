@@ -39,6 +39,18 @@ export const paypalService = {
       const token = localStorage.getItem("token");
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
+      // Get voucher information if available
+      const voucherId = localStorage.getItem('appliedVoucherId');
+      const voucherCode = localStorage.getItem('appliedVoucherCode');
+      const voucherDiscount = localStorage.getItem('appliedVoucherDiscount');
+
+      // Create payment description with voucher info if available
+      let description = "Đơn hàng từ Decor & More";
+      if (voucherCode && voucherDiscount) {
+        const discountAmount = parseFloat(voucherDiscount);
+        description += ` - Mã giảm giá: ${voucherCode} (Giảm ${discountAmount.toLocaleString()} VND)`;
+      }
+
       const response = await api.post(`${API_URL}/create-order`, {
         intent: "CAPTURE",
         purchase_units: [
@@ -48,7 +60,7 @@ export const paypalService = {
               value: amountUSD.toString(),
             },
             custom_id: orderRef, // Use custom_id to store our order reference
-            description: "Đơn hàng từ Decor & More",
+            description: description,
           },
         ],
         application_context: {
@@ -58,6 +70,12 @@ export const paypalService = {
           return_url: `${window.location.origin}/checkout/success`,
           cancel_url: `${window.location.origin}/checkout/cancel`,
         },
+        // Include voucher information in metadata if available
+        metadata: voucherId ? {
+          voucherId,
+          voucherCode,
+          voucherDiscount
+        } : undefined
       }, { headers });
 
       return response.data;
@@ -96,13 +114,30 @@ export const paypalService = {
       const token = localStorage.getItem("token");
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
+      // Get voucher information if available
+      const voucherId = localStorage.getItem('appliedVoucherId');
+      const voucherCode = localStorage.getItem('appliedVoucherCode');
+      const voucherDiscount = localStorage.getItem('appliedVoucherDiscount');
+
+      // Payment info with voucher details
+      const paymentInfo: any = {
+        paypalOrderId,
+      };
+
+      // Add voucher information if available
+      if (voucherId && voucherCode && voucherDiscount) {
+        paymentInfo.voucher = {
+          id: voucherId,
+          code: voucherCode,
+          discount: parseFloat(voucherDiscount)
+        };
+      }
+
       // Update order status
       const orderResponse = await api.post(`${ORDER_URL}/${orderSlug}/update-payment-status`, {
         paymentMethod: "paypal",
         paymentStatus: "paid",
-        paymentInfo: {
-          paypalOrderId,
-        },
+        paymentInfo,
       }, { headers });
 
       // Update checkout status

@@ -101,25 +101,33 @@ const MenuPC = () => {
 
   const categories: { label: string; href: string }[] = [
     {
-      label: "Gối Sofa",
-      href: "/category/goi-sofa"
+      label: "Camera",
+      href: "/category/camera"
     },
     {
-      label: "Mô hình xe Vintage",
-      href: "/category/mo-hinh-xe-vintage"
+      label: "Đồng hồ",
+      href: "/category/dong-ho"
     },
     {
-      label: "Đồng hồ trang trí",
-      href: "/category/dong-ho-trang-tri"
+      label: "Điện thoại",
+      href: "/category/dien-thoai"
     },
     {
-      label: "Tranh Canvas",
-      href: "/category/tranh-canvas"
+      label: "Laptop",
+      href: "/category/laptop"
     },
     {
-      label: "Quà tặng nghệ thuật",
-      href: "/category/qua-tang-nghe-thuat"
-    }
+      label: "PC",
+      href: "/category/pc"
+    },
+    {
+      label: "Máy in",
+      href: "/category/may-in"
+    },
+    {
+      label: "Máy tính bảng",
+      href: "/category/may-tinh-bang"
+    },
   ];
 
   // Hide InfoBar when not at top

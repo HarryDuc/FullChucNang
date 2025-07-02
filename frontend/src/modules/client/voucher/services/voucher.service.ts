@@ -124,16 +124,23 @@ export class VoucherClientService {
   } {
     let discountAmount = 0;
 
+    console.log("Calculating discount for voucher:", voucher.code);
+    console.log("Original total amount:", totalAmount);
+
     if (voucher.discountType === 'PERCENTAGE') {
+      console.log(`Applying percentage discount: ${voucher.discountValue}%`);
       discountAmount = (totalAmount * voucher.discountValue) / 100;
     } else {
+      console.log(`Applying fixed discount: ${voucher.discountValue}`);
       discountAmount = voucher.discountValue;
     }
 
     // Ensure discount doesn't exceed the total amount
     discountAmount = Math.min(discountAmount, totalAmount);
+    console.log("Final discount amount:", discountAmount);
 
     const finalPrice = totalAmount - discountAmount;
+    console.log("Final price after discount:", finalPrice);
 
     return {
       discountAmount,

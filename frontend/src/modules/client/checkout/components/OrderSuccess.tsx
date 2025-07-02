@@ -40,7 +40,7 @@ const OrderSuccess = ({ orderSlug }: OrderSuccessProps) => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/client"
+              href="/"
               className="inline-block bg-blue-900 text-white px-8 py-3 no-underline hover:bg-blue-800 transition duration-300"
             >
               TIẾP TỤC MUA SẮM

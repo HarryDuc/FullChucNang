@@ -30,7 +30,13 @@ export const createCategoriesProduct = async (
 ): Promise<CategoriesProduct> => {
   const response = await api.post<CategoriesProduct>(
     `${API_URL}`,
-    categoryData
+    categoryData,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    }
   );
   return response.data;
 };
@@ -41,7 +47,13 @@ export const updateCategoriesProduct = async (
 ): Promise<CategoriesProduct> => {
   const response = await api.put<CategoriesProduct>(
     `${API_URL}/${slug}`,
-    categoryData
+    categoryData,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    }
   );
   return response.data;
 };

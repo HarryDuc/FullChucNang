@@ -46,11 +46,11 @@ const AdminMenu = () => {
       <div className="flex items-center gap-4" ref={dropdownRef}>
         {/* Action buttons */}
         <button className="p-2 rounded-lg relative">
-          <MdNotifications className="text-xl text-white" />
+          <MdNotifications className="text-xl text-[#fcf8a9]" />
           <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
         </button>
         <button className="p-2 rounded-lg">
-          <MdHelp className="text-xl text-white" />
+          <MdHelp className="text-xl text-[#fcf8a9]" />
         </button>
 
         {/* User profile */}
@@ -59,30 +59,30 @@ const AdminMenu = () => {
             onClick={() => setDropdownOpen(!dropdownOpen)}
             className="flex items-center gap-3 p-2 rounded-lg"
           >
-            <div className="h-8 w-8 rounded-lg bg-white text-black flex items-center justify-center font-medium">
+            <div className="h-8 w-8 rounded-lg bg-[#fcf8a9] text-black flex items-center justify-center font-medium">
               {user?.email?.charAt(0)?.toUpperCase() || "A"}
             </div>
             <div className="hidden md:block text-left">
-              <p className="text-sm font-medium text-white">
+              <p className="text-sm font-medium text-[#fcf8a9]">
                 {user?.role === "admin" ? "Quản trị viên" : "Người dùng"}
               </p>
-              <p className="text-xs text-white">
+              <p className="text-xs text-[#fcf8a9]">
                 {user?.email || "admin@example.com"}
               </p>
             </div>
           </button>
 
           {dropdownOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-50 border border-gray-100">
+            <div className="absolute right-0 mt-2 w-48 bg-[#fcf8a9] rounded-lg shadow-lg py-1 z-50 border border-gray-100">
               <Link
                 href="/profile"
-                className="block px-4 py-2 text-sm text-black hover:bg-gray-50 no-underline"
+                className="block px-4 py-2 text-sm text-black hover:bg-[#fcf8a9] no-underline"
               >
                 Profile Settings
               </Link>
               <button
                 onClick={handleLogout}
-                className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
+                className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-[#fcf8a9]"
               >
                 Sign Out
               </button>

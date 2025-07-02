@@ -300,7 +300,7 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
           {!collapsed && (
         <Link href="/admin" className="flex items-center gap-2 no-underline ml-5">
             <span className="font-semibold text-[#fcf8a9] text-lg">
-              <img src="/logo-yaviet/logo yaviet nen toi mau sang.png" alt="logo" className="w-full h-10" />
+              <img src="https://yaviet.com/img/logo/logo-YAVIET-nen-toi-mau-sang.png" alt="logo" className="w-full h-10" />
             </span>
         </Link>
           )}

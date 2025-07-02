@@ -28,6 +28,27 @@ const PayPalButton = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const isMounted = useRef<boolean>(true);
 
+  console.log(
+    "PayPalButton render with amount:",
+    amount,
+    "VND",
+    "=",
+    amountUSD,
+    "USD"
+  );
+
+  // Log voucher information if available
+  useEffect(() => {
+    const voucherCode = localStorage.getItem("appliedVoucherCode");
+    const voucherDiscount = localStorage.getItem("appliedVoucherDiscount");
+
+    if (voucherCode && voucherDiscount) {
+      console.log("PayPal with voucher applied:", voucherCode);
+      console.log("Discount amount:", voucherDiscount, "VND");
+      console.log("Final amount with discount:", amount, "VND");
+    }
+  }, [amount]);
+
   useEffect(() => {
     // Set isMounted to true when component mounts
     isMounted.current = true;

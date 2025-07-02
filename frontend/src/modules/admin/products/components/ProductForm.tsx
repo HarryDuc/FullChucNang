@@ -768,7 +768,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       </div>
 
       {/* Nút hành động */}
-      <div className="flex justify-end gap-4">
+      <div className="fixed bottom-6 right-6 z-50 flex justify-end gap-4">
         <button
           type="button"
           onClick={onCancel}

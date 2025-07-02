@@ -2,6 +2,15 @@
 export const API_URL_CLIENT = process.env.NEXT_PUBLIC_API_URL; // Lấy từ .env.local
 
 export const apiRoutes = {
+    ADDRESSES: {
+        BASE: '/addressesapi',
+        CREATE: '/addressesapi',
+        GET_ALL: '/addressesapi',
+        GET_BY_ID: (id: string) => `/addressesapi/${id}`,
+        UPDATE: (id: string) => `/addressesapi/${id}`,
+        DELETE: (id: string) => `/addressesapi/${id}`,
+        SET_DEFAULT: (id: string) => `/addressesapi/${id}/default`,
+    },
     AUTH: {
         BASE: '/authapi',
         CHECK_EMAIL: '/authapi/check-email',

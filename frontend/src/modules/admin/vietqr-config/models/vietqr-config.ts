@@ -2,6 +2,7 @@ export interface VietQRConfig {
   _id: string;
   bankBin: string;
   bankName: string;
+  shortName: string;
   accountNumber: string;
   accountName: string;
   template: string;

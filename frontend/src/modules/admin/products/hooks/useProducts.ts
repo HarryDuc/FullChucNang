@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Product, VariantAttribute, ProductVariant } from "../models/product.model";
 import { ProductService } from "../services/product.service";
+import { useImages } from "@/common/hooks/useImages";
 
 // Định nghĩa kiểu cho danh mục
 interface Category {
@@ -26,6 +27,9 @@ export const useProducts = () => {
   const [searchTotalPages, setSearchTotalPages] = useState<number>(1);
   const [searchCurrentPage, setSearchCurrentPage] = useState<number>(1);
   const [isSearching, setIsSearching] = useState<boolean>(false);
+
+  // Sử dụng hook useImages
+  const { uploadImage: uploadImageToServer } = useImages();
 
   // 📌 Lấy danh sách sản phẩm (có phân trang)
   const fetchProducts = useCallback(async (page: number = 1) => {
@@ -151,18 +155,19 @@ export const useProducts = () => {
     [fetchProducts]
   );
 
-  // 📌 Upload ảnh sản phẩm
+  // 📌 Upload ảnh sản phẩm - Sử dụng useImages hook
   const uploadImage = useCallback(
     async (file: File): Promise<string | null> => {
       try {
-        const { url } = await ProductService.uploadImage(file);
-        return url;
+        const result = await uploadImageToServer(file);
+        if (!result) throw new Error('Failed to upload image');
+        return result.imageUrl;
       } catch (err: any) {
         setError(err.message);
         return null;
       }
     },
-    []
+    [uploadImageToServer]
   );
 
   // 📌 Gọi API khi component mount

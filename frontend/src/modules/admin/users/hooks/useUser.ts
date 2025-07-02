@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { User, UserAddress, UserSettings } from "../models/user.model";
 import { UserService } from "../services/user.service";
 import { useAuth } from "@/context/AuthContext";
+import { useImages } from "@/common/hooks/useImages";
 
 // 🧑‍💼 Hook quản lý thông tin người dùng
 export const useUser = () => {
@@ -15,6 +16,7 @@ export const useUser = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const { uploadImage: uploadImageToServer } = useImages();
 
   // 📌 Lấy thông tin người dùng hiện tại
   const fetchUserInfo = useCallback(async () => {
@@ -84,10 +86,11 @@ export const useUser = () => {
     setError(null);
 
     try {
-      const { url } = await UserService.uploadAvatar(file);
+      const result = await uploadImageToServer(file);
+      if (!result) throw new Error('Failed to upload image');
       // Cập nhật user với avatar mới
-      await updateUserInfo({ avatar: url });
-      return url;
+      await updateUserInfo({ avatar: result.imageUrl });
+      return result.imageUrl;
     } catch (err: any) {
       setError(err.message || "Không thể tải lên ảnh đại diện");
       console.error("Lỗi khi upload avatar:", err);

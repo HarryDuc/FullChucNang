@@ -67,14 +67,22 @@ export class OrderService {
    * @param order Đơn hàng cần tính.
    * @returns Tổng giá đơn hàng.
    */
-  private async calculateTotalPrice(order: Order): Promise<number> {
+  private async calculateTotalPrice(order: Order): Promise<{ subtotalPrice: number; totalPrice: number }> {
     // Dummy await để thỏa mãn eslint: @typescript-eslint/require-await
     await Promise.resolve();
-    let total = 0;
+    let subtotal = 0;
     for (const item of order.orderItems) {
-      total += item.price * item.quantity;
+      subtotal += item.price * item.quantity;
     }
-    return total;
+
+    // Tính tổng giá sau khi áp dụng giảm giá
+    const discountAmount = order.discountAmount || 0;
+    const totalPrice = subtotal - discountAmount;
+
+    return {
+      subtotalPrice: subtotal,
+      totalPrice: totalPrice
+    };
   }
 
   /**
@@ -108,12 +116,17 @@ export class OrderService {
       orderItems,
       slug,
       status: createOrderDto.status || 'pending', // Mặc định là 'pending'
+      voucherCode: createOrderDto.voucherCode,
+      discountAmount: createOrderDto.discountAmount || 0,
     });
 
     const savedOrder = await newOrder.save();
-    const total = await this.calculateTotalPrice(savedOrder);
-    savedOrder.totalPrice = total;
+    const { subtotalPrice, totalPrice } = await this.calculateTotalPrice(savedOrder);
+
+    savedOrder.subtotalPrice = subtotalPrice;
+    savedOrder.totalPrice = totalPrice;
     await savedOrder.save();
+
     return savedOrder;
   }
 
@@ -182,8 +195,9 @@ export class OrderService {
     }
 
     if (updatePayload.orderItems) {
-      const total = await this.calculateTotalPrice(updatedOrder);
-      updatedOrder.totalPrice = total;
+      const { subtotalPrice, totalPrice } = await this.calculateTotalPrice(updatedOrder);
+      updatedOrder.subtotalPrice = subtotalPrice;
+      updatedOrder.totalPrice = totalPrice;
       await updatedOrder.save();
     }
 

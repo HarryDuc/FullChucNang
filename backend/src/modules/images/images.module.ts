@@ -33,4 +33,4 @@ import { User, UserSchema } from '../users/schemas/users.schema';
   providers: [ImagesService, RoleService],
   exports: [ImagesService],
 })
-export class ImagesModule {}
+export class ImagesModule { }

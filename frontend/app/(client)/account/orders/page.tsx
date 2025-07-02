@@ -1,8 +1,8 @@
 
-import Orders from "@/modules/client/pages/Orders";
+import OrdersPage from "@/modules/client/pages/Orders";
 
 export default function OrdersApp() {
   return (
-      <Orders />
+      <OrdersPage />
   )
 }

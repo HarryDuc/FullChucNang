@@ -1,9 +1,27 @@
 import { useMutation, useInfiniteQuery, useQueryClient, UseMutationResult, InfiniteData } from '@tanstack/react-query';
 import { imagesService, ImageResponse, PaginatedImageResponse } from '@/modules/admin/media/services/images.service';
 import { toast } from 'react-hot-toast';
+import { useImages as useCommonImages } from '@/common/hooks/useImages';
+import { ImageResponse as CommonImageResponse } from '@/common/services/imageService';
+
+// Hàm chuyển đổi từ CommonImageResponse sang ImageResponse
+const convertToAdminImageResponse = (commonResponse: CommonImageResponse): ImageResponse => {
+  return {
+    _id: commonResponse._id,
+    originalName: commonResponse.originalName || commonResponse.filename,
+    imageUrl: commonResponse.imageUrl,
+    location: commonResponse.path,
+    slug: commonResponse.slug,
+    alt: commonResponse.alt || '',
+    caption: commonResponse.caption,
+    createdAt: commonResponse.createdAt,
+    updatedAt: commonResponse.updatedAt
+  };
+};
 
 export const useImages = () => {
   const queryClient = useQueryClient();
+  const commonImageHook = useCommonImages();
 
   // Query để lấy ảnh với infinite scroll
   const {
@@ -40,8 +58,12 @@ export const useImages = () => {
   const {
     mutate: uploadImage,
     isPending: isUploading,
-  }: UseMutationResult<ImageResponse, Error, File> = useMutation({
-    mutationFn: imagesService.uploadImage,
+  } = useMutation<ImageResponse, Error, File>({
+    mutationFn: async (file: File) => {
+      const result = await commonImageHook.uploadImage(file);
+      if (!result) throw new Error('Failed to upload image');
+      return convertToAdminImageResponse(result);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['images'] });
       toast.success('Tải ảnh lên thành công');
@@ -55,8 +77,12 @@ export const useImages = () => {
   const {
     mutate: uploadMultipleImages,
     isPending: isUploadingMultiple,
-  }: UseMutationResult<ImageResponse[], Error, File[]> = useMutation({
-    mutationFn: imagesService.uploadMultipleImages,
+  } = useMutation<ImageResponse[], Error, File[]>({
+    mutationFn: async (files: File[]) => {
+      const results = await commonImageHook.uploadMultipleImages(files);
+      if (!results.length) throw new Error('Failed to upload images');
+      return results.map(convertToAdminImageResponse);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['images'] });
       toast.success('Tải các ảnh lên thành công');
@@ -85,8 +111,12 @@ export const useImages = () => {
   const {
     mutate: uploadEditorImage,
     isPending: isUploadingEditor,
-  }: UseMutationResult<ImageResponse, Error, File> = useMutation({
-    mutationFn: imagesService.uploadEditorImage,
+  } = useMutation<ImageResponse, Error, File>({
+    mutationFn: async (file: File) => {
+      const result = await commonImageHook.uploadEditorImage(file);
+      if (!result) throw new Error('Failed to upload editor image');
+      return convertToAdminImageResponse(result);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['images'] });
       toast.success('Tải ảnh lên thành công');

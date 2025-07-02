@@ -62,6 +62,7 @@ import { RedirectsModule } from './modules/redirects/redirects.module';
     }),
 
     // ✅ Import các module chính
+    AddressesModule,
     DatabaseModule,
     AuthModule,
     UsersModule,

@@ -27,6 +27,21 @@ const getAuthHeader = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+interface CreateOrderData {
+  orderItems: {
+    product: string;
+    quantity: number;
+    price: number;
+    variant?: string;
+  }[];
+  voucherId?: string;
+  subtotalPrice?: number;
+  voucherCode?: string;
+  discountAmount?: number;
+  totalPrice?: number;
+  status?: string;
+}
+
 export const OrderService = {
   /**
    * Lấy danh sách tất cả đơn hàng kèm thông tin checkout
@@ -101,12 +116,25 @@ export const OrderService = {
   /**
    * Tạo mới một đơn hàng
    */
-  createOrder: async (orderData: Partial<Order>): Promise<Order> => {
-    console.log("Creating order with auth header:", getAuthHeader());
-    const response = await axios.post<Order>(ORDER_URL, orderData, {
-      headers: getAuthHeader(),
-    });
-    return response.data;
+  createOrder: async (orderData: CreateOrderData): Promise<Order> => {
+    try {
+      const response = await fetch(`${ORDER_URL}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create order");
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error creating order:", error);
+      throw error;
+    }
   },
 
   /**
@@ -182,6 +210,19 @@ export const OrderService = {
       }
       console.error("Lỗi khi tìm kiếm đơn hàng:", error);
       throw new Error("Đã xảy ra lỗi khi tìm kiếm đơn hàng.");
+    }
+  },
+
+  async getOrder(slug: string) {
+    try {
+      const response = await fetch(`${ORDER_URL}/${slug}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch order");
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Error fetching order:", error);
+      throw error;
     }
   },
 };

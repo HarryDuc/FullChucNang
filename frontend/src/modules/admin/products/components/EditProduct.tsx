@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useProducts } from "../hooks/useProducts";
 import { Product } from "../models/product.model";
 import { ProductForm } from "./ProductForm";
+import { toast } from "react-hot-toast";
 
 const EditProduct = ({ slug }: { slug: string }) => {
   const router = useRouter();
@@ -18,7 +19,7 @@ const EditProduct = ({ slug }: { slug: string }) => {
   const handleSubmit = async (productData: Partial<Product>) => {
     if (!productDetail) return;
     await updateProduct(slug, productData);
-    router.push("/admin/products");
+    toast.success("Cập nhật sản phẩm thành công");
   };
 
   const handleCancel = () => {

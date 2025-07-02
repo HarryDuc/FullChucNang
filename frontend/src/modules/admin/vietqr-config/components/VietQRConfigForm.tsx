@@ -1,3 +1,4 @@
+"use client"
 import React, { useState, useEffect } from "react";
 import {
   CreateVietQRConfigDto,
@@ -126,11 +127,45 @@ export const VietQRConfigForm: React.FC<VietQRConfigFormProps> = ({
           ) : (
             banks.map((bank) => (
               <option key={bank.bin} value={bank.bin}>
-                ({bank.bin}) {bank.name}
+                <span style={{ display: "flex", alignItems: "center" }}>
+                  <img
+                    src={bank.logo}
+                    alt={bank.shortName || bank.name}
+                    style={{
+                      width: 24,
+                      height: 24,
+                      objectFit: "contain",
+                      display: "inline-block",
+                      marginRight: 6,
+                      verticalAlign: "middle",
+                    }}
+                  />
+                  {bank.shortName || bank.name} ({bank.code}) - {bank.name} [{bank.bin}]
+                </span>
               </option>
             ))
           )}
         </select>
+        {/* For better UX, show logo and info below select if a bank is selected */}
+        {formData.bankBin && !loading && !error && (
+          (() => {
+            const selectedBank = banks.find((b) => b.bin === formData.bankBin);
+            if (!selectedBank) return null;
+            return (
+              <div className="flex items-center mt-2 space-x-2">
+                <img
+                  src={selectedBank.logo}
+                  alt={selectedBank.shortName || selectedBank.name}
+                  className="w-8 h-8 object-contain"
+                />
+                <div>
+                  <div className="font-semibold">{selectedBank.shortName || selectedBank.name} ({selectedBank.code})</div>
+                  <div className="text-xs text-gray-500">{selectedBank.name} - BIN: {selectedBank.bin}</div>
+                </div>
+              </div>
+            );
+          })()
+        )}
       </div>
 
       <div>

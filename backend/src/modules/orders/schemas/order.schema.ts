@@ -51,7 +51,19 @@ export class Order extends Document {
   @Prop({ type: [OrderItemSchema], default: [] })
   orderItems: OrderItem[];
 
-  // Tổng giá của đơn hàng, được tính dựa trên price của sản phẩm nhân với số lượng
+  // Tổng giá của đơn hàng trước khi áp dụng giảm giá
+  @Prop({ type: Number, required: true, default: 0 })
+  subtotalPrice: number;
+
+  // Mã voucher được áp dụng
+  @Prop({ type: String, required: false })
+  voucherCode?: string;
+
+  // Số tiền giảm giá từ voucher
+  @Prop({ type: Number, required: false, default: 0 })
+  discountAmount: number;
+
+  // Tổng giá cuối cùng sau khi áp dụng giảm giá
   @Prop({ type: Number, required: true, default: 0 })
   totalPrice: number;
 

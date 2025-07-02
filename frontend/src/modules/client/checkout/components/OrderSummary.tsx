@@ -3,6 +3,7 @@ import Link from "next/link";
 import { CartItem } from "../../../../../utils/cartUtils";
 import { formatPrice } from "../../../../../utils/cartUtils";
 import VoucherInput from "../../voucher/components/VoucherInput";
+import { Voucher } from "../../voucher/models/voucher.model";
 
 interface OrderSummaryProps {
   cartItems: CartItem[];
@@ -24,6 +25,7 @@ interface OrderSummaryProps {
   onSubmit: (e: React.FormEvent) => void;
   getSubtotal: () => number;
   paymentMethod: string;
+  onVoucherApply?: (voucher: Voucher, discountAmount: number) => void;
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({
@@ -31,11 +33,13 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   subtotal,
   shippingFee,
   discountAmount,
+  total,
   isSubmitting,
   shippingInfo,
   onSubmit,
   getSubtotal,
   paymentMethod,
+  onVoucherApply,
 }) => {
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
@@ -74,6 +78,11 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
             <span>- {formatPrice(discountAmount)}</span>
           </div>
         )}
+
+        <div className="flex justify-between font-semibold text-lg pt-2 border-t">
+          <span>Tổng cộng</span>
+          <span>{formatPrice(total)}</span>
+        </div>
       </div>
 
       {shippingInfo && (
@@ -96,7 +105,10 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
         <VoucherInput
           productSlug={cartItems[0]?.slug}
           totalAmount={getSubtotal()}
-          paymentMethod={paymentMethod === "cod" ? "cash" : paymentMethod}
+          paymentMethod={
+            paymentMethod === "cod" ? "COD" : paymentMethod.toUpperCase()
+          }
+          onApply={onVoucherApply}
         />
       </div>
 

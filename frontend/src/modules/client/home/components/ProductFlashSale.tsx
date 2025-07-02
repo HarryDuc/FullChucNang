@@ -5,9 +5,29 @@ import {
   addToCart as addToCartUtil,
   CartItem,
 } from "../../../../../utils/cartUtils";
-import { Product } from "../models/product.model";
 import { ProductService } from "../services/product.service";
 import ProductCardShopeeStyle from "../../common/components/ProductCard";
+
+// Thêm interface cho variant
+interface ProductVariant {
+  variantCurrentPrice?: number;
+  variantDiscountPrice?: number;
+}
+
+// Mở rộng interface Product
+interface Product {
+  _id?: string;
+  id?: string;
+  name: string;
+  slug: string;
+  basePrice?: number;
+  currentPrice?: number;
+  discountPrice?: number;
+  thumbnail?: string;
+  sku?: string;
+  hasVariants?: boolean;
+  variants?: ProductVariant[];
+}
 
 // Xử lý ảnh sản phẩm
 const getImageUrl = (thumbnail?: string) => {
@@ -37,22 +57,59 @@ const ProductFlashSale = () => {
   }, []);
 
   const handleAddToCart = (product: Product) => {
-    if (
-      !(
-        (product.discountPrice && product.discountPrice > 0) ||
-        (product.basePrice && product.basePrice > 0)
-      )
-    )
-      return;
+    // Tìm giá thấp nhất trong các variants
+    const getLowestVariantPrices = () => {
+      if (!product.variants || product.variants.length === 0)
+        return { lowest: product.basePrice || 0, lowestDiscount: undefined };
+
+      let lowest = Infinity;
+      let lowestDiscount = Infinity;
+
+      product.variants.forEach((variant) => {
+        // Cập nhật giá gốc thấp nhất
+        if (
+          variant.variantCurrentPrice !== undefined &&
+          variant.variantCurrentPrice < lowest
+        ) {
+          lowest = variant.variantCurrentPrice;
+        }
+        // Cập nhật giá khuyến mãi thấp nhất
+        if (
+          variant.variantDiscountPrice !== undefined &&
+          variant.variantDiscountPrice < lowestDiscount
+        ) {
+          lowestDiscount = variant.variantDiscountPrice;
+        }
+      });
+
+      return {
+        lowest: lowest === Infinity ? product.basePrice || 0 : lowest,
+        lowestDiscount:
+          lowestDiscount === Infinity ? undefined : lowestDiscount,
+      };
+    };
+
+    // Xác định giá hiển thị dựa trên việc có variant hay không
+    const { lowest, lowestDiscount } = product.hasVariants
+      ? getLowestVariantPrices() // Có variant -> lấy giá thấp nhất từ variants
+      : {
+          lowest: product.currentPrice || product.basePrice || 0,
+          lowestDiscount: product.discountPrice,
+        }; // Không có variant -> giữ nguyên logic cũ
+
+    const displayPrice = lowest;
+    const displayDiscountPrice = lowestDiscount;
+    const finalPrice = displayDiscountPrice || displayPrice;
+
+    if (!(finalPrice > 0)) return;
 
     const item: CartItem = {
       _id: product._id || product.id || "",
       name: product.name,
       slug: product.slug,
-      basePrice: product.basePrice || 0,
-      currentPrice: product.currentPrice || 0,
-      discountPrice: product.discountPrice || 0,
-      price: product.discountPrice || product.currentPrice || 0,
+      currentPrice: displayPrice,
+      discountPrice: displayDiscountPrice,
+      price: finalPrice,
       quantity: 1,
       image: getImageUrl(product.thumbnail),
       sku: product.sku,

@@ -8,6 +8,9 @@ import UserProfile from "../components/UserProfile";
 import WalletManagement from "../components/WalletManagement";
 import { useAccount } from "../hooks/useAccount";
 import { User } from "../models/account.model";
+import AppSettingSection from "../../setting/AppSettingSection";
+import Account from "../components/AccountSection";
+import OrdersPage from "../../pages/Orders";
 
 // Make sure this matches the interface in the UserProfile component
 interface UserData {
@@ -49,10 +52,10 @@ const ProfilePage: React.FC = () => {
 
   // Check if user is authenticated
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isAuthenticated) {
       router.push("/login");
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated]);
 
   // Handle profile changes
   const handleProfileChange = (
@@ -144,6 +147,8 @@ const ProfilePage: React.FC = () => {
   const tabs = [
     { key: "profile", label: "Thông tin cá nhân" },
     { key: "wallets", label: "Ví MetaMask" },
+    { key: "notifications", label: "Thông báo" },
+    { key: "orders", label: "Đơn hàng" },
     { key: "settings", label: "Cài đặt" },
   ];
 
@@ -194,9 +199,19 @@ const ProfilePage: React.FC = () => {
 
         {activeTab === "settings" && (
           <div className="p-6">
-            <p className="text-gray-600">
-              Cài đặt tài khoản sẽ được phát triển trong tương lai.
-            </p>
+              <AppSettingSection />
+          </div>
+        )}
+
+        {activeTab === "notifications" && (
+          <div className="p-6">
+              <Account />
+          </div>
+        )}
+
+        {activeTab === "orders" && (
+          <div className="p-6">
+              <OrdersPage />
           </div>
         )}
       </div>

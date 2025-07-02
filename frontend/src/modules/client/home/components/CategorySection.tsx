@@ -45,16 +45,19 @@ interface ProductData {
   rating?: number;
   sku?: string;
   hasVariants?: boolean;
+  variants?: {
+    variantCurrentPrice?: number;
+    variantDiscountPrice?: number;
+  }[];
 }
 
 // Các slug được quy định để hiển thị (dạng slug)
 const allowedCategorySlugs = [
-  "decor-cao-cap",
-  "do-phong-thuy",
-  "den-trang-tri",
-  "do-gom",
-  "mo-hinh-xe-vintage",
-  "san-pham-khac",
+  "camera",
+  "dong-ho",
+  "dien-thoai",
+  "laptop",
+  "pc",
 ];
 
 // Banner images tương ứng (theo thứ tự trong allowedCategorySlugs)
@@ -83,13 +86,7 @@ const CategorySection: React.FC = () => {
 
   // Xử lý thêm vào giỏ hàng
   const handleAddToCart = (product: DisplayProduct) => {
-    if (
-      !(
-        (product.salePrice && product.salePrice > 0) ||
-        (product.originalPrice && product.originalPrice > 0)
-      )
-    )
-      return;
+    if (!(product.salePrice && product.salePrice > 0)) return;
 
     const item: CartItem = {
       _id: product.id || "",
@@ -183,15 +180,55 @@ const CategorySection: React.FC = () => {
                   bannerImage: images[index % images.length],
                   slug: category.slug,
                   products: productsData.data.map((product: ProductData) => {
-                    // Xác định giá hiển thị dựa trên việc có variant hay không
-                    const displayPrice = product.hasVariants
-                      ? product.basePrice || 0 // Có variant -> hiển thị basePrice
-                      : product.currentPrice || product.basePrice || 0; // Không có variant -> hiển thị currentPrice
+                    // Tìm giá thấp nhất trong các variants
+                    const getLowestVariantPrices = () => {
+                      if (!product.variants || product.variants.length === 0)
+                        return {
+                          lowest: product.basePrice || 0,
+                          lowestDiscount: undefined,
+                        };
 
-                    // Xác định giá giảm dựa trên việc có variant hay không
-                    const displayDiscountPrice = product.hasVariants
-                      ? undefined // Có variant -> không hiển thị giá giảm
-                      : product.discountPrice; // Không có variant -> hiển thị discountPrice
+                      let lowest = Infinity;
+                      let lowestDiscount = Infinity;
+
+                      product.variants.forEach((variant) => {
+                        // Cập nhật giá gốc thấp nhất
+                        if (
+                          variant.variantCurrentPrice !== undefined &&
+                          variant.variantCurrentPrice < lowest
+                        ) {
+                          lowest = variant.variantCurrentPrice;
+                        }
+                        // Cập nhật giá khuyến mãi thấp nhất
+                        if (
+                          variant.variantDiscountPrice !== undefined &&
+                          variant.variantDiscountPrice < lowestDiscount
+                        ) {
+                          lowestDiscount = variant.variantDiscountPrice;
+                        }
+                      });
+
+                      return {
+                        lowest:
+                          lowest === Infinity ? product.basePrice || 0 : lowest,
+                        lowestDiscount:
+                          lowestDiscount === Infinity
+                            ? undefined
+                            : lowestDiscount,
+                      };
+                    };
+
+                    // Xác định giá hiển thị dựa trên việc có variant hay không
+                    const { lowest, lowestDiscount } = product.hasVariants
+                      ? getLowestVariantPrices() // Có variant -> lấy giá thấp nhất từ variants
+                      : {
+                          lowest:
+                            product.currentPrice || product.basePrice || 0,
+                          lowestDiscount: product.discountPrice,
+                        }; // Không có variant -> giữ nguyên logic cũ
+
+                    const displayPrice = lowest;
+                    const displayDiscountPrice = lowestDiscount;
 
                     return {
                       id: product._id || product.id || "",

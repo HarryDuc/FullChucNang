@@ -1,9 +1,52 @@
-import React from "react";
+"use client"
+
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useVietQRConfigs } from "../hooks/useVietQRConfigs";
 
+// Định nghĩa kiểu cho Bank để lấy shortName dựa trên binCode
+interface Bank {
+  id: number;
+  name: string;
+  code: string;
+  bin: string;
+  shortName: string;
+  logo: string;
+  transferSupported: number;
+  lookupSupported: number;
+  short_name: string;
+  support: number;
+  isTransfer: number;
+  swift_code: string;
+}
+
 export const VietQRConfigList: React.FC = () => {
   const { configs, loading, setActiveConfig } = useVietQRConfigs();
+  const [banks, setBanks] = useState<Bank[]>([]);
+  const [banksLoading, setBanksLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBanks = async () => {
+      try {
+        const response = await fetch("https://api.vietqr.io/v2/banks");
+        const data = await response.json();
+        if (data.code === "00") {
+          setBanks(data.data);
+        }
+      } catch (err) {
+        // ignore error, just don't show shortName
+      } finally {
+        setBanksLoading(false);
+      }
+    };
+    fetchBanks();
+  }, []);
+
+  // Hàm lấy shortName từ binCode
+  const getShortNameByBin = (bin: string) => {
+    const bank = banks.find((b) => b.bin === bin);
+    return bank?.shortName || "";
+  };
 
   if (loading) {
     return (
@@ -21,8 +64,11 @@ export const VietQRConfigList: React.FC = () => {
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Ngân hàng
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Mã ngân hàng
+            </th> */}
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              ShortName (theo bin)
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Số tài khoản
@@ -47,8 +93,13 @@ export const VietQRConfigList: React.FC = () => {
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 {config.bankName}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 {config.bankBin}
+              </td> */}
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {banksLoading
+                  ? "Đang tải..."
+                  : getShortNameByBin(config.bankBin) || <span className="text-gray-400 italic">Không có</span>}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 {config.accountNumber}

@@ -17,7 +17,7 @@ export class CategoriesProductService {
   constructor(
     @InjectModel(Category.name)
     private readonly categoryModel: Model<CategoryDocument>,
-  ) {}
+  ) { }
 
   /**
    * ✅ Tạo danh mục mới (hỗ trợ tạo danh mục con ngay lập tức)
@@ -184,6 +184,11 @@ export class CategoriesProductService {
   ): Promise<string> {
     const category = await this.categoryModel.findOne({ slug }).exec();
     if (!category) throw new NotFoundException('Danh mục không tồn tại!');
+
+    // Kiểm tra updateCategoryDto có tồn tại không
+    if (!updateCategoryDto) {
+      throw new Error('Dữ liệu cập nhật không hợp lệ!');
+    }
 
     // Kiểm tra nếu có thay đổi danh mục cha
     if (updateCategoryDto.parentCategory) {

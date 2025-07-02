@@ -3,7 +3,7 @@ import { AddressService } from '../services/address.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CreateAddressDto, UpdateAddressDto } from '../dtos/address.dto';
 
-@Controller('addressesapi')
+@Controller('usersapi/addressesapi')
 @UseGuards(JwtAuthGuard)
 export class AddressController {
   private readonly logger = new Logger(AddressController.name);

@@ -407,7 +407,12 @@ const OrderSection = () => {
         <meta property="og:image" content="/images/og-orders.jpg" />
       </Head>
 
-      <main className="max-w-4xl mx-auto" role="main">
+      {/*
+        NOTE: <main> should NOT be rendered inside a <p>.
+        If you are using this component inside a context where a <p> is a parent,
+        wrap this <main> in a <div> or <section> instead.
+      */}
+      <div className="max-w-4xl mx-auto" role="main">
         <PageHeader
           title="Đơn hàng của tôi"
           description="Theo dõi và quản lý các đơn hàng của bạn"
@@ -731,7 +736,7 @@ const OrderSection = () => {
             ))}
           </div>
         )}
-      </main>
+      </div>
     </>
   );
 };

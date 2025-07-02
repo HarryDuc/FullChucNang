@@ -21,12 +21,22 @@ export interface CategoryPostResponse<T> {
 
 export const CategoryPostService = {
   create: async (dto: CreateCategoryPostDto): Promise<CategoryPostResponse<CategoryPost>> => {
-    const response = await api.post(API_URL, dto);
+    const response = await api.post(API_URL, dto, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
     return response.data;
   },
 
   update: async (slug: string, dto: UpdateCategoryPostDto): Promise<CategoryPostResponse<CategoryPost>> => {
-    const response = await api.patch(`${API_URL}/${slug}`, dto);
+    const response = await api.patch(`${API_URL}/${slug}`, dto, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
     return response.data;
   },
 
@@ -47,12 +57,22 @@ export const CategoryPostService = {
   },
 
   softDelete: async (slug: string): Promise<CategoryPostResponse<void>> => {
-    const response = await api.patch(`${API_URL}/${slug}/soft-delete`);
+    const response = await api.patch(`${API_URL}/${slug}/soft-delete`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json',
+      },
+    });
     return response.data;
   },
 
   hardDelete: async (slug: string): Promise<CategoryPostResponse<void>> => {
-    const response = await api.delete(`${API_URL}/${slug}`);
+    const response = await api.delete(`${API_URL}/${slug}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json',
+      },
+    });
     return response.data;
   },
 };

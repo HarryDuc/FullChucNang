@@ -111,7 +111,7 @@ export const UserService = {
   // 📌 Lấy danh sách địa chỉ của người dùng
   getUserAddresses: async (): Promise<UserAddress[]> => {
     try {
-      const response = await fetch(`${USER_API}/addresses`, fetchOptions('GET'));
+      const response = await fetch(`${USER_API}/addressesapi`, fetchOptions('GET'));
       return handleResponse(response);
     } catch (error) {
       console.error("Lỗi khi lấy danh sách địa chỉ:", error);
@@ -122,7 +122,7 @@ export const UserService = {
   // 📌 Thêm địa chỉ mới
   addAddress: async (address: Omit<UserAddress, 'id'>): Promise<UserAddress> => {
     try {
-      const response = await fetch(`${USER_API}/addresses`, fetchOptions('POST', address));
+      const response = await fetch(`${USER_API}/addressesapi`, fetchOptions('POST', address));
       return handleResponse(response);
     } catch (error) {
       console.error("Lỗi khi thêm địa chỉ mới:", error);
@@ -134,7 +134,7 @@ export const UserService = {
   updateAddress: async (id: string, address: Partial<UserAddress>): Promise<UserAddress> => {
     try {
       const response = await fetch(
-        `${USER_API}/addresses/${id}`,
+        `${USER_API}/addressesapi/${id}`,
         fetchOptions('PUT', address)
       );
       return handleResponse(response);
@@ -148,7 +148,7 @@ export const UserService = {
   deleteAddress: async (id: string): Promise<void> => {
     try {
       const response = await fetch(
-        `${USER_API}/addresses/${id}`,
+        `${USER_API}/addressesapi/${id}`,
         fetchOptions('DELETE')
       );
       await handleResponse(response);
@@ -162,7 +162,7 @@ export const UserService = {
   setDefaultAddress: async (id: string): Promise<UserAddress> => {
     try {
       const response = await fetch(
-        `${USER_API}/addresses/${id}/default`,
+        `${USER_API}/addressesapi/${id}/default`,
         fetchOptions('PUT')
       );
       return handleResponse(response);
