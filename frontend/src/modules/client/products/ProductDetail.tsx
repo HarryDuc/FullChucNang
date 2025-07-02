@@ -342,9 +342,26 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
     variant: ProductVariant,
     baseProduct: Product
   ) => {
+    // Nếu variant có giá giảm, ưu tiên sử dụng giá giảm của variant
+    if (variant.variantDiscountPrice !== undefined) {
+      return {
+        currentPrice:
+          variant.variantCurrentPrice || variant.variantDiscountPrice,
+        discountPrice: variant.variantDiscountPrice,
+      };
+    }
+
+    // Nếu variant có giá riêng, ưu tiên sử dụng giá của variant
+    if (variant.variantCurrentPrice !== undefined) {
+      return {
+        currentPrice: variant.variantCurrentPrice,
+        discountPrice: variant.variantDiscountPrice,
+      };
+    }
+
     let totalAdditionalPrice = 0;
 
-    // Chỉ tính additionalPrice khi sản phẩm có variants
+    // Chỉ tính additionalPrice khi sản phẩm có variants và variant không có giá riêng
     if (baseProduct.hasVariants) {
       // Lặp qua từng combination trong variant
       variant.combination.forEach((combo) => {

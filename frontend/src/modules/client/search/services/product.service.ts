@@ -2,6 +2,7 @@ import { ClientProduct } from "@/common/models/product.model";
 import { Product } from "../models/product.model";
 import { config } from "@/config/config";
 import { API_URL_CLIENT } from "@/config/apiRoutes";
+import { calculateSearchScore, SearchScore } from "@/common/utils/searchUtils";
 
 const IMAGE_UPLOAD_API = API_URL_CLIENT + config.ROUTES.IMAGES.UPLOAD;
 const PRODUCT_API = API_URL_CLIENT + config.ROUTES.PRODUCTS.BASE;
@@ -201,8 +202,6 @@ export const ProductService = {
     }
   },
 
-  // Add this method to the ProductService object
-
   // Tìm kiếm sản phẩm theo tên
   searchByName: async (
     searchTerm: string,
@@ -213,6 +212,7 @@ export const ProductService = {
     total: number;
     page: number;
     totalPages: number;
+    searchScores?: { [key: string]: SearchScore };
   }> => {
     try {
       const encodedSearchTerm = encodeURIComponent(searchTerm);
@@ -230,7 +230,30 @@ export const ProductService = {
         throw new Error("Dữ liệu trả về không hợp lệ");
       }
 
-      return result;
+      // Calculate search scores for each product
+      const searchScores: { [key: string]: SearchScore } = {};
+      result.data = result.data.map((product: Product) => {
+        const score = calculateSearchScore(searchTerm, {
+          name: product.name,
+          description: product.description || '',
+          category: product.category?.main || '',
+          tags: product.category?.tags || []
+        });
+        searchScores[product._id] = score;
+        return product;
+      });
+
+      // Sort products by search score
+      result.data.sort((a: Product, b: Product) => {
+        const scoreA = searchScores[a._id]?.score || 0;
+        const scoreB = searchScores[b._id]?.score || 0;
+        return scoreB - scoreA;
+      });
+
+      return {
+        ...result,
+        searchScores
+      };
     } catch (error) {
       console.error("Lỗi khi tìm kiếm sản phẩm:", error);
       throw error;

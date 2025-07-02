@@ -40,6 +40,37 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
   buyNow,
   formatPrice,
 }) => {
+  // Tìm giá thấp nhất trong các variants
+  const getLowestVariantPrices = () => {
+    if (!product.variants || product.variants.length === 0)
+      return { lowest: product.basePrice || 0, lowestDiscount: undefined };
+
+    let lowest = Infinity;
+    let lowestDiscount = Infinity;
+
+    product.variants.forEach((variant) => {
+      // Cập nhật giá gốc thấp nhất
+      if (
+        variant.variantCurrentPrice !== undefined &&
+        variant.variantCurrentPrice < lowest
+      ) {
+        lowest = variant.variantCurrentPrice;
+      }
+      // Cập nhật giá khuyến mãi thấp nhất
+      if (
+        variant.variantDiscountPrice !== undefined &&
+        variant.variantDiscountPrice < lowestDiscount
+      ) {
+        lowestDiscount = variant.variantDiscountPrice;
+      }
+    });
+
+    return {
+      lowest: lowest === Infinity ? product.basePrice || 0 : lowest,
+      lowestDiscount: lowestDiscount === Infinity ? undefined : lowestDiscount,
+    };
+  };
+
   // Tính tổng giá tăng thêm từ các thuộc tính được chọn
   const calculateAdditionalPrice = () => {
     if (!selectedVariant || !product.variantAttributes) return 0;
@@ -57,27 +88,50 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
     return totalAdditional;
   };
 
-  // Xác định giá hiển thị dựa trên biến thể được chọn và props
   const additionalPrice = calculateAdditionalPrice();
 
-  // Tính giá hiển thị dựa trên việc có variant hay không
-  const baseDisplayPrice = product.hasVariants
+  // Xác định giá hiển thị dựa trên việc có variant hay không
+  const { lowest, lowestDiscount } = product.hasVariants
     ? selectedVariant
-      ? (product.basePrice || 0) + additionalPrice // Có variant -> basePrice + additionalPrice
-      : product.basePrice || 0 // Chưa chọn variant -> basePrice
-    : product.currentPrice || product.basePrice || 0; // Không có variant -> currentPrice
+      ? {
+          lowest: selectedVariant.variantCurrentPrice,
+          lowestDiscount: selectedVariant.variantDiscountPrice,
+        }
+      : getLowestVariantPrices() // Nếu chưa chọn variant, lấy giá thấp nhất
+    : {
+        lowest: product.currentPrice || product.basePrice || 0,
+        lowestDiscount: product.discountPrice,
+      };
 
-  const displayPrice = baseDisplayPrice;
+  // Tính giá hiển thị theo thứ tự ưu tiên
+  const displayPrice = product.hasVariants
+    ? selectedVariant
+      ? selectedVariant.variantDiscountPrice || // Ưu tiên giá giảm của variant
+        selectedVariant.variantCurrentPrice || // Sau đó là giá bán của variant
+        (product.basePrice || 0) + additionalPrice // Cuối cùng là basePrice + additionalPrice
+      : lowestDiscount || lowest // Nếu chưa chọn variant, ưu tiên giá giảm thấp nhất
+    : product.discountPrice || product.currentPrice || product.basePrice || 0;
 
-  // Xác định giá giảm dựa trên việc có variant hay không
-  const displayDiscountPrice = product.hasVariants
-    ? undefined // Có variant -> không có giá giảm
-    : product.discountPrice; // Không có variant -> lấy giá giảm từ sản phẩm
+  // Xác định giá gốc để tính % giảm giá
+  const originalPrice = product.hasVariants
+    ? selectedVariant
+      ? selectedVariant.variantCurrentPrice ||
+        (product.basePrice || 0) + additionalPrice
+      : lowest
+    : product.currentPrice || product.basePrice || 0;
+
+  // Đảm bảo giá trị không bị undefined
+  const finalDisplayPrice = displayPrice || 0;
+  const finalOriginalPrice = originalPrice || 0;
 
   // Tính toán phần trăm giảm giá
   const calculatedDiscount =
-    displayDiscountPrice && displayPrice
-      ? Math.round(((displayPrice - displayDiscountPrice) / displayPrice) * 100)
+    finalDisplayPrice &&
+    finalOriginalPrice &&
+    finalDisplayPrice < finalOriginalPrice
+      ? Math.round(
+          ((finalOriginalPrice - finalDisplayPrice) / finalOriginalPrice) * 100
+        )
       : 0;
 
   // Kiểm tra xem một giá trị có được chọn trong biến thể hiện tại không
@@ -150,10 +204,10 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex-1">
                 <span className="text-xl text-blue-900 font-bold">
-                  {formatPrice(displayDiscountPrice)}
+                  {formatPrice(finalDisplayPrice)}
                 </span>
                 <span className="text-base text-gray-500 line-through ml-3">
-                  {formatPrice(displayPrice)}
+                  {formatPrice(finalOriginalPrice)}
                 </span>
               </div>
               <div className="bg-red-600 text-white px-3 py-2 rounded-lg text-sm font-bold">
@@ -163,16 +217,16 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
             <div className="mt-2 text-sm text-gray-600">
               Tiết kiệm:{" "}
               <span className="font-medium text-red-600">
-                {formatPrice(displayPrice - (displayDiscountPrice || 0))}
+                {formatPrice(finalOriginalPrice - finalDisplayPrice)}
               </span>
             </div>
           </div>
         ) : (
           <div className="bg-blue-50 rounded-lg p-6 transition-all duration-300 shadow hover:shadow-md">
             <span className="text-xl text-blue-900 font-bold">
-              {formatPrice(displayPrice)}
+              {formatPrice(finalDisplayPrice)}
             </span>
-            {displayPrice === 0 && (
+            {finalDisplayPrice === 0 && (
               <p className="mt-2 text-sm text-gray-600">
                 Vui lòng liên hệ để biết thêm chi tiết về giá
               </p>

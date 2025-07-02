@@ -91,7 +91,7 @@ export class ProductService {
     const [data, total] = await Promise.all([
       this.productModel
         .find()
-        .select('name slug basePrice currentPrice discountPrice thumbnail hasVariants')
+        .select('name slug basePrice currentPrice discountPrice thumbnail hasVariants variants')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -136,7 +136,7 @@ export class ProductService {
     // Truy vấn dữ liệu với phân trang và chỉ lấy các trường cần thiết
     const data = await this.productModel
       .find(query)
-      .select('name slug basePrice currentPrice discountPrice thumbnail hasVariants publishedAt createdAt') // Chỉ lấy các trường cần thiết
+      .select('name slug basePrice currentPrice discountPrice thumbnail hasVariants variants publishedAt createdAt') // Chỉ lấy các trường cần thiết
       .sort({ publishedAt: -1, createdAt: -1 }) // 👈 Thêm dòng này để sản phẩm mới nhất lên đầu
       .skip((page - 1) * limit)
       .limit(limit)
@@ -163,7 +163,7 @@ export class ProductService {
       this.productModel
         .find(
           query,
-          'name slug basePrice currentPrice discountPrice thumbnail hasVariants publishedAt createdAt',
+          'name slug basePrice currentPrice discountPrice thumbnail hasVariants variants publishedAt createdAt',
         )
         .sort({ publishedAt: -1, createdAt: -1 }) // Sắp xếp sản phẩm mới nhất lên trước
         .lean() // Giúp truy vấn nhanh hơn
@@ -200,7 +200,7 @@ export class ProductService {
     // Truy vấn dữ liệu với phân trang
     const data = await this.productModel
       .find(query)
-      .select('name slug basePrice currentPrice discountPrice thumbnail hasVariants publishedAt createdAt') // Chỉ lấy các trường cần thiết
+      .select('name slug basePrice currentPrice discountPrice thumbnail hasVariants variants publishedAt createdAt') // Chỉ lấy các trường cần thiết
       .skip((page - 1) * limit)
       .limit(limit)
       .exec();
@@ -294,7 +294,7 @@ export class ProductService {
     const total = await this.productModel.countDocuments().exec();
     const data = await this.productModel
       .find()
-      .select('name slug basePrice currentPrice discountPrice thumbnail hasVariants category publishedAt createdAt')
+      .select('name slug basePrice currentPrice discountPrice thumbnail hasVariants variants category publishedAt createdAt')
       // Sắp xếp dựa trên publishedAt giảm dần; nếu publishedAt không có thì dùng createdAt giảm dần
       .sort({ publishedAt: -1, createdAt: -1 })
       .skip(skip)

@@ -108,7 +108,7 @@ export class ProductController {
     @Query('q') searchTerm: string,
     @Query('page') page?: string,
   ): Promise<{
-    data: Product[];
+    data: Pick<Product, 'name' | 'slug' | 'currentPrice' | 'discountPrice' | 'thumbnail'>[];
     total: number;
     page: number;
     totalPages: number;
@@ -125,7 +125,6 @@ export class ProductController {
     const pageNumber = page ? parseInt(page, 10) || 1 : 1;
     return this.productService.searchByName(searchTerm, pageNumber);
   }
-
   /**
    * Lấy thông tin sản phẩm theo slug.
    */

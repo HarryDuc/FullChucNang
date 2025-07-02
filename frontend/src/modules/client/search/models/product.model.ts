@@ -23,24 +23,33 @@ export interface CategoryInfo {
 }
 
 export interface Product {
-  id?: string; // id cũ, giữ lại để tương thích ngược
-  _id?: string; // _id từ MongoDB
+  _id: string;
   name: string;
   slug: string;
   sku?: string;
   description?: string;
-  shortDescription?: string; // Mô tả ngắn của sản phẩm
-  importPrice?: number;
+  shortDescription?: string;
+  basePrice?: number;
   currentPrice?: number;
   discountPrice?: number;
   thumbnail?: string;
   gallery?: string[];
+  isVisible?: boolean;
+  isFeatured?: boolean;
+  isNewArrival?: boolean;
+  isBestSeller?: boolean;
+  status?: string;
+  category?: {
+    main: string;
+    sub: string[];
+    tags: string[];
+  };
+  hasVariants?: boolean;
+  variantAttributes?: any[];
+  variants?: any[];
   stock?: number;
   sold?: number;
-  category?: CategoryInfo;
-  // Danh sách biến thể thành phẩm để hiển thị giá trị thực tế cho người mua
-  productVariants?: ProductVariant[];
-  publishedAt?: string; // Ngày giờ đăng sản phẩm (ISO string)
   createdAt?: string;
   updatedAt?: string;
+  publishedAt?: string;
 }
