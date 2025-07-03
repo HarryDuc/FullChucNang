@@ -23,6 +23,7 @@ const fetchOptions = (
   method,
   headers: {
     "Content-Type": "application/json",
+    "Authorization": `Bearer ${localStorage.getItem("token")}`
   },
   body: data ? JSON.stringify(data) : undefined,
 });
@@ -153,4 +154,38 @@ export const FlashSaleService = {
       throw error;
     }
   },
+
+    // Tìm kiếm sản phẩm theo tên
+    searchByName: async (
+      searchTerm: string,
+      page: number = 1,
+      limit: number = 16
+    ): Promise<{
+      data: Product[];
+      total: number;
+      page: number;
+      totalPages: number;
+    }> => {
+      try {
+        const encodedSearchTerm = encodeURIComponent(searchTerm);
+        const response = await fetch(
+          `${PRODUCT_API}/search?q=${encodedSearchTerm}&page=${page}&limit=${limit}`
+        );
+
+        if (!response.ok) {
+          throw new Error(`Lỗi API: ${response.status} - ${response.statusText}`);
+        }
+
+        const result = await handleResponse(response);
+
+        if (!result || !result.data) {
+          throw new Error("Dữ liệu trả về không hợp lệ");
+        }
+
+        return result;
+      } catch (error) {
+        console.error("Lỗi khi tìm kiếm sản phẩm:", error);
+        throw error;
+      }
+    },
 };

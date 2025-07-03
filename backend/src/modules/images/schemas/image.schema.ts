@@ -32,6 +32,18 @@ export class Image extends Document {
 
   @Prop({ default: '' })
   description: string; // ✅ Mô tả ảnh
+
+  @Prop({ type: Number })
+  size: number; // ✅ Kích thước file
+
+  @Prop({ type: String })
+  useTable: string; // ✅ Bảng sử dụng ảnh
+
+  @Prop({ type: String })
+  useId: string; // ✅ ID của bản ghi sử dụng ảnh
+
+  @Prop({ type: Object })
+  metadata: Record<string, any>; // ✅ Metadata của ảnh
 }
 
 // ✅ Tạo schema Mongoose

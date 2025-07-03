@@ -5,6 +5,7 @@ import { Image } from '../schemas/image.schema';
 import { removeVietnameseTones } from '../utils/image.utils';
 import * as fs from 'fs';
 import * as path from 'path';
+import { exiftool } from 'exiftool-vendored';
 
 export interface PaginatedImages {
   images: Image[];
@@ -14,7 +15,26 @@ export interface PaginatedImages {
 
 @Injectable()
 export class ImagesService {
-  constructor(@InjectModel(Image.name) private imageModel: Model<Image>) { }
+  constructor(@InjectModel(Image.name) private imageModel: Model<Image>) {
+    // Create tmp directory if it doesn't exist
+    const tmpDir = path.join(__dirname, '../../tmp');
+    if (!fs.existsSync(tmpDir)) {
+      fs.mkdirSync(tmpDir, { recursive: true });
+    }
+  }
+
+  /**
+   * ✅ Extract metadata from image file
+   */
+  private async extractMetadata(filePath: string): Promise<Record<string, any>> {
+    try {
+      const metadata = await exiftool.read(filePath);
+      return metadata;
+    } catch (error) {
+      console.error('Error extracting metadata:', error);
+      return {};
+    }
+  }
 
   /**
    * ✅ Tạo slug duy nhất (không đổi tên file)
@@ -39,7 +59,7 @@ export class ImagesService {
   /**
    * ✅ Lưu thông tin file vào database (tên file không thay đổi)
    */
-  async saveImageToDB(file: Express.Multer.File): Promise<Image> {
+  async saveImageToDB(file: Express.Multer.File, useTable?: string, useId?: string): Promise<Image> {
     if (!file) throw new Error('❌ Không tìm thấy file upload!');
 
     const now = new Date();
@@ -48,8 +68,12 @@ export class ImagesService {
 
     // ✅ Lưu đường dẫn đúng với thư mục năm/tháng
     const imageUrl = `/uploads/${year}/${month}/${file.filename}`;
+    const filePath = path.join(__dirname, `../../../../uploads/${year}/${month}/${file.filename}`);
 
     const slug = await this.generateUniqueSlug(file.originalname);
+
+    // Extract metadata
+    const metadata = await this.extractMetadata(filePath);
 
     const image = new this.imageModel({
       originalName: file.originalname,
@@ -58,6 +82,10 @@ export class ImagesService {
       alt: slug,
       caption: '',
       description: '',
+      size: file.size,
+      useTable,
+      useId,
+      metadata,
     });
 
     return image.save();
@@ -66,8 +94,8 @@ export class ImagesService {
   /**
    * ✅ Xử lý upload 1 ảnh
    */
-  async handleFileUpload(file: Express.Multer.File): Promise<Image> {
-    return this.saveImageToDB(file);
+  async handleFileUpload(file: Express.Multer.File, useTable?: string, useId?: string): Promise<Image> {
+    return this.saveImageToDB(file, useTable, useId);
   }
 
   /**
@@ -75,11 +103,13 @@ export class ImagesService {
    */
   async handleMultipleFileUpload(
     files: Express.Multer.File[],
+    useTable?: string,
+    useId?: string,
   ): Promise<Image[]> {
     if (!files || files.length === 0) {
       throw new Error('❌ Không có ảnh nào để tải lên!');
     }
-    return Promise.all(files.map((file) => this.saveImageToDB(file)));
+    return Promise.all(files.map((file) => this.saveImageToDB(file, useTable, useId)));
   }
 
   /**
@@ -149,39 +179,17 @@ export class ImagesService {
 
   /**
    * ✅ Xử lý upload ảnh từ SunEditor và lưu vào database
-   *
-   * Cập nhật xử lý trường hợp nhận file với field name dạng "file-0", "file-1", ...
-   * và trả về URL đúng bằng cách sử dụng savedImage.imageUrl.
    */
   async handleEditorFileUpload(
     file: Express.Multer.File,
+    useTable?: string,
+    useId?: string,
   ): Promise<{ result: { url: string; name: string; size: number }[] }> {
     if (!file) {
       throw new Error('❌ Không tìm thấy file upload!');
     }
 
-    // ✅ Tạo slug duy nhất từ tên file gốc
-    const slug = await this.generateUniqueSlug(file.originalname);
-
-    // ✅ Xác định thư mục lưu trữ theo năm/tháng
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-
-    // ✅ Tạo đường dẫn đúng cấu trúc lưu trữ
-    const imageUrl = `/uploads/${year}/${month}/${file.filename}`;
-
-    // ✅ Lưu vào database với thông tin chuẩn hóa
-    const image = new this.imageModel({
-      originalName: file.originalname,
-      imageUrl,
-      slug,
-      alt: slug,
-      caption: '',
-      description: '',
-    });
-
-    const savedImage = await image.save();
+    const savedImage = await this.saveImageToDB(file, useTable, useId);
 
     return {
       result: [

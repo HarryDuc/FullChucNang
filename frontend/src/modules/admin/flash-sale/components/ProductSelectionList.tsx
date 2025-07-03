@@ -1,5 +1,5 @@
 import React from "react";
-import { Product } from "../../products/models/types";
+import { Product } from "../../products/models/product.model";
 
 interface ProductSelectionListProps {
   products: Product[];
@@ -62,9 +62,9 @@ export const ProductSelectionList = ({
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center">
-                  {product.images && product.images[0] && (
+                  {product.thumbnail && (
                     <img
-                      src={product.images[0]}
+                      src={product.thumbnail}
                       alt={product.name}
                       className="h-10 w-10 object-cover rounded-md mr-3"
                     />
@@ -81,7 +81,7 @@ export const ProductSelectionList = ({
                 {new Intl.NumberFormat("vi-VN", {
                   style: "currency",
                   currency: "VND",
-                }).format(product.price)}
+                }).format(product.currentPrice || 0)}
               </td>
             </tr>
           ))}

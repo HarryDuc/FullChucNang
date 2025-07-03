@@ -6,6 +6,7 @@ import Image from "next/image";
 import { DeleteFlashSaleDialog } from "./DeleteFlashSaleDialog";
 import { AddFlashSaleDialog } from "./AddFlashSaleDialog";
 import Link from "next/link";
+import SearchProducts from "./SearchProducts";
 
 export const FlashSaleList = () => {
   const { products, page, totalPages, loading, error, fetchProducts } =
@@ -15,7 +16,13 @@ export const FlashSaleList = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState<string | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
+  const handleSearch = (term: string, page?: number) => {
+    setSearchTerm(term);
+    setIsSearching(true);
+  };
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
@@ -63,7 +70,11 @@ export const FlashSaleList = () => {
           Thêm sản phẩm
         </Link>
       </div>
-
+      <SearchProducts
+        onSearch={handleSearch}
+        isSearching={isSearching}
+        placeholder="Tìm kiếm sản phẩm để thêm vào flash sale..."
+      />
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -75,10 +86,10 @@ export const FlashSaleList = () => {
                 Tên sản phẩm
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Giá Flash Sale
+                Giá gốc
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Giá gốc
+                Giá Flash Sale
               </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Thao tác
@@ -108,7 +119,7 @@ export const FlashSaleList = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
-                    {formatPrice(product.discountPrice)}
+                    {formatPrice(product.discountPrice || 0)}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -136,8 +147,14 @@ export const FlashSaleList = () => {
                       </svg>
                     </button>
                     {showDropdown === product._id && (
-                      <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
-                        <div className="py-1">
+                      <div className="absolute right-8 -mt-12 w-36 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                        <div className="py-1 flex flex-col gap-2">
+                          <Link
+                            href={`/admin/products/edit/${product.slug}`}
+                            className="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-gray-100"
+                          >
+                            Sửa sản phẩm
+                          </Link>
                           <button
                             onClick={() => {
                               handleDelete(product.slug);
@@ -158,7 +175,7 @@ export const FlashSaleList = () => {
                                 d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                               />
                             </svg>
-                            Xóa
+                            Hủy Flash Sale
                           </button>
                         </div>
                       </div>

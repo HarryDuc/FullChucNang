@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useFlashSaleProducts } from "../hooks/useFlashSaleProducts";
 import { ProductService } from "../../products/services/product.service";
-import { Product } from "../../products/models/types";
 import { ProductSelectionList } from "./ProductSelectionList";
+import { Product } from "../../products/models/product.model";
 
 interface AddFlashSaleDialogProps {
   open: boolean;
@@ -118,10 +118,8 @@ export const AddFlashSaleDialog = ({
 
       // Tạo tất cả sản phẩm flash sale
       const promises = selectedProducts.map((product) => {
-        const discountPrice = Math.round(product.price * (1 - percentage));
         const flashSaleProduct = {
           ...product,
-          discountPrice,
           category: {
             ...(product.category || {}),
             main: "flash-sale",

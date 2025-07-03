@@ -15,6 +15,11 @@ interface UseFlashSaleProductsReturn {
   updateProduct: (slug: string, product: Partial<Product>) => Promise<Product>;
   deleteProduct: (slug: string) => Promise<void>;
   getProduct: (slug: string) => Promise<Product>;
+  searchResults: Product[];
+  searchTotalPages: number;
+  searchCurrentPage: number;
+  isSearching: boolean;
+  searchProducts: (searchTerm: string, page?: number) => Promise<void>;
 }
 
 export const useFlashSaleProducts = (): UseFlashSaleProductsReturn => {
@@ -24,12 +29,17 @@ export const useFlashSaleProducts = (): UseFlashSaleProductsReturn => {
   const [totalPages, setTotalPages] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [searchTotalPages, setSearchTotalPages] = useState<number>(1);
+  const [searchCurrentPage, setSearchCurrentPage] = useState<number>(1);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+
 
   const fetchProducts = useCallback(async (currentPage: number = 1, limit: number = 16) => {
     setLoading(true);
     setError(null);
     try {
-      const result = await FlashSaleService.getAll("flash sale", currentPage, limit);
+      const result = await FlashSaleService.getAll("Flash Sale", currentPage, limit);
       setProducts(result.data);
       setTotal(result.total);
       setPage(result.page);
@@ -102,6 +112,33 @@ export const useFlashSaleProducts = (): UseFlashSaleProductsReturn => {
     }
   }, []);
 
+  // 📌 Tìm kiếm sản phẩm theo tên
+  const searchProducts = useCallback(
+    async (searchTerm: string, page: number = 1) => {
+      if (!searchTerm.trim()) {
+        setSearchResults([]);
+        setSearchTotalPages(0);
+        return;
+      }
+
+      setIsSearching(true);
+      setError(null);
+
+      try {
+        const result = await FlashSaleService.searchByName(searchTerm, page);
+        setSearchResults(result.data);
+        setSearchTotalPages(result.totalPages);
+        setSearchCurrentPage(page);
+      } catch (err: any) {
+        setError(err.message);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    },
+    []
+  );
+
   return {
     products,
     total,
@@ -109,6 +146,11 @@ export const useFlashSaleProducts = (): UseFlashSaleProductsReturn => {
     totalPages,
     loading,
     error,
+    searchResults,
+    searchTotalPages,
+    searchCurrentPage,
+    isSearching,
+    searchProducts,
     fetchProducts,
     createProduct,
     updateProduct,

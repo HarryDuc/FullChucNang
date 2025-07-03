@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { useFlashSaleProducts } from "../hooks/useFlashSaleProducts";
 import { ProductService } from "../../products/services/product.service";
 import { Product } from "../../products/models/product.model";
+import SearchProducts from "./SearchProducts";
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 12;
 
 export const AddFlashSalePage = () => {
   const router = useRouter();
@@ -28,10 +29,20 @@ export const AddFlashSalePage = () => {
     discountPercentage: "",
   });
 
+  // Thêm state cho tìm kiếm
+  const [isSearching, setIsSearching] = useState(false);
+  const [isSearchMode, setIsSearchMode] = useState(false);
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [currentSearchTerm, setCurrentSearchTerm] = useState("");
+  const [searchCurrentPage, setSearchCurrentPage] = useState(1);
+  const [searchTotalPages, setSearchTotalPages] = useState(1);
+
   // Fetch sản phẩm với phân trang
   useEffect(() => {
-    fetchProducts(currentPage);
-  }, [currentPage]);
+    if (!isSearchMode) {
+      fetchProducts(currentPage);
+    }
+  }, [currentPage, isSearchMode]);
 
   const fetchProducts = async (page: number) => {
     setLoading(true);
@@ -65,6 +76,60 @@ export const AddFlashSalePage = () => {
     }
   };
 
+  // Xử lý tìm kiếm
+  const handleSearch = async (searchTerm: string, page: number = 1) => {
+    if (!searchTerm.trim()) {
+      setIsSearchMode(false);
+      fetchProducts(currentPage);
+      return;
+    }
+
+    setCurrentSearchTerm(searchTerm);
+    setIsSearching(true);
+    setIsSearchMode(true);
+
+    try {
+      const result = await ProductService.searchByName(searchTerm, page);
+
+      // Lọc ra những sản phẩm không thuộc flash-sale
+      const filteredProducts = result.data.map((product: Product) => ({
+        ...product,
+        isInFlashSale: existingFlashSaleProducts.some(
+          (fp) => fp.slug === product.slug
+        ),
+      }));
+
+      setSearchResults(filteredProducts);
+      setSearchTotalPages(result.totalPages);
+      setSearchCurrentPage(page);
+    } catch (error) {
+      console.error("Lỗi tìm kiếm:", error);
+      setError("Không thể tìm kiếm sản phẩm. Vui lòng thử lại sau.");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Xử lý phân trang khi tìm kiếm
+  const handleSearchPagination = async (page: number) => {
+    if (!isSearchMode || !currentSearchTerm) return;
+    handleSearch(currentSearchTerm, page);
+  };
+
+  // Cập nhật hàm xử lý phân trang
+  const handlePageChange = (page: number) => {
+    if (isSearchMode) {
+      handleSearchPagination(page);
+    } else {
+      setCurrentPage(page);
+    }
+  };
+
+  // Sản phẩm hiển thị dựa trên chế độ
+  const displayedProducts = isSearchMode ? searchResults : products;
+  const displayedCurrentPage = isSearchMode ? searchCurrentPage : currentPage;
+  const displayedTotalPages = isSearchMode ? searchTotalPages : totalPages;
+
   const validateForm = () => {
     const errors = {
       products: "",
@@ -77,16 +142,16 @@ export const AddFlashSalePage = () => {
       isValid = false;
     }
 
-    if (!discountPercentage) {
-      errors.discountPercentage = "Vui lòng nhập phần trăm giảm giá";
-      isValid = false;
-    } else {
-      const percentage = Number(discountPercentage);
-      if (isNaN(percentage) || percentage <= 0 || percentage >= 100) {
-        errors.discountPercentage = "Phần trăm giảm giá phải từ 1-99";
-        isValid = false;
-      }
-    }
+    // if (!discountPercentage) {
+    //   errors.discountPercentage = "Vui lòng nhập phần trăm giảm giá";
+    //   isValid = false;
+    // } else {
+    //   const percentage = Number(discountPercentage);
+    //   if (isNaN(percentage) || percentage <= 0 || percentage >= 100) {
+    //     errors.discountPercentage = "Phần trăm giảm giá phải từ 1-99";
+    //     isValid = false;
+    //   }
+    // }
 
     setFormErrors(errors);
     return isValid;
@@ -127,9 +192,9 @@ export const AddFlashSalePage = () => {
       // Cập nhật tất cả sản phẩm đã chọn thành flash sale
       const updatePromises = selectedProducts.map(async (product) => {
         try {
-          const discountPrice = Math.round(
-            (product.currentPrice || 0) * (1 - percentage)
-          );
+          // const discountPrice = Math.round(
+          //   (product.currentPrice || 0) * (1 - percentage)
+          // );
 
           // Thêm "Flash Sale" vào danh sách category.main hiện có
           const currentMainCategories = (product.category?.main || "")
@@ -141,7 +206,7 @@ export const AddFlashSalePage = () => {
 
           const flashSaleProduct = {
             ...product,
-            discountPrice,
+            // discountPrice,
             category: {
               ...product.category,
               main: newMainCategories.join(", "), // Giữ lại tất cả danh mục cũ và thêm Flash Sale
@@ -181,9 +246,15 @@ export const AddFlashSalePage = () => {
         </button>
       </div>
 
+      <SearchProducts
+        onSearch={handleSearch}
+        isSearching={isSearching}
+        placeholder="Tìm kiếm sản phẩm để thêm vào flash sale..."
+      />
+
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-white shadow rounded-lg p-6">
-          <div className="mb-6">
+          {/* <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Phần trăm giảm giá (%)
             </label>
@@ -209,7 +280,7 @@ export const AddFlashSalePage = () => {
                 {formErrors.discountPercentage}
               </p>
             )}
-          </div>
+          </div> */}
 
           <div>
             <div className="flex justify-between items-center mb-4">
@@ -221,7 +292,7 @@ export const AddFlashSalePage = () => {
               )}
             </div>
 
-            {loading ? (
+            {loading || isSearching ? (
               <div className="flex justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
@@ -253,12 +324,12 @@ export const AddFlashSalePage = () => {
                           scope="col"
                           className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                         >
-                          Giá sau giảm
+                          Giá giảm giá
                         </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {products.map((product) => (
+                      {displayedProducts.map((product) => (
                         <tr
                           key={product.slug}
                           className={`hover:bg-gray-50 ${
@@ -302,17 +373,10 @@ export const AddFlashSalePage = () => {
                             }).format(product.currentPrice || 0)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {discountPercentage
-                              ? new Intl.NumberFormat("vi-VN", {
-                                  style: "currency",
-                                  currency: "VND",
-                                }).format(
-                                  Math.round(
-                                    (product.currentPrice || 0) *
-                                      (1 - Number(discountPercentage) / 100)
-                                  )
-                                )
-                              : "-"}
+                            {new Intl.NumberFormat("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                            }).format(product.discountPrice || 0)}
                           </td>
                         </tr>
                       ))}
@@ -320,26 +384,22 @@ export const AddFlashSalePage = () => {
                   </table>
                 </div>
 
-                {/* Phân trang */}
+                {/* Cập nhật phân trang */}
                 <div className="flex justify-between items-center mt-4">
                   <div className="flex space-x-2">
                     <button
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.max(prev - 1, 1))
-                      }
-                      disabled={currentPage === 1}
+                      onClick={() => handlePageChange(displayedCurrentPage - 1)}
+                      disabled={displayedCurrentPage === 1}
                       className="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50"
                     >
                       Trước
                     </button>
                     <span className="px-3 py-1">
-                      Trang {currentPage} / {totalPages}
+                      Trang {displayedCurrentPage} / {displayedTotalPages}
                     </span>
                     <button
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                      }
-                      disabled={currentPage === totalPages}
+                      onClick={() => handlePageChange(displayedCurrentPage + 1)}
+                      disabled={displayedCurrentPage === displayedTotalPages}
                       className="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50"
                     >
                       Sau

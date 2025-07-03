@@ -9,6 +9,7 @@ import {
   UseInterceptors,
   UseGuards,
   Query,
+  Body,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -77,8 +78,12 @@ export class ImagesController {
       }),
     }),
   )
-  async uploadFile(@UploadedFile() file: Express.Multer.File) {
-    return this.imagesService.handleFileUpload(file);
+  async uploadFile(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('useTable') useTable?: string,
+    @Body('useId') useId?: string,
+  ) {
+    return this.imagesService.handleFileUpload(file, useTable, useId);
   }
 
   /**
@@ -108,8 +113,12 @@ export class ImagesController {
       }),
     }),
   )
-  async uploadMultipleFiles(@UploadedFiles() files: Express.Multer.File[]) {
-    return this.imagesService.handleMultipleFileUpload(files);
+  async uploadMultipleFiles(
+    @UploadedFiles() files: Express.Multer.File[],
+    @Body('useTable') useTable?: string,
+    @Body('useId') useId?: string,
+  ) {
+    return this.imagesService.handleMultipleFileUpload(files, useTable, useId);
   }
 
   /**
@@ -136,7 +145,6 @@ export class ImagesController {
 
   /**
    * ✅ API cho SunEditor upload ảnh
-   * Sử dụng field 'image' và cùng quy tắc lưu file với API upload thông thường
    */
   @Post('sunEditor')
   @UseGuards(JwtAuthGuard, RolesGuard, PermissionGuard)
@@ -162,8 +170,11 @@ export class ImagesController {
       }),
     }),
   )
-  async handleEditorFileUpload(@UploadedFile() file: Express.Multer.File) {
-    // Gọi hàm xử lý file upload trong service
-    return this.imagesService.handleEditorFileUpload(file);
+  async handleEditorFileUpload(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('useTable') useTable?: string,
+    @Body('useId') useId?: string,
+  ) {
+    return this.imagesService.handleEditorFileUpload(file, useTable, useId);
   }
 }
