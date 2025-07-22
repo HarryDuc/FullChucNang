@@ -23,7 +23,12 @@ export interface ICreatePageDto {
 
 export const PageService = {
   async createPage(data: ICreatePageDto) {
-    const response = await axios.post(`${API_URL}`, data);
+    const response = await axios.post(`${API_URL}`, data, {
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
     return response.data;
   },
 
@@ -43,12 +48,21 @@ export const PageService = {
   },
 
   async updatePage(slug: string, data: Partial<ICreatePageDto>) {
-    const response = await axios.put(`${API_URL}/by-slug/${slug}`, data);
+    const response = await axios.put(`${API_URL}/by-slug/${slug}`, data, {
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
     return response.data;
   },
 
   async deletePage(slug: string) {
-    const response = await axios.delete(`${API_URL}/by-slug/${slug}`);
+    const response = await axios.delete(`${API_URL}/by-slug/${slug}`, {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
     return response.data;
   },
 };

@@ -336,11 +336,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
         <div>
           <label className="block mb-1">Mô tả ngắn</label>
-          <textarea
-            value={shortDescription}
-            onChange={(e) => setShortDescription(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded"
-            rows={3}
+          <SunEditerUploadImage
+            postData={shortDescription} 
+            setPostData={setShortDescription}
           />
         </div>
 

@@ -102,6 +102,7 @@ function ProductCard({ product }: { product: Product }) {
 
     let lowest = Infinity;
     let lowestDiscount = Infinity;
+    let hasDiscount = false;
 
     variants.forEach((variant) => {
       // Cập nhật giá gốc thấp nhất
@@ -111,14 +112,24 @@ function ProductCard({ product }: { product: Product }) {
       ) {
         lowest = variant.variantCurrentPrice;
       }
-      // Cập nhật giá khuyến mãi thấp nhất
+      // Cập nhật giá khuyến mãi thấp nhất - chỉ tính khi giá khuyến mãi > 0
       if (
         variant.variantDiscountPrice !== undefined &&
+        variant.variantDiscountPrice > 0 &&
         variant.variantDiscountPrice < lowestDiscount
       ) {
         lowestDiscount = variant.variantDiscountPrice;
+        hasDiscount = true;
       }
     });
+
+    // Nếu không có variant nào có discountPrice > 0, thì hiển thị currentPrice như discountPrice
+    if (!hasDiscount) {
+      return {
+        lowest: lowest === Infinity ? basePrice || 0 : lowest,
+        lowestDiscount: lowest === Infinity ? undefined : lowest,
+      };
+    }
 
     return {
       lowest: lowest === Infinity ? basePrice || 0 : lowest,

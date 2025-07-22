@@ -57,22 +57,40 @@ export const ScriptService = {
   },
 
   async createScript(data: CreateScriptDto): Promise<IScript> {
-    const response = await axios.post(`${API_URL}`, data);
+    const response = await axios.post(`${API_URL}`, data, {
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
     return response.data;
   },
 
   async updateScript(id: string, data: UpdateScriptDto): Promise<IScript> {
-    const response = await axios.patch(`${API_URL}/${id}`, data);
+    const response = await axios.patch(`${API_URL}/${id}`, data, {
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
     return response.data;
   },
 
   async deleteScript(id: string): Promise<IScript> {
-    const response = await axios.delete(`${API_URL}/${id}`);
+    const response = await axios.delete(`${API_URL}/${id}`, {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
     return response.data;
   },
 
   async toggleScriptActive(id: string): Promise<IScript> {
-    const response = await axios.patch(`${API_URL}/${id}/toggle`);
+    const response = await axios.patch(`${API_URL}/${id}/toggle`, {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
     return response.data;
   },
 };
