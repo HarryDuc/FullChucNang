@@ -15,6 +15,7 @@ import CategoryTree, { Category } from "./CategoryTree";
 import { VariantOptions } from "./VariantOptions";
 import Image from "next/image";
 import SunEditerUploadImage from "../../common/components/SunEditer";
+import { useProductSpecification } from '../hooks/useProductSpecification';
 
 interface SelectedCategory {
   id: string;
@@ -35,6 +36,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   onCancel,
 }): React.ReactElement => {
   const { categories, uploadImage } = useProducts();
+  const { specifications, fetchSpecificationBySlug } = useProductSpecification();
 
   // Basic Information
   const [name, setName] = useState(initialData?.name || "");
@@ -602,6 +604,35 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       <div className="bg-white rounded-xl shadow p-6 space-y-4">
         <h3 className="text-lg font-bold mb-2">Thông số kỹ thuật</h3>
         <div className="space-y-4">
+          <div>
+            <label className="block mb-1">Chọn template thông số kỹ thuật</label>
+            <select
+              className="w-full px-3 py-2 border border-gray-300 rounded"
+              onChange={async (e) => {
+                const slug = e.target.value;
+                if (slug) {
+                  const spec = await fetchSpecificationBySlug(slug);
+                  if (spec) {
+                    setSpecification({
+                      title: spec.title,
+                      groups: spec.groups.map((group: any) => ({
+                        title: group.title,
+                        specs: group.specs
+                      }))
+                    });
+                  }
+                }
+              }}
+            >
+              <option value="">-- Chọn template --</option>
+              {specifications.map((spec) => (
+                <option key={spec._id} value={spec.slug}>
+                  {spec.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div>
             <label className="block mb-1">Tiêu đề chung</label>
             <input

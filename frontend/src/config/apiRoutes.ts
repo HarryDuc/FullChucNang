@@ -345,6 +345,15 @@ export const apiRoutes = {
       UPDATE: (id: string) => `/filtersapi/${id}`,
       DELETE: (id: string) => `/filtersapi/${id}`,
     },
+    SPECIFICATIONS: {
+        GET_ALL: '/specificationsapi',
+        CREATE: '/specificationsapi',
+        GET_BY_SLUG: (slug: string) => `/specificationsapi/${slug}`,
+        UPDATE: (slug: string) => `/specificationsapi/${slug}`,
+        DELETE: (slug: string) => `/specificationsapi/${slug}`,
+        UPDATE_STATUS: (slug: string) => `/specificationsapi/${slug}/status`,
+        GET_BY_CATEGORIES: '/specificationsapi/by-categories',
+    },
 };
 
 // For backward compatibility

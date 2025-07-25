@@ -25,6 +25,7 @@ import {
   MdOutlineSwapHoriz,
   MdOutlineAdminPanelSettings,
   MdOutlineManageAccounts,
+  MdOutlineFilterList,
 } from "react-icons/md";
 import { useAuth } from "@/context/AuthContext";
 
@@ -90,6 +91,26 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
       group: "Thương mại điện tử",
       requiredPermission: {
         resource: "categories-product",
+        action: "read",
+      },
+    },
+    {
+      href: "/admin/filters",
+      icon: <MdOutlineFilterList />,
+      label: "Bộ lọc",
+      group: "Thương mại điện tử",
+      requiredPermission: {
+        resource: "filters",
+        action: "read",
+      },
+    },
+    {
+      href: "/admin/specifications",
+      icon: <MdOutlineStyle />,
+      label: "Thông số kỹ thuật",
+      group: "Thương mại điện tử",
+      requiredPermission: {
+        resource: "specifications",
         action: "read",
       },
     },
