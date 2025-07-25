@@ -16,6 +16,11 @@ import { VariantOptions } from "./VariantOptions";
 import Image from "next/image";
 import SunEditerUploadImage from "../../common/components/SunEditer";
 
+interface SelectedCategory {
+  id: string;
+  name: string;
+}
+
 interface ProductFormProps {
   initialData?: Product;
   mode: "create" | "edit";
@@ -34,6 +39,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   // Basic Information
   const [name, setName] = useState(initialData?.name || "");
   const [slug, setSlug] = useState(initialData?.slug || "");
+  // const [filters, setFilters] = useState<Record<string, any>>({});
+  const handleFilterChange = (newFilters: Record<string, any>) => {
+    setFilters(newFilters);
+  };
   const [description, setDescription] = useState(
     initialData?.description || ""
   );
@@ -63,9 +72,15 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const [gallery, setGallery] = useState<string[]>(initialData?.gallery || []);
 
   // State for categories
-  const [selectedCategoryNames, setSelectedCategoryNames] = useState<string[]>(
+  const [selectedCategories, setSelectedCategories] = useState<SelectedCategory[]>(
     initialData?.category
-      ? [initialData.category.main, ...(initialData.category.sub || [])]
+      ? [
+          { id: initialData.category._id || "", name: initialData.category.main },
+          ...(initialData.category.sub || []).map((name: string) => {
+            const category = categories.find(c => c.name === name);
+            return { id: category?._id || "", name };
+          })
+        ]
       : []
   );
 
@@ -117,6 +132,19 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
 
+  // Khởi tạo filters từ initialData
+  const [filters, setFilters] = useState<Record<string, any>>(
+    initialData?.filterAttributes || {}
+  );
+
+  // Load filters khi có initialData hoặc khi category thay đổi
+  useEffect(() => {
+    if (initialData?.filterAttributes) {
+      console.log('Loading initial filters:', initialData.filterAttributes);
+      setFilters(initialData.filterAttributes);
+    }
+  }, [initialData?.filterAttributes]);
+
   // Tự động tạo slug từ name
   useEffect(() => {
     if (mode === "create" && !initialData?.slug && name) {
@@ -133,20 +161,28 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   useEffect(() => {
     if (initialData?.category) {
-      setSelectedCategoryNames([
-        initialData.category.main,
-        ...(initialData.category.sub || []),
+      setSelectedCategories([
+        { id: initialData.category._id || "", name: initialData.category.main },
+        ...(initialData.category.sub || []).map((name: string) => {
+          const category = categories.find(c => c.name === name);
+          return { id: category?._id || "", name };
+        })
       ]);
     }
   }, [initialData?.category]);
 
-  // Handle category selection
+  // Handle category change
   const handleCategoryChange = (category: Category, checked: boolean) => {
-    setSelectedCategoryNames((prev) => {
+    setSelectedCategories((prev) => {
       if (checked) {
-        return [...prev, category.name];
+        return [...prev, { id: category._id || "", name: category.name }];
       }
-      return prev.filter((name) => name !== category.name);
+      const newNames = prev.filter((name) => name.name !== category.name);
+      // Chỉ reset filters khi bỏ chọn category cuối cùng
+      if (newNames.length === 0) {
+        setFilters({});
+      }
+      return newNames;
     });
   };
 
@@ -229,9 +265,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       }
 
       // Prepare category data
-      const mainCategory = selectedCategoryNames[0] || "";
-      const subCategories = selectedCategoryNames.slice(1);
-
+      const mainCategory = selectedCategories[0]?.name || "";
+      const mainCategoryId = selectedCategories[0]?.id || "";
+      const subCategories = selectedCategories.slice(1).map(c => c.name);
+      const subCategoryIds = selectedCategories.slice(1).map(c => c.id);
       // Prepare product data
       const productData: Partial<Product> = {
         name,
@@ -255,8 +292,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         category: {
           main: mainCategory,
           sub: subCategories,
+          subCategoryIds: subCategoryIds,
           tags: [],
+          _id: mainCategoryId,
+          name: mainCategory,
+          slug: mainCategory.toLowerCase().replace(/\s+/g, '-'),
         },
+        // Thêm filterAttributes vào dữ liệu sản phẩm
+        filterAttributes: filters,
         variantAttributes,
         variants,
         specification:
@@ -280,6 +323,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         },
       };
 
+      console.log('Submitting product with filters:', filters); // Debug log
       await onSubmit(productData);
       setIsSubmitting(false);
     } catch (error) {
@@ -472,7 +516,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         <div className="border rounded-lg p-4">
           <CategoryTree
             categories={categories}
-            selectedCategoryNames={selectedCategoryNames}
+            selectedCategoryNames={selectedCategories.map(c => c.name)}
+            selectedFilters={filters}
+            onFilterChange={handleFilterChange}
             handleCategoryChange={handleCategoryChange}
           />
         </div>

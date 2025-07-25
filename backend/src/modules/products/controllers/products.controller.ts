@@ -18,6 +18,7 @@ import {
   UpdateProductCategoryDto,
   UpdateProductVariantsDto,
   UpdateProductSlugDto,
+  ProductFilterDto,
 } from '../dtos/product.dto';
 import { Product } from '../schemas/product.schema';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -71,6 +72,102 @@ export class ProductController {
   }> {
     const pageNumber = page ? parseInt(page, 10) || 1 : 1;
     return this.productService.findAllBasicInfo(pageNumber);
+  }
+  
+  /**
+   * Lọc sản phẩm theo các tiêu chí (có phân trang)
+   * @param filters Các tiêu chí lọc
+   * @param page Trang hiện tại
+   * @param limit Số sản phẩm mỗi trang
+   */
+  @Post('filter')
+  async filterProducts(
+    @Body() body: { filters: Record<string, any> },
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '12',
+  ) {
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+    return this.productService.searchProductsByFilters(body.filters, pageNumber, limitNumber);
+  }
+
+  /**
+   * Lấy danh sách filter có sẵn của sản phẩm theo slug
+   */
+  @Get(':slug/filters')
+  async getProductFilters(@Param('slug') slug: string) {
+    return this.productService.getProductFilters(slug);
+  }
+
+  /**
+   * Cập nhật filter cho sản phẩm
+   */
+  @Post(':slug/filters')
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionGuard)
+  @Roles('admin', 'manager')
+  @RequirePermission('products', 'update')
+  async setProductFilters(
+    @Param('slug') slug: string,
+    @Body('filters') filters: Record<string, any>,
+  ) {
+    return this.productService.setProductFilters(slug, filters);
+  }
+
+  /**
+   * Lấy danh sách filter khả dụng theo danh mục
+   */
+  @Get('category/:categoryId/filters')
+  async getCategoryFilters(@Param('categoryId') categoryId: string) {
+    return this.productService.getCategoryFilters(categoryId);
+  }
+
+  /**
+   * Lọc sản phẩm theo danh mục và filter (có phân trang)
+   */
+  @Post('category/:categoryId/filter')
+  async filterProductsByCategory(
+    @Param('categoryId') categoryId: string,
+    @Body() body: { filters: Record<string, any> },
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '12',
+  ) {
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+    
+    // Log request for debugging
+    console.log('Filter request received:', {
+      categoryId,
+      body,
+      page: pageNumber,
+      limit: limitNumber
+    });
+    
+    // Validate and normalize filter structure
+    const filters = body.filters || {};
+    
+    // Ensure filterAttributes exists and has the correct structure
+    if (!filters.filterAttributes && Object.keys(filters).length > 0) {
+      // If filters were sent without the filterAttributes wrapper, wrap them
+      console.log('Restructuring filters - wrapping in filterAttributes');
+      filters.filterAttributes = { ...filters };
+      
+      // Remove any non-filter fields from the wrapped structure
+      ['name', 'minPrice', 'maxPrice', 'hasVariants'].forEach(field => {
+        if (filters.filterAttributes[field] !== undefined) {
+          filters[field] = filters.filterAttributes[field];
+          delete filters.filterAttributes[field];
+        }
+      });
+    }
+    
+    console.log('Normalized filters:', filters);
+    
+    return this.productService.searchProductsByCategoryAndFilters(
+      categoryId,
+      filters,
+      pageNumber,
+      limitNumber,
+    );
   }
 
   /**

@@ -56,6 +56,7 @@ export interface CategoryInfo {
   title?: string;
   key?: string;
   url?: string;
+  _id?: string;
   id?: string;
   name?: string;
   slug?: string;

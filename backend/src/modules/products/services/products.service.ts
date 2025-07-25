@@ -6,7 +6,7 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Product, ProductDocument } from '../schemas/product.schema';
 import {
   CreateProductDto,
@@ -20,13 +20,69 @@ import { removeVietnameseTones } from '../../../common/utils/slug.utils';
 import { normalizeForSearch } from '../../../common/utils/normalizeForSearch';
 import { RedirectsService } from '../../redirects/services/redirects.service';
 import { FRONTEND_ROUTES } from '../../../config/routes.config';
+import { FilterService } from '../../filters/services/filter.service';
+import { CategoriesProductService } from '../../categories-product/services/categories-product.service';
+import { Category, CategoryDocument } from '../../categories-product/schemas/category.schema';
+
+interface MongoQuery {
+  [key: string]: any;
+  $or?: any[];
+  $and?: any[];
+}
+
+interface PriceRangeQuery {
+  $or: Array<{
+    [key: string]: any;
+    discountPrice?: {
+      $exists: boolean;
+      $ne: null;
+      $gte: number;
+      $lte: number;
+    };
+    currentPrice?: {
+      $exists: boolean;
+      $ne: null;
+      $gte: number;
+      $lte: number;
+    };
+    basePrice?: {
+      $exists: boolean;
+      $ne: null;
+      $gte: number;
+      $lte: number;
+    };
+    importPrice?: {
+      $exists: boolean;
+      $ne: null;
+      $gte: number;
+      $lte: number;
+    };
+    'variants.variantCurrentPrice'?: {
+      $exists: boolean;
+      $elemMatch: {
+        $gte: number;
+        $lte: number;
+      };
+    };
+    $and?: Array<{
+      $or?: Array<{
+        [key: string]: any;
+      }>;
+      [key: string]: any;
+    }>;
+  }>;
+}
+
 @Injectable()
 export class ProductService {
   constructor(
-    @InjectModel(Product.name) private productModel: Model<Product>,
+    @InjectModel(Product.name) private productModel: Model<ProductDocument>,
+    @InjectModel(Category.name) private categoryModel: Model<CategoryDocument>,
     @Inject(forwardRef(() => RedirectsService))
-    private readonly redirectsService: RedirectsService,
-  ) { }
+    private redirectsService: RedirectsService,
+    private filterService: FilterService,
+    private categoriesService: CategoriesProductService,
+  ) {}
 
   /**
    * Tạo slug duy nhất dựa trên tên sản phẩm.
@@ -50,7 +106,7 @@ export class ProductService {
    * @returns Sản phẩm mới được tạo.
    */
   async create(createProductDto: CreateProductDto): Promise<Product> {
-    const { name, basePrice, ...updateFields } = createProductDto;
+    const { name, basePrice, category, ...updateFields } = createProductDto;
 
     if (!name) {
       throw new BadRequestException('Tên sản phẩm là bắt buộc.');
@@ -58,6 +114,27 @@ export class ProductService {
 
     if (!basePrice || basePrice <= 0) {
       throw new BadRequestException('Giá cơ bản phải lớn hơn 0.');
+    }
+
+    // Validate and get category IDs
+    if (category) {
+      const mainCategory = await this.categoryModel.findOne({ name: category.main }).exec();
+      if (!mainCategory) {
+        throw new BadRequestException('Danh mục chính không tồn tại');
+      }
+
+      const subCategories = await Promise.all(
+        (category.sub || []).map(async (subName) => {
+          const subCat = await this.categoryModel.findOne({ name: subName }).exec();
+          if (!subCat) {
+            throw new BadRequestException(`Danh mục con "${subName}" không tồn tại`);
+          }
+          return subCat;
+        })
+      );
+
+      category.mainCategoryId = mainCategory._id;
+      category.subCategoryIds = subCategories.map(sub => sub._id);
     }
 
     const generatedSlug = await this.generateUniqueSlug(name);
@@ -68,6 +145,7 @@ export class ProductService {
         name,
         slug: generatedSlug,
         basePrice,
+        category,
         variantAttributes: updateFields.variantAttributes || [],
         variants: updateFields.variants || [],
       });
@@ -240,6 +318,7 @@ export class ProductService {
           'variants',
           'stock',
           'sold',
+          'filterAttributes',
           'hasVariants',
           'specification',
           'createdAt',
@@ -319,7 +398,7 @@ export class ProductService {
     slug: string,
     updateProductDto: UpdateProductDto,
   ): Promise<Product> {
-    const { name, slug: newSlug } = updateProductDto;
+    const { name: newName, slug: newSlug, category } = updateProductDto;
 
     // Kiểm tra sản phẩm tồn tại
     const product = await this.findOne(slug);
@@ -335,6 +414,27 @@ export class ProductService {
       if (existingProduct) {
         throw new BadRequestException('Slug đã tồn tại.');
       }
+    }
+
+    // Validate and get category IDs if category is being updated
+    if (category) {
+      const mainCategory = await this.categoryModel.findOne({ name: category.main }).exec();
+      if (!mainCategory) {
+        throw new BadRequestException('Danh mục chính không tồn tại');
+      }
+
+      const subCategories = await Promise.all(
+        (category.sub || []).map(async (subName) => {
+          const subCat = await this.categoryModel.findOne({ name: subName }).exec();
+          if (!subCat) {
+            throw new BadRequestException(`Danh mục con "${subName}" không tồn tại`);
+          }
+          return subCat;
+        })
+      );
+
+      category.mainCategoryId = mainCategory._id;
+      category.subCategoryIds = subCategories.map(sub => sub._id);
     }
 
     try {
@@ -411,8 +511,25 @@ export class ProductService {
         throw new BadRequestException('Danh mục chính là bắt buộc.');
       }
 
-      // Ensure arrays are initialized
-      updateDto.category.sub = updateDto.category.sub || [];
+      // Validate and get category IDs
+      const mainCategory = await this.categoryModel.findOne({ name: updateDto.category.main }).exec();
+      if (!mainCategory) {
+        throw new BadRequestException('Danh mục chính không tồn tại');
+      }
+
+      const subCategories = await Promise.all(
+        (updateDto.category.sub || []).map(async (subName) => {
+          const subCat = await this.categoryModel.findOne({ name: subName }).exec();
+          if (!subCat) {
+            throw new BadRequestException(`Danh mục con "${subName}" không tồn tại`);
+          }
+          return subCat;
+        })
+      );
+
+      // Update category with IDs
+      updateDto.category.mainCategoryId = mainCategory._id;
+      updateDto.category.subCategoryIds = subCategories.map(sub => sub._id);
       updateDto.category.tags = updateDto.category.tags || [];
 
       const product = await this.productModel
@@ -741,5 +858,299 @@ export class ProductService {
       throw new NotFoundException('Không tìm thấy sản phẩm để xóa.');
     }
     return product;
+  }
+
+  async searchProductsByFilters(
+    filters: Record<string, any>,
+    page: number = 1,
+    limit: number = 12,
+  ): Promise<{
+    data: Product[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> {
+    const query: any = {};
+    const skip = (page - 1) * limit;
+
+    // Xử lý filter giá
+    if (filters.priceMin != null || filters.priceMax != null) {
+      query.currentPrice = {};
+      if (filters.priceMin != null) {
+        query.currentPrice.$gte = filters.priceMin;
+      }
+      if (filters.priceMax != null) {
+        query.currentPrice.$lte = filters.priceMax;
+      }
+    }
+
+    // Xử lý filter danh mục
+    if (filters.categoryId) {
+      query['category.id'] = filters.categoryId;
+    }
+
+    // Xử lý các filter động
+    Object.entries(filters).forEach(([key, value]) => {
+      if (!['priceMin', 'priceMax', 'categoryId'].includes(key)) {
+        query[`filterAttributes.${key}`] = Array.isArray(value)
+          ? { $in: value }
+          : value;
+      }
+    });
+
+    const [data, total] = await Promise.all([
+      this.productModel
+        .find(query)
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 })
+        .lean()
+        .exec(),
+      this.productModel.countDocuments(query),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async getProductFilters(slug: string): Promise<Record<string, any>> {
+    const product = await this.productModel.findOne({ slug }).lean().exec();
+    if (!product) {
+      throw new NotFoundException('Sản phẩm không tồn tại');
+    }
+    return product.filterAttributes || {};
+  }
+
+  async setProductFilters(
+    slug: string,
+    filters: Record<string, any>,
+  ): Promise<Product> {
+    const product = await this.productModel.findOne({ slug });
+    if (!product) {
+      throw new NotFoundException('Sản phẩm không tồn tại');
+    }
+
+    // Validate filters against category's available filters
+    if (product.category?.id) {
+      const categoryFilters = await this.getCategoryFilters(product.category.id);
+      const invalidFilters = Object.keys(filters).filter(
+        key => !categoryFilters.some(f => f.slug === key),
+      );
+      if (invalidFilters.length > 0) {
+        throw new Error(
+          `Invalid filters for this category: ${invalidFilters.join(', ')}`,
+        );
+      }
+    }
+
+    product.filterAttributes = filters;
+    return product.save();
+  }
+
+  async getCategoryFilters(categoryId: string): Promise<any[]> {
+    return this.filterService.findByCategory(categoryId);
+  }
+
+  async searchProductsByCategoryAndFilters(
+    categoryId: string,
+    filters: Record<string, any>,
+    page: number = 1,
+    limit: number = 12,
+  ): Promise<{
+    data: Pick<Product, 'name' | 'basePrice' | 'hasVariants' | 'currentPrice' | 'discountPrice' | 'thumbnail' | 'slug' | 'filterAttributes'>[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> {
+    console.log('Filter request received:', {
+      categoryId,
+      body: { filters },
+      page,
+      limit
+    });
+
+    // Build query filter
+    const query: MongoQuery = {};
+
+    // Filter by categoryId - check both main and sub categories
+    if (categoryId) {
+      const categoryObjectId = new Types.ObjectId(categoryId);
+      query.$or = [
+        { 'category.mainCategoryId': categoryObjectId },
+        { 'category.subCategoryIds': categoryObjectId }
+      ];
+    }
+
+    // Separate price filter from other filters
+    const { 'loc-gia': priceFilter, ...otherFilters } = filters || {};
+    
+    // Initialize $and array for combining conditions with proper type
+    const andConditions: MongoQuery[] = [];
+
+    // Handle price filtering
+    if (priceFilter) {
+      const { min, max } = priceFilter;
+      if (min !== undefined && max !== undefined) {
+        // Create price range condition checking all price fields
+        const priceRangeQuery: PriceRangeQuery = {
+          $or: [
+            // Check discountPrice first if it exists and is within range
+            {
+              discountPrice: {
+                $exists: true,
+                $ne: null,
+                $gte: min,
+                $lte: max
+              }
+            },
+            // Check currentPrice if no valid discountPrice
+            {
+              $and: [
+                {
+                  $or: [
+                    { discountPrice: { $exists: false } },
+                    { discountPrice: null }
+                  ]
+                },
+                {
+                  currentPrice: {
+                    $exists: true,
+                    $ne: null,
+                    $gte: min,
+                    $lte: max
+                  }
+                }
+              ]
+            },
+            // Check basePrice if no valid currentPrice
+            {
+              $and: [
+                {
+                  $or: [
+                    { currentPrice: { $exists: false } },
+                    { currentPrice: null }
+                  ]
+                },
+                {
+                  basePrice: {
+                    $exists: true,
+                    $ne: null,
+                    $gte: min,
+                    $lte: max
+                  }
+                }
+              ]
+            },
+            // Check importPrice if no other prices available
+            {
+              $and: [
+                {
+                  $or: [
+                    { basePrice: { $exists: false } },
+                    { basePrice: null }
+                  ]
+                },
+                {
+                  importPrice: {
+                    $exists: true,
+                    $ne: null,
+                    $gte: min,
+                    $lte: max
+                  }
+                }
+              ]
+            },
+            // Check variant prices
+            {
+              'variants.variantCurrentPrice': {
+                $exists: true,
+                $elemMatch: {
+                  $gte: min,
+                  $lte: max
+                }
+              }
+            }
+          ]
+        };
+
+        andConditions.push(priceRangeQuery);
+      }
+    }
+
+    // Handle other filter attributes - only include products that have these filter attributes set
+    const filterQueries = Object.entries(otherFilters)
+      .filter(([key, value]) => 
+        value !== undefined && 
+        value !== null && 
+        value !== '' && 
+        key !== 'filterAttributes' && // Exclude nested filterAttributes
+        key !== 'loc-gia' // Exclude price filter as it's handled separately
+      )
+      .map(([key, value]) => {
+        if (Array.isArray(value)) {
+          return { [`filterAttributes.${key}`]: { $in: value } };
+        }
+        return { [`filterAttributes.${key}`]: value };
+      });
+
+    if (filterQueries.length > 0) {
+      andConditions.push({ $and: filterQueries } as MongoQuery);
+    }
+
+    // Add $and conditions to query if there are any
+    if (andConditions.length > 0) {
+      query.$and = andConditions;
+    }
+
+    console.log('Final query:', JSON.stringify(query, null, 2));
+
+    // Pagination
+    const skip = (page - 1) * limit;
+
+    // First get all matching products
+    const [data, total] = await Promise.all([
+      this.productModel
+        .find(query)
+        .select('name basePrice hasVariants currentPrice discountPrice thumbnail slug filterAttributes variants')
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .exec(),
+      this.productModel.countDocuments(query),
+    ]);
+
+    // Calculate effective price and sort products
+    const processedData = data
+      .map(product => {
+        const effectivePrice = 
+          product.discountPrice ?? 
+          product.currentPrice ?? 
+          product.basePrice ?? 
+          (product.variants && product.variants.length > 0 
+            ? Math.min(...product.variants.map(v => v.variantCurrentPrice || Infinity))
+            : null);
+
+        return {
+          ...product,
+          effectivePrice
+        };
+      })
+      .sort((a, b) => {
+        // Sort by effective price
+        const priceA = a.effectivePrice ?? Infinity;
+        const priceB = b.effectivePrice ?? Infinity;
+        return priceA - priceB;
+      });
+
+    return {
+      data: processedData,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 }

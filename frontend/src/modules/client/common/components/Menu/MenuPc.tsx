@@ -334,21 +334,12 @@ const MenuPC = () => {
                         >
                           Xem Giỏ Hàng
                         </Link>
-                        {isAuthenticated ? (
                         <Link
                           href="/checkout"
                           className="bg-[#021737] text-white py-3 px-4 rounded-none text-center hover:bg-opacity-90 transition-colors no-underline font-medium"
-                            >
-                            Thanh Toán
-                          </Link>
-                        ) : (
-                          <Link
-                            href="/login"
-                            className="bg-[#021737] text-white py-3 px-4 rounded-none text-center hover:bg-opacity-90 transition-colors no-underline font-medium"
-                          >
-                            Thanh toán
-                          </Link>
-                        )}
+                        >
+                          Thanh Toán
+                        </Link>
                       </div>
                     </>
                   ) : (

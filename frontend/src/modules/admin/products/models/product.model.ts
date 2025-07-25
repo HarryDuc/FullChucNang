@@ -55,9 +55,11 @@ export interface CategoryInfo {
   title?: string;
   key?: string;
   url?: string;
-  id?: string;
+  mainCategoryId?: string;
+  subCategoryIds?: string[];
   name?: string;
   slug?: string;
+  _id?: string;
 }
 
 /**
@@ -159,6 +161,9 @@ export interface Product {
 
   // Thông số kỹ thuật
   specification?: Specification;
+
+  // Thông tin bộ lọc
+  filterAttributes?: Record<string, any>;
 
   // Thông tin bổ sung
   seo?: SeoInfo;

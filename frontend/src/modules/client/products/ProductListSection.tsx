@@ -14,6 +14,10 @@ import {
   type CartItem,
 } from "../../../../utils/cartUtils";
 import ProductCardShopeeStyle from "../common/components/ProductCard";
+import { useCategoryFilters } from './hooks/useCategoryFilters';
+import ProductFilterSelector from '@/modules/client/products/components/ProductFilterSelector';
+import FilterSection from "./components/FilterSection";
+import Filter from "./components/Filter";
 
 function Breadcrumb({ categoryName }: { categoryName?: string }) {
   return (
@@ -56,30 +60,6 @@ function Breadcrumb({ categoryName }: { categoryName?: string }) {
   );
 }
 
-function FilterBar({
-  sortOption,
-  onSortChange,
-}: {
-  sortOption: string;
-  onSortChange: (value: string) => void;
-}) {
-  return (
-    <div className="flex justify-end mb-2">
-      <label className="sr-only">Sắp xếp theo</label>
-      <select
-        value={sortOption}
-        onChange={(e) => onSortChange(e.target.value)}
-        className="w-48 border border-gray-300 rounded-md px-3 py-2 pr-8 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-orange-500"
-      >
-        <option value="default">Mặc định</option>
-        <option value="newest">Mới nhất</option>
-        <option value="oldest">Cũ nhất</option>
-        <option value="price-asc">Giá tăng dần</option>
-        <option value="price-desc">Giá giảm dần</option>
-      </select>
-    </div>
-  );
-}
 
 function ProductCard({ product }: { product: Product }) {
   const {
@@ -201,7 +181,6 @@ function ProductList({ products }: { products: Product[] }) {
 }
 
 export default function ProductListSection({ slug }: { slug: string }) {
-  // const { slug } = useParams() as { slug?: string };
   const isAllProducts = !slug;
   const { category, loading: loadingCategory } = useCategoryBySlug(slug || "");
   const [page, setPage] = useState(1);
@@ -209,10 +188,31 @@ export default function ProductListSection({ slug }: { slug: string }) {
   const [hasMore, setHasMore] = useState(true);
   const [sortOption, setSortOption] = useState("default");
 
+  // Add filter states
+  const {
+    selectedFilters,
+    updateFilters,
+    loading: loadingFilters,
+  } = useCategoryFilters(category?.id || category?._id);
+
+  // Debug logs
+  useEffect(() => {
+    console.log('Category:', category);
+    console.log('Selected Filters:', selectedFilters);
+  }, [category, selectedFilters]);
+
   const { products, loading, error, totalPages } = useProductsByCategory(
     isAllProducts ? null : category,
-    page
+    page,
+    selectedFilters
   );
+
+  // Debug log for products response
+  useEffect(() => {
+    if (!loading) {
+      console.log('Products Response:', { products, error, totalPages });
+    }
+  }, [products, loading, error, totalPages]);
 
   const observer = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useCallback(
@@ -229,33 +229,34 @@ export default function ProductListSection({ slug }: { slug: string }) {
     [loading, hasMore]
   );
 
-  useEffect(() => {
-    setPage(1);
-    setHasMore(true);
-    setAllProducts([]);
-  }, [category?.name]);
-
+  // Update products fetching to use filters
   useEffect(() => {
     if (!loading) {
       if (page > 1 && products.length === 0) {
         setHasMore(false);
       } else {
-        // Lọc ra các sản phẩm không bị ẩn và có trạng thái published
         const visibleProducts = products.filter((p) => p.isVisible !== false);
         setAllProducts((prev) =>
           page === 1
             ? visibleProducts
             : [
-                ...prev,
-                ...visibleProducts.filter(
-                  (p) => !prev.some((i) => i._id === p._id)
-                ),
-              ]
+              ...prev,
+              ...visibleProducts.filter(
+                (p) => !prev.some((i) => i._id === p._id)
+              ),
+            ]
         );
         setHasMore(page < totalPages);
       }
     }
   }, [products, loading, page, totalPages]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+    setAllProducts([]);
+    setHasMore(true);
+  }, [selectedFilters, category?.name]);
 
   const sortedProducts = useMemo(() => {
     const copy = [...allProducts];
@@ -314,8 +315,8 @@ export default function ProductListSection({ slug }: { slug: string }) {
   const pageTitle = isAllProducts
     ? "Tất cả sản phẩm"
     : category?.name
-    ? `Sản phẩm thuộc ${category.name}`
-    : "Tất cả sản phẩm";
+      ? `Sản phẩm thuộc ${category.name}`
+      : "Tất cả sản phẩm";
 
   return (
     <main className="md:p-2 space-y-4">
@@ -323,17 +324,32 @@ export default function ProductListSection({ slug }: { slug: string }) {
         <title>{pageTitle} | Website</title>
         <meta
           name="description"
-          content={`Danh sách sản phẩm ${
-            category?.name || "mới nhất"
-          } - Giá tốt, đa dạng`}
+          content={`Danh sách sản phẩm ${category?.name || "mới nhất"
+            } - Giá tốt, đa dạng`}
         />
         <meta name="robots" content="index, follow" />
       </Head>
 
-      <Breadcrumb
-        categoryName={isAllProducts ? "Tất cả sản phẩm" : category?.name}
-      />
-      <FilterBar sortOption={sortOption} onSortChange={setSortOption} />
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+        <Breadcrumb
+          categoryName={isAllProducts ? "Tất cả sản phẩm" : category?.name}
+        />
+        <FilterSection
+          sortOption={sortOption}
+          onSortChange={setSortOption}
+          categoryId={category?._id}
+          onFilterChange={updateFilters}
+          selectedFilters={selectedFilters}
+          loading={loadingFilters}
+        />
+      </div>
+
+      {/* <Filter
+        categoryId={category?._id || ""}
+        selectedFilters={selectedFilters}
+        onFilterChange={updateFilters}
+        loading={loadingFilters}
+      /> */}
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
 

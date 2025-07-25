@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams, useParams } from "next/navigation";
 import {
+  useCategoryBySlug,
   useMainCategories,
   useSubCategories,
 } from "../hooks/useClientProducts";
 import { Category } from "../services/client.product.service";
+import Filter from "./Filter";
 
 const CategoryItem = ({
   category,
@@ -73,6 +75,56 @@ const CategoryItem = ({
 const Sidebar = () => {
   const { categories, loading, error } = useMainCategories();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const params = useParams();
+  const slug = typeof params?.slug === 'string' ? params.slug : '';
+  const currentCategoryId = searchParams.get('categoryId');
+  const { category, loading: loadingCategory } = useCategoryBySlug(slug);
+
+  // Parse current filters from URL
+  const [selectedFilters, setSelectedFilters] = useState(() => {
+    try {
+      const filterParams = Object.fromEntries(
+        Array.from(searchParams.entries()).filter(([key]) => key !== 'categoryId')
+      );
+      
+      // Parse any JSON values
+      return Object.fromEntries(
+        Object.entries(filterParams).map(([key, value]) => {
+          try {
+            return [key, JSON.parse(value)];
+          } catch {
+            return [key, value];
+          }
+        })
+      );
+    } catch {
+      return {};
+    }
+  });
+
+  // Handle filter changes
+  const handleFilterChange = (newFilters: Record<string, any>) => {
+    setSelectedFilters(newFilters);
+    
+    // Update URL with new filters
+    const params = new URLSearchParams(searchParams);
+    Object.entries(newFilters).forEach(([key, value]) => {
+      if (value === undefined || value === null) {
+        params.delete(key);
+      } else {
+        params.set(key, typeof value === 'object' ? JSON.stringify(value) : value);
+      }
+    });
+    
+    // Keep categoryId if it exists
+    if (currentCategoryId) {
+      params.set('categoryId', currentCategoryId);
+    }
+    
+    router.push(`?${params.toString()}`);
+  };
 
   // Đóng sidebar khi click ra ngoài overlay (mobile only)
   const handleOverlayClick = () => {
@@ -84,9 +136,9 @@ const Sidebar = () => {
       {/* Nút mở sidebar (mobile only) */}
       <button
         onClick={() => setMobileOpen(true)}
-        aria-label="Mở danh mục sản phẩm"
-        className="md:hidden p-2 bg-gray-100 text-gray-800 rounded border border-gray-300 inline-flex items-center justify-center text-xl font-bold  w-full">
-        <span className="ml-2">Danh mục sản phẩm</span>
+        aria-label="Mở danh mục và bộ lọc"
+        className="md:hidden p-2 bg-gray-100 text-gray-800 rounded border border-gray-300 inline-flex items-center justify-center text-xl font-bold w-full">
+        <span className="ml-2">Danh mục và bộ lọc</span>
       </button>
 
       {/* Overlay (mobile only) */}
@@ -103,8 +155,16 @@ const Sidebar = () => {
           fixed z-50 top-0 left-0 h-full w-64 bg-[#f5f5fa] shadow-lg border-r
           transform transition-transform duration-300 ease-in-out will-change-transform
           ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
-           md:translate-x-0 md:shadow-none md:border-0 md:w-full md:h-auto md:sticky md:top-32 flex justify-centers items-end
+           md:translate-x-0 md:shadow-none md:border-0 md:w-full md:h-auto md:sticky md:top-32 flex flex-col gap-4
         `}>
+        {/* Bộ lọc */}
+        <Filter
+          categoryId={category?._id || currentCategoryId || ""}
+          selectedFilters={selectedFilters}
+          onFilterChange={handleFilterChange}
+          loading={loading || loadingCategory}
+        />
+
         {/* Danh mục */}
         <div className="h-[90vh] w-full md:h-auto overflow-y-auto p-6 pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent bg-white rounded-lg shadow">
           <h2 className="text-lg font-semibold mb-4">Danh mục sản phẩm</h2>

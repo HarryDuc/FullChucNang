@@ -37,6 +37,7 @@ import { VoucherModule } from './modules/vouchers/voucher.module';
 import { PermissionsModule } from './modules/permissions/permissions.module';
 import { RedirectMiddleware } from './modules/redirects/middlewares/redirect.middleware'; // ✅ Middleware xử lý redirect
 import { RedirectsModule } from './modules/redirects/redirects.module';
+import { FilterModule } from './modules/filters/filter.module';
 
 @Module({
   imports: [
@@ -85,7 +86,7 @@ import { RedirectsModule } from './modules/redirects/redirects.module';
     PermissionsModule,
     PayPalModule, // 💰 Import module thanh toán PayPal
     RedirectsModule, // ✅ Import module quản lý redirect URLs
-
+    FilterModule, // ✅ Import module quản lý filter
     // ✅ Cấu hình MailerModule để gửi email
     MailerModule.forRoot({
       transport: {

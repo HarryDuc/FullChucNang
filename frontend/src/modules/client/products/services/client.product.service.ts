@@ -1,7 +1,9 @@
 export interface Category {
   id: string;
+  _id: string;
   name: string;
   level: number;
+  isActive: boolean;
   slug: string;
 }
 
@@ -70,7 +72,18 @@ export interface Product {
 }
 
 import { config } from "@/config/config";
-import { API_URL_CLIENT } from "@/config/apiRoutes";
+import { API_URL_CLIENT, API_ROUTES } from "@/config/apiRoutes";
+import { Product as ProductType } from '@/modules/admin/products/models/product.model';
+import axios from 'axios';
+
+export interface ProductFilter {
+  name?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  hasVariants?: boolean;
+  filterAttributes?: Record<string, any>;
+}
+
 const CATEGORIES_API = API_URL_CLIENT + config.ROUTES.CATEGORIES_PRODUCT.BASE;
 const MAIN_CATEGORIES_API = `${CATEGORIES_API}/main`;
 const SUB_CATEGORIES_API = `${CATEGORIES_API}/sub`;
@@ -174,4 +187,60 @@ export const getCategoryBySlug = async (slug: string, signal?: AbortSignal) => {
   return fetchJSON<Category>(url, { signal });
 };
 
+export const getProductsByCategory = async (
+  categoryId: string | null,
+  filters: ProductFilter = {},
+  page: number = 1,
+  limit: number = 12
+): Promise<{
+  data: ProductType[];
+  total: number;
+  page: number;
+  totalPages: number;
+}> => {
+  try {
+    const params = new URLSearchParams();
+    if (categoryId) params.append('categoryId', categoryId);
+    if (page) params.append('page', page.toString());
+    if (limit) params.append('limit', limit.toString());
+    
+    // Add filter parameters
+    if (filters.name) params.append('name', filters.name);
+    if (filters.minPrice !== undefined) params.append('minPrice', filters.minPrice.toString());
+    if (filters.maxPrice !== undefined) params.append('maxPrice', filters.maxPrice.toString());
+    if (filters.hasVariants !== undefined) params.append('hasVariants', filters.hasVariants.toString());
+    
+    // Add filter attributes
+    if (filters.filterAttributes) {
+      Object.entries(filters.filterAttributes).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          params.append(`filterAttributes[${key}]`, Array.isArray(value) ? JSON.stringify(value) : value.toString());
+        }
+      });
+    }
 
+    const response = await axios.get(`${API_ROUTES.PRODUCTS}/category?${params.toString()}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching products by category:', error);
+    throw error;
+  }
+};
+
+
+export const getProductsByMainAndSubCategory = async (
+  mainCategory: string,
+  subCategory: string,
+  page: number = 1,
+) => {
+  const encodedCategoryMain = encodeURIComponent(mainCategory);
+  const encodedCategorySub = encodeURIComponent(subCategory);
+  const urlMain = `${PRODUCT_API}/bycategory/${encodedCategoryMain}?page=${page}`;
+  const urlSub = `${PRODUCT_API}/bysubcategory/${encodedCategorySub}?page=${page}`;
+  const response = await axios.all([
+    axios.get(urlMain),
+    axios.get(urlSub)
+  ]);
+  const data = response.map(r => r.data);
+  return data;
+};

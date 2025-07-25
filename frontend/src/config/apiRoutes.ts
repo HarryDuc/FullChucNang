@@ -337,6 +337,14 @@ export const apiRoutes = {
         // [DELETE] /vouchersapi/:id - Xóa voucher
         DELETE: (id: string) => `/vouchersapi/${id}`,
     },
+    FILTERS: {
+      BASE: '/filtersapi',
+      CREATE: '/filtersapi',
+      GET_ALL: '/filtersapi',
+      GET_BY_ID: (id: string) => `/filtersapi/${id}`,
+      UPDATE: (id: string) => `/filtersapi/${id}`,
+      DELETE: (id: string) => `/filtersapi/${id}`,
+    },
 };
 
 // For backward compatibility

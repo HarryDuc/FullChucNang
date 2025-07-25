@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { CartItem } from '../../../../../utils/cartUtils';
 import { FC } from 'react';
-import { useAuth } from "@/context/AuthContext";
 
 type CartSummaryProps = {
   cartItems: CartItem[];
@@ -16,7 +15,6 @@ const CartSummary: FC<CartSummaryProps> = ({
   getTotal,
   formatPrice,
 }) => {
-  const { isAuthenticated } = useAuth();
   return (
     <div className="bg-white border border-gray-200 rounded-md lg:sticky lg:top-4">
       <div className="border-b py-3 px-4 md:px-6 font-medium text-base md:text-lg bg-gray-50 rounded-t-md">
@@ -32,7 +30,6 @@ const CartSummary: FC<CartSummaryProps> = ({
           <span className="text-blue-900">{formatPrice(getTotal())}</span>
         </div>
         <div className="mt-4 md:mt-6 space-y-4">
-          {isAuthenticated ? (
           <Link
             href="/checkout"
             className="block bg-blue-900 no-underline text-white text-center py-3 hover:bg-blue-800 transition duration-300 font-medium rounded"
@@ -41,14 +38,6 @@ const CartSummary: FC<CartSummaryProps> = ({
           >
             TIẾN HÀNH THANH TOÁN
           </Link>
-          ) : (
-            <Link
-              href="/login"
-              className="block bg-blue-900 no-underline text-white text-center py-3 hover:bg-blue-800 transition duration-300 font-medium rounded"
-            >
-              TIẾN HÀNH THANH TOÁN
-            </Link>
-          )}
           <div className="text-sm text-gray-500 mt-4">
             <p className="flex items-center mb-2">
               <svg

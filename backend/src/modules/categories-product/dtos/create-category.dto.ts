@@ -7,6 +7,7 @@ import {
   IsArray,
   IsNumber,
   ValidateNested,
+  IsObject,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { Types } from 'mongoose';
@@ -30,6 +31,11 @@ export class CreateCategoryDto {
   @Type(() => CreateCategoryDto) // Biến subCategories thành mảng chứa CreateCategoryDto
   @IsMongoId()
   subCategories?: CreateCategoryDto[];
+
+
+  @IsOptional()
+  @IsObject()
+  filterableAttributes?: Record<string, any>;
 
   @IsOptional()
   @IsNumber()

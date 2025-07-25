@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Schema as MongooseSchema } from 'mongoose';
+import { Document, Schema as MongooseSchema, Types } from 'mongoose';
 
 export type ProductDocument = Product & Document;
 
@@ -123,7 +123,8 @@ export const CategoryInfoSchema = {
   title: { type: String },
   key: { type: String },
   url: { type: String },
-  id: { type: String },
+  mainCategoryId: { type: Types.ObjectId, ref: 'Category' }, // Store main category ID as ObjectId
+  subCategoryIds: { type: [{ type: Types.ObjectId, ref: 'Category' }], default: [] }, // Store sub-category IDs
   name: { type: String },
   slug: { type: String }
 };
@@ -242,6 +243,10 @@ export class Product {
   @Prop({ default: () => new Date() })
   publishedAt?: Date;
 
+
+  @Prop({ type: Object, default: {} })
+  filterAttributes?: Record<string, any>;
+
   // Virtual fields for reviews
   reviews?: any[];
   averageRating?: number;
@@ -282,3 +287,4 @@ ProductSchema.index({ 'variantAttributes.values.slug': 1 });
 ProductSchema.index({ stock: 1 });
 ProductSchema.index({ status: 1 });
 ProductSchema.index({ hasVariants: 1 });
+// ProductSchema.index({ 'filterAttributes.key': 1 });

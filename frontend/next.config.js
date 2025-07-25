@@ -16,6 +16,7 @@ const nextConfig = {
   // ? Cho ph�p hi?n th? ?nh t? c�c domain b�n ngo�i (bao g?m backend b?n)
   images: {
     domains: [
+      "cdn.decorandmore.vn",
       "decorandmore.vn",
       "storage.googleapis.com",
       "lh3.googleusercontent.com",

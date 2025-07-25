@@ -5,6 +5,7 @@ import {
   IsBoolean,
   IsArray,
   IsNumber,
+  IsObject,
 } from 'class-validator';
 import { Types } from 'mongoose';
 
@@ -25,6 +26,10 @@ export class UpdateCategoryDto {
   @IsArray()
   @IsMongoId({ each: true })
   subCategories?: Types.ObjectId[]; // 🔹 Danh sách danh mục con (nếu cập nhật)
+
+  @IsOptional()
+  @IsObject()
+  filterableAttributes?: Record<string, any>;
 
   @IsOptional()
   @IsNumber()

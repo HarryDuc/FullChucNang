@@ -307,4 +307,21 @@ export class CategoriesProductService {
       slug: subCategory.slug,
     }));
   }
+
+  async setFiltersForCategory(id: string, filters: Record<string, any>): Promise<Category> {
+    const updated = await this.categoryModel.findByIdAndUpdate(
+      id,
+      { filterableAttributes: filters },
+      { new: true }
+    ).exec();
+    if (!updated) throw new NotFoundException('Danh mục không tồn tại!');
+    return updated;
+  }
+
+  async getFiltersByCategory(id: string): Promise<Record<string, any>> {
+    const cat = await this.categoryModel.findById(id).exec();
+    if (!cat) throw new NotFoundException('Danh mục không tồn tại!');
+    return cat.filterableAttributes || {};
+  }
+  
 }

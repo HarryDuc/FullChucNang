@@ -19,6 +19,9 @@ export class Category {
   @Prop({ type: String, trim: true, default: '' })
   description?: string;
 
+  @Prop({ type: Object, default: {} })
+  filterableAttributes?: Record<string, any>;
+
   @Prop({ default: 0 })
   level: number;
 

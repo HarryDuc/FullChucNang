@@ -10,7 +10,9 @@ import {
   getCategoryBySlug,
   Category,
   Product,
+  getProductsByMainAndSubCategory,
 } from "../services/client.product.service";
+import { filterProducts } from "../services/filter.service";
 import {
   getCachedMainCategories,
   setCachedMainCategories,
@@ -237,13 +239,111 @@ export const useCategoryBySlug = (slug: string | null) => {
 
 export const useProductsByCategory = (
   category: Category | null,
-  page: number
+  page: number,
+  filters: Record<string, any> = {}
 ) => {
-  const allHook = useAllProducts(page);
-  const mainHook = useProductsByMainCategory(category?.name || null, page);
-  const subHook = useProductsBySubCategory(category?.name || null, page);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!category) return allHook;
-  if (category.level === 0) return mainHook;
-  return subHook;
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Check if we have any active filters
+        const hasActiveFilters = Object.keys(filters).length > 0;
+
+        let response;
+        if (hasActiveFilters) {
+          // Use filter endpoint if we have filters
+          response = await filterProducts(
+            category?.id || category?._id || null,
+            filters,
+            page
+          );
+        } else {
+          // Use regular endpoints if no filters
+          if (!category) {
+            response = await getAllProducts(page, controller.signal);
+          } else if (category.level === 0) {
+            response = await getProductsByMainCategory(
+              category.name,
+              page,
+              controller.signal
+            );
+          } else {
+            response = await getProductsBySubCategory(
+              category.name,
+              page,
+              controller.signal
+            );
+          }
+        }
+
+        setProducts(response.data);
+        setTotalPages(response.totalPages);
+      } catch (err) {
+        if (err instanceof Error && err.name !== "AbortError") {
+          setError("Lỗi khi tải dữ liệu sản phẩm.");
+          console.error("Error fetching products:", err);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+    return () => controller.abort();
+  }, [category, page, filters]); // Add filters to dependencies
+
+  return { products, loading, error, totalPages };
 };
+
+/**
+ * Hook to fetch category info by slug.
+ * @param slug Slug of the category.
+ * @returns { category, loading, error }
+ */
+export function useCategoryBySlugMainAndSubCategory(slug: string, mainCategory: string, subCategory: string, page: number = 1) {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState<boolean>(!!slug);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!slug) {
+      setProducts([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
+    let isMounted = true;
+    setLoading(true);
+    setError(null);
+
+    getProductsByMainAndSubCategory(mainCategory, subCategory, page)
+      .then((data) => {
+        if (isMounted) {
+          setProducts(data);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          setError("Không thể tải thông tin danh mục.");
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [slug, mainCategory, subCategory, page]);
+
+  return { products, loading, error };
+}

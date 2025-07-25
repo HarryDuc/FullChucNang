@@ -10,8 +10,11 @@ import {
   IsUrl,
   Min,
   Max,
+  IsObject,
+  IsMongoId,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { Types } from 'mongoose';
 
 /**
  * DTO cho giá trị của thuộc tính biến thể
@@ -151,8 +154,13 @@ export class CategoryInfoDto {
   url?: string;
 
   @IsOptional()
-  @IsString()
-  id?: string;
+  @IsMongoId()
+  mainCategoryId?: Types.ObjectId;
+
+  @IsOptional()
+  @IsArray()
+  @IsMongoId({ each: true })
+  subCategoryIds?: Types.ObjectId[];
 
   @IsOptional()
   @IsString()
@@ -592,4 +600,19 @@ export class UpdateProductVariantAttributesDto {
 export class UpdateProductSlugDto {
   @IsString()
   newSlug: string;
+}
+
+export class ProductFilterDto {
+  @IsOptional()
+  categoryId?: string;
+
+  @IsOptional()
+  priceMin?: number;
+
+  @IsOptional()
+  priceMax?: number;
+
+  @IsOptional()
+  @IsObject()
+  filterAttributes?: Record<string, any>;
 }

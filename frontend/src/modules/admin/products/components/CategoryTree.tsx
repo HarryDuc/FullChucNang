@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { GoChevronDown, GoChevronRight } from "react-icons/go";
+import ProductFilterSelector from '../../../client/products/components/ProductFilterSelector';
 
 // Định nghĩa kiểu Category
 export interface Category {
@@ -17,12 +18,16 @@ export interface Category {
 interface CategoryTreeProps {
   categories: Category[];
   selectedCategoryNames: string[];
+  selectedFilters: Record<string, any>;
+  onFilterChange: (filters: Record<string, any>) => void;
   handleCategoryChange: (category: Category, checked: boolean) => void;
 }
 
 const CategoryTree: React.FC<CategoryTreeProps> = ({
   categories,
   selectedCategoryNames,
+  selectedFilters,
+  onFilterChange,
   handleCategoryChange,
 }) => {
   // Hàm đệ quy hiển thị node
@@ -65,6 +70,17 @@ const CategoryTree: React.FC<CategoryTreeProps> = ({
           </label>
           {hasChildren && arrowIcon}
         </div>
+
+        {/* Hiển thị bộ lọc nếu danh mục được chọn */}
+        {isOpen && !hasChildren && (
+          <div className="ml-6 mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <ProductFilterSelector
+              categoryId={category._id}
+              selectedFilters={selectedFilters}
+              onChange={onFilterChange}
+            />
+          </div>
+        )}
 
         {/* Render danh mục con nếu node được mở */}
         {hasChildren && isOpen && (

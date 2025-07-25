@@ -34,6 +34,19 @@ export class CategoriesProductController {
   async create(@Body() createCategoryDto: CreateCategoryDto) {
     return this.categoriesService.createCategory(createCategoryDto);
   }
+  
+  @Post(':id/filters')
+  async setFiltersForCategory(
+    @Param('id') id: string,
+    @Body('filters') filters: Record<string, string[]>,
+  ) {
+    return this.categoriesService.setFiltersForCategory(id, filters);
+  }
+
+  @Get(':id/filters')
+  async getFiltersByCategory(@Param('id') id: string) {
+    return this.categoriesService.getFiltersByCategory(id);
+  }
 
   /**
    * ✅ 2. API Lấy tất cả danh mục (Không phân trang - Level = 0)
