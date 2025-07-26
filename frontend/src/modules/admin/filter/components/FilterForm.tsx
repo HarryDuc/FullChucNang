@@ -92,9 +92,49 @@ const FilterForm: React.FC<Props> = ({ filter, onSuccess }) => {
   const handleCategoryChange = (categoryId: string, checked: boolean) => {
     setSelectedCategories(prev => {
       if (checked) {
-        return prev.includes(categoryId) ? prev : [...prev, categoryId];
+        // Khi chọn danh mục con, tự động chọn tất cả danh mục cha
+        const getAllParentCategories = (childId: string): string[] => {
+          const category = categories.find(cat => cat._id === childId);
+          if (!category || !category.parentCategory) {
+            return [];
+          }
+          
+          const parentId = category.parentCategory;
+          // Đệ quy để lấy tất cả danh mục cha của cha
+          return [parentId, ...getAllParentCategories(parentId)];
+        };
+        
+        const parentCategoriesToAdd = getAllParentCategories(categoryId);
+        const categoriesToAdd = [categoryId, ...parentCategoriesToAdd];
+        
+        // Thêm tất cả danh mục mới (tránh trùng lặp)
+        const newCategories = [...prev];
+        categoriesToAdd.forEach(catId => {
+          if (!newCategories.includes(catId)) {
+            newCategories.push(catId);
+          }
+        });
+        
+        return newCategories;
       } else {
-        return prev.filter(id => id !== categoryId);
+        // Khi bỏ chọn danh mục cha, cũng bỏ chọn tất cả danh mục con
+        const getAllChildCategories = (parentId: string): string[] => {
+          const children = categories.filter(cat => cat.parentCategory === parentId);
+          let allChildren: string[] = [];
+          
+          for (const child of children) {
+            allChildren.push(child._id);
+            // Đệ quy để lấy tất cả danh mục con của con
+            allChildren = [...allChildren, ...getAllChildCategories(child._id)];
+          }
+          
+          return allChildren;
+        };
+        
+        const childCategoriesToRemove = getAllChildCategories(categoryId);
+        const categoriesToRemove = [categoryId, ...childCategoriesToRemove];
+        
+        return prev.filter(id => !categoriesToRemove.includes(id));
       }
     });
   };

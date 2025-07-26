@@ -179,14 +179,82 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const handleCategoryChange = (category: Category, checked: boolean) => {
     setSelectedCategories((prev) => {
       if (checked) {
-        return [...prev, { id: category._id || "", name: category.name }];
+        // Khi chọn danh mục con, tự động chọn tất cả danh mục cha
+        const getAllParentCategories = (childCategory: Category): SelectedCategory[] => {
+          if (!childCategory.parentCategory) {
+            return [];
+          }
+          
+          const parentCategory = categories.find(cat => cat._id === childCategory.parentCategory);
+          if (!parentCategory) {
+            return [];
+          }
+          
+          const parentSelected: SelectedCategory = {
+            id: parentCategory._id || "",
+            name: parentCategory.name
+          };
+          
+          // Đệ quy để lấy tất cả danh mục cha của cha
+          return [parentSelected, ...getAllParentCategories(parentCategory)];
+        };
+        
+        const parentCategoriesToAdd = getAllParentCategories(category);
+        const categoriesToAdd = [
+          { id: category._id || "", name: category.name },
+          ...parentCategoriesToAdd
+        ];
+        
+        // Thêm tất cả danh mục mới (tránh trùng lặp)
+        const newCategories = [...prev];
+        categoriesToAdd.forEach(catToAdd => {
+          const exists = newCategories.some(existing => 
+            existing.id === catToAdd.id || existing.name === catToAdd.name
+          );
+          if (!exists) {
+            newCategories.push(catToAdd);
+          }
+        });
+        
+        return newCategories;
+      } else {
+        // Khi bỏ chọn danh mục cha, cũng bỏ chọn tất cả danh mục con
+        const getAllChildCategories = (parentCategory: Category): SelectedCategory[] => {
+          const children = categories.filter(cat => cat.parentCategory === parentCategory._id);
+          let allChildren: SelectedCategory[] = [];
+          
+          for (const child of children) {
+            const childSelected: SelectedCategory = {
+              id: child._id || "",
+              name: child.name
+            };
+            allChildren.push(childSelected);
+            // Đệ quy để lấy tất cả danh mục con của con
+            allChildren = [...allChildren, ...getAllChildCategories(child)];
+          }
+          
+          return allChildren;
+        };
+        
+        const childCategoriesToRemove = getAllChildCategories(category);
+        const categoriesToRemove = [
+          { id: category._id || "", name: category.name },
+          ...childCategoriesToRemove
+        ];
+        
+        const newCategories = prev.filter(existing => 
+          !categoriesToRemove.some(toRemove => 
+            existing.id === toRemove.id || existing.name === toRemove.name
+          )
+        );
+        
+        // Chỉ reset filters khi bỏ chọn category cuối cùng
+        if (newCategories.length === 0) {
+          setFilters({});
+        }
+        
+        return newCategories;
       }
-      const newNames = prev.filter((name) => name.name !== category.name);
-      // Chỉ reset filters khi bỏ chọn category cuối cùng
-      if (newNames.length === 0) {
-        setFilters({});
-      }
-      return newNames;
     });
   };
 

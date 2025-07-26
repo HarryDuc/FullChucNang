@@ -157,14 +157,59 @@ export const SpecificationForm: React.FC<SpecificationFormProps> = ({
   });
 
   // Handle checkbox change for categories
-  const   handleCategoryChange = (category: Category, checked: boolean) => {
+  const handleCategoryChange = (category: Category, checked: boolean) => {
     const current = getValues('categories') || [];
     let updated: string[];
+    
     if (checked) {
-      updated = [...current, category._id];
+      // Khi chọn danh mục con, tự động chọn tất cả danh mục cha
+      const getAllParentCategories = (childCategory: Category): string[] => {
+        if (!childCategory.parentCategory) {
+          return [];
+        }
+        
+        const parentCategory = categories.find(cat => cat._id === childCategory.parentCategory);
+        if (!parentCategory) {
+          return [];
+        }
+        
+        // Đệ quy để lấy tất cả danh mục cha của cha
+        return [parentCategory._id, ...getAllParentCategories(parentCategory)];
+      };
+      
+      const parentCategoriesToAdd = getAllParentCategories(category);
+      const categoriesToAdd = [category._id, ...parentCategoriesToAdd];
+      
+      // Thêm tất cả danh mục mới (tránh trùng lặp)
+      const newCategories = [...current];
+      categoriesToAdd.forEach(catId => {
+        if (!newCategories.includes(catId)) {
+          newCategories.push(catId);
+        }
+      });
+      
+      updated = newCategories;
     } else {
-      updated = current.filter((id: string) => id !== category._id);
+      // Khi bỏ chọn danh mục cha, cũng bỏ chọn tất cả danh mục con
+      const getAllChildCategories = (parentCategory: Category): string[] => {
+        const children = categories.filter(cat => cat.parentCategory === parentCategory._id);
+        let allChildren: string[] = [];
+        
+        for (const child of children) {
+          allChildren.push(child._id);
+          // Đệ quy để lấy tất cả danh mục con của con
+          allChildren = [...allChildren, ...getAllChildCategories(child)];
+        }
+        
+        return allChildren;
+      };
+      
+      const childCategoriesToRemove = getAllChildCategories(category);
+      const categoriesToRemove = [category._id, ...childCategoriesToRemove];
+      
+      updated = current.filter(id => !categoriesToRemove.includes(id));
     }
+    
     setValue('categories', updated, { shouldValidate: true });
   };
 
