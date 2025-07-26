@@ -15,7 +15,7 @@ interface Props {
 const FilterForm: React.FC<Props> = ({ filter, onSuccess }) => {
   const router = useRouter();
   const [name, setName] = useState(filter?.name || '');
-  const [type, setType] = useState<Filter['type']>(filter?.type || 'select');
+  const [type, setType] = useState<Filter['type']>(filter?.type || 'checkbox');
   const [options, setOptions] = useState<string[]>(filter?.options || []);
   const [rangeOptions, setRangeOptions] = useState<RangeOption[]>(
     filter?.rangeOptions || []
@@ -198,8 +198,8 @@ const FilterForm: React.FC<Props> = ({ filter, onSuccess }) => {
               onChange={e => setType(e.target.value as Filter['type'])}
               className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-300"
             >
-              <option value="select">Select (Dropdown)</option>
               <option value="checkbox">Checkbox (Multi-select)</option>
+              <option value="select">Select (Dropdown)</option>
               <option value="range">Range (Khoảng giá)</option>
               <option value="text">Text (Văn bản)</option>
               <option value="number">Number (Số)</option>

@@ -81,7 +81,6 @@ export class ProductService {
     @Inject(forwardRef(() => RedirectsService))
     private redirectsService: RedirectsService,
     private filterService: FilterService,
-    private categoriesService: CategoriesProductService,
   ) {}
 
   /**
@@ -106,7 +105,7 @@ export class ProductService {
    * @returns Sản phẩm mới được tạo.
    */
   async create(createProductDto: CreateProductDto): Promise<Product> {
-    const { name, basePrice, category, ...updateFields } = createProductDto;
+    const { name, basePrice, ...updateFields } = createProductDto;
 
     if (!name) {
       throw new BadRequestException('Tên sản phẩm là bắt buộc.');
@@ -114,27 +113,6 @@ export class ProductService {
 
     if (!basePrice || basePrice <= 0) {
       throw new BadRequestException('Giá cơ bản phải lớn hơn 0.');
-    }
-
-    // Validate and get category IDs
-    if (category) {
-      const mainCategory = await this.categoryModel.findOne({ name: category.main }).exec();
-      if (!mainCategory) {
-        throw new BadRequestException('Danh mục chính không tồn tại');
-      }
-
-      const subCategories = await Promise.all(
-        (category.sub || []).map(async (subName) => {
-          const subCat = await this.categoryModel.findOne({ name: subName }).exec();
-          if (!subCat) {
-            throw new BadRequestException(`Danh mục con "${subName}" không tồn tại`);
-          }
-          return subCat;
-        })
-      );
-
-      category.mainCategoryId = mainCategory._id;
-      category.subCategoryIds = subCategories.map(sub => sub._id);
     }
 
     const generatedSlug = await this.generateUniqueSlug(name);
@@ -145,7 +123,6 @@ export class ProductService {
         name,
         slug: generatedSlug,
         basePrice,
-        category,
         variantAttributes: updateFields.variantAttributes || [],
         variants: updateFields.variants || [],
       });
@@ -394,11 +371,12 @@ export class ProductService {
    * @param updateProductDto DTO cập nhật.
    * @returns Sản phẩm đã cập nhật.
    */
+
   async update(
     slug: string,
     updateProductDto: UpdateProductDto,
   ): Promise<Product> {
-    const { name: newName, slug: newSlug, category } = updateProductDto;
+    const { slug: newSlug } = updateProductDto;
 
     // Kiểm tra sản phẩm tồn tại
     const product = await this.findOne(slug);
@@ -414,27 +392,6 @@ export class ProductService {
       if (existingProduct) {
         throw new BadRequestException('Slug đã tồn tại.');
       }
-    }
-
-    // Validate and get category IDs if category is being updated
-    if (category) {
-      const mainCategory = await this.categoryModel.findOne({ name: category.main }).exec();
-      if (!mainCategory) {
-        throw new BadRequestException('Danh mục chính không tồn tại');
-      }
-
-      const subCategories = await Promise.all(
-        (category.sub || []).map(async (subName) => {
-          const subCat = await this.categoryModel.findOne({ name: subName }).exec();
-          if (!subCat) {
-            throw new BadRequestException(`Danh mục con "${subName}" không tồn tại`);
-          }
-          return subCat;
-        })
-      );
-
-      category.mainCategoryId = mainCategory._id;
-      category.subCategoryIds = subCategories.map(sub => sub._id);
     }
 
     try {

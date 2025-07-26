@@ -180,6 +180,9 @@ export class Product {
   @Prop({ default: false })
   isFeatured?: boolean;
 
+  @Prop({ default: false })
+  isSpecification?: boolean;
+
   @Prop({
     type: {
       title: { type: String },
@@ -191,6 +194,9 @@ export class Product {
     title: string;
     groups: SpecificationGroup[];
   };
+
+  @Prop({ default: '' })
+  isSpecificationProduct?: string;
 
   @Prop({ default: false, description: 'Xác định sản phẩm có sử dụng biến thể hay không' })
   isNewArrival?: boolean;

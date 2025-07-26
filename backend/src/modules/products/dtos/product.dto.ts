@@ -336,10 +336,17 @@ export class CreateProductDto {
   @IsBoolean()
   hasVariants: boolean;
 
+  @IsBoolean()
+  isSpecification?: boolean;
+
   @IsOptional()
   @ValidateNested()
   @Type(() => SpecificationDto)
   specification?: SpecificationDto;
+
+  @IsOptional()
+  @IsString()
+  isSpecificationProduct?: string;
 
   @IsOptional()
   @IsArray()
@@ -548,6 +555,14 @@ export class UpdateProductDto implements Partial<CreateProductDto> {
   @ValidateNested()
   @Type(() => SpecificationDto)
   specification?: SpecificationDto;
+
+  @IsOptional()
+  @IsString()
+  isSpecificationProduct?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isSpecification?: boolean;
 }
 
 /**

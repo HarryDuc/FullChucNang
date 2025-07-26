@@ -60,14 +60,14 @@ const GroupField: React.FC<GroupFieldProps> = ({
             <div key={field.id} className="flex gap-2">
               <input
                 type="text"
-                {...register(`groups.${groupIndex}.specs.${index}.name` as const, { required: true })}
+                {...register(`groups.${groupIndex}.specs.${index}.name` as const, { required: 'Tên thông số kỹ thuật là bắt buộc' })}
                 placeholder="Tên thông số kỹ thuật"
                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
               />
               <input
                 type="text"
-                {...register(`groups.${groupIndex}.specs.${index}.value` as const, { required: true })}
-                placeholder="Giá trị thông số kỹ thuật"
+                {...register(`groups.${groupIndex}.specs.${index}.value` as const)}
+                placeholder="Giá trị thông số kỹ thuật (không bắt buộc)"
                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
               />
               <button

@@ -5,8 +5,9 @@ export class TechnicalSpecDto {
   @IsString()
   name: string;
 
+  @IsOptional()
   @IsString()
-  value: string;
+  value?: string;
 }
 
 export class SpecificationGroupDto {

@@ -18,6 +18,7 @@ import SunEditerUploadImage from "../../common/components/SunEditer";
 import { useProductSpecification } from '../hooks/useProductSpecification';
 import { useCategoryFilters } from '../hooks/useCategoryFilters';
 import ProductFilterSelector from './ProductFilterSelector';
+import { specificationService } from '../services/specification.service';
 
 interface SelectedCategory {
   id: string;
@@ -135,6 +136,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const [errorMsg, setErrorMsg] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [isLoadingSpecifications, setIsLoadingSpecifications] = useState(false);
+  const [autoPopulatedCategories, setAutoPopulatedCategories] = useState<string[]>([]);
 
   // Khởi tạo filters từ initialData
   const [filters, setFilters] = useState<Record<string, any>>(
@@ -148,6 +151,140 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       setFilters(initialData.filterAttributes);
     }
   }, [initialData?.filterAttributes]);
+
+  // Auto-fetch and populate specification templates when categories change
+  useEffect(() => {
+    const fetchSpecificationTemplates = async () => {
+      if (selectedCategories.length === 0) {
+        setAutoPopulatedCategories([]);
+        return;
+      }
+
+      setIsLoadingSpecifications(true);
+      try {
+        // Fetch specifications for all selected categories
+        const specificationPromises = selectedCategories.map(async (category) => {
+          if (!category.id) return null;
+          try {
+            const specs = await specificationService.getByCategoryId(category.id);
+            return { categoryId: category.id, categoryName: category.name, specs };
+          } catch (error) {
+            console.log(`No specifications found for category ${category.name}:`, error);
+            return null;
+          }
+        });
+
+        const results = await Promise.all(specificationPromises);
+        const validResults = results.filter(result => result && result.specs && result.specs.length > 0);
+
+        if (validResults.length > 0) {
+          // If we have specifications from any category, merge them
+          let mergedSpecification: Specification = {
+            title: "Thông số kỹ thuật",
+            groups: []
+          };
+
+          validResults.forEach((result) => {
+            if (result && result.specs) {
+              result.specs.forEach((spec: any) => {
+                if (spec.groups && spec.groups.length > 0) {
+                  // Add category prefix to group titles to avoid confusion
+                  const prefixedGroups = spec.groups.map((group: any) => ({
+                    ...group,
+                    title: `${result.categoryName} - ${group.title || 'Thông số'}`,
+                    specs: group.specs || []
+                  }));
+                  mergedSpecification.groups.push(...prefixedGroups);
+                }
+              });
+            }
+          });
+
+          // Only update if we don't already have specification data or if it's empty
+          if (!specification.title && specification.groups.length === 0) {
+            setSpecification(mergedSpecification);
+            setAutoPopulatedCategories(validResults.map(r => r?.categoryName || ''));
+            console.log('Auto-populated specification templates for categories:', validResults.map(r => r?.categoryName));
+          }
+        } else {
+          setAutoPopulatedCategories([]);
+        }
+      } catch (error) {
+        console.error('Error fetching specification templates:', error);
+        setAutoPopulatedCategories([]);
+      } finally {
+        setIsLoadingSpecifications(false);
+      }
+    };
+
+    // Only fetch if we're in create mode or if specification is empty
+    if (mode === 'create' || (!specification.title && specification.groups.length === 0)) {
+      fetchSpecificationTemplates();
+    }
+  }, [selectedCategories, mode]); // Dependencies: selectedCategories and mode
+
+  // Manual refresh function for specification templates
+  const handleRefreshSpecificationTemplates = async () => {
+    if (selectedCategories.length === 0) {
+      return;
+    }
+
+    setIsLoadingSpecifications(true);
+    try {
+      // Fetch specifications for all selected categories
+      const specificationPromises = selectedCategories.map(async (category) => {
+        if (!category.id) return null;
+        try {
+          const specs = await specificationService.getByCategoryId(category.id);
+          return { categoryId: category.id, categoryName: category.name, specs };
+        } catch (error) {
+          console.log(`No specifications found for category ${category.name}:`, error);
+          return null;
+        }
+      });
+
+      const results = await Promise.all(specificationPromises);
+      const validResults = results.filter(result => result && result.specs && result.specs.length > 0);
+
+      if (validResults.length > 0) {
+        // If we have specifications from any category, merge them
+        let mergedSpecification: Specification = {
+          title: "Thông số kỹ thuật",
+          groups: []
+        };
+
+        validResults.forEach((result) => {
+          if (result && result.specs) {
+            result.specs.forEach((spec: any) => {
+              if (spec.groups && spec.groups.length > 0) {
+                // Add category prefix to group titles to avoid confusion
+                const prefixedGroups = spec.groups.map((group: any) => ({
+                  ...group,
+                  title: `${result.categoryName} - ${group.title || 'Thông số'}`,
+                  specs: group.specs || []
+                }));
+                mergedSpecification.groups.push(...prefixedGroups);
+              }
+            });
+          }
+        });
+
+        // Force update specification templates
+        setSpecification(mergedSpecification);
+        setAutoPopulatedCategories(validResults.map(r => r?.categoryName || ''));
+        console.log('Manually refreshed specification templates for categories:', validResults.map(r => r?.categoryName));
+      } else {
+        setAutoPopulatedCategories([]);
+        // Clear specifications if no templates found
+        setSpecification({ title: "", groups: [] });
+      }
+    } catch (error) {
+      console.error('Error refreshing specification templates:', error);
+      setAutoPopulatedCategories([]);
+    } finally {
+      setIsLoadingSpecifications(false);
+    }
+  };
 
   // Tự động tạo slug từ name
   useEffect(() => {
@@ -765,7 +902,50 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
       {/* Thông số kỹ thuật */}
       <div className="bg-white rounded-xl shadow p-6 space-y-4">
-        <h3 className="text-lg font-bold mb-2">Thông số kỹ thuật</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold">Thông số kỹ thuật</h3>
+          <div className="flex items-center gap-2">
+            {isLoadingSpecifications && (
+              <div className="flex items-center gap-2 text-blue-600">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                <span className="text-sm">Đang tải template...</span>
+              </div>
+            )}
+            {selectedCategories.length > 0 && (
+              <button
+                type="button"
+                onClick={handleRefreshSpecificationTemplates}
+                disabled={isLoadingSpecifications}
+                className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+              >
+                Làm mới template
+              </button>
+            )}
+          </div>
+        </div>
+        
+        {/* Show auto-populated categories info */}
+        {autoPopulatedCategories.length > 0 && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span className="text-sm text-green-800 font-medium">
+                Đã tự động tải template từ danh mục:
+              </span>
+            </div>
+            <div className="mt-1 flex flex-wrap gap-1">
+              {autoPopulatedCategories.map((categoryName, index) => (
+                <span
+                  key={index}
+                  className="inline-block px-2 py-1 text-xs bg-green-100 text-green-800 rounded"
+                >
+                  {categoryName}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+        
         <div className="space-y-4">
           <div>
             <label className="block mb-1">Chọn template thông số kỹ thuật</label>

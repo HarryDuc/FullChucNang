@@ -21,13 +21,21 @@ export const specificationService = {
     return response.data;
   },
 
-  async getByCategoryIds(categoryIds: string[]) {
-    const response = await api.get(API_ROUTES.SPECIFICATIONS.GET_BY_CATEGORIES, {
-      params: { categories: categoryIds.join(',') },
+  async getByCategoryIds(categoryIds: string) {
+    const response = await api.get(API_ROUTES.SPECIFICATIONS.GET_BY_CATEGORIES(categoryIds), {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
     });
     return response.data;
   },
-}; 
+
+  async getByCategoryId(categoryId: string) {
+    const response = await api.get(API_ROUTES.SPECIFICATIONS.GET_BY_CATEGORIES(categoryId), {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    return response.data;
+  },
+};

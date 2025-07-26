@@ -63,4 +63,9 @@ export class SpecificationController {
   updateStatus(@Param('slug') slug: string, @Body('isActive') isActive: boolean) {
     return this.specificationService.updateStatus(slug, isActive);
   }
+
+  @Get('category/:categoryId')
+  async findByCategory(@Param('categoryId') categoryId: string) {
+    return this.specificationService.findByCategory(categoryId);
+  }
 } 

@@ -10,8 +10,8 @@ export class TechnicalSpec {
   @Prop({ required: true })
   name: string;
 
-  @Prop({ required: true })
-  value: string;
+  @Prop()
+  value?: string;
 }
 
 /**

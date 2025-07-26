@@ -352,7 +352,7 @@ export const apiRoutes = {
         UPDATE: (slug: string) => `/specificationsapi/${slug}`,
         DELETE: (slug: string) => `/specificationsapi/${slug}`,
         UPDATE_STATUS: (slug: string) => `/specificationsapi/${slug}/status`,
-        GET_BY_CATEGORIES: '/specificationsapi/by-categories',
+        GET_BY_CATEGORIES: (categoryId: string) => `/specificationsapi/category/${categoryId}`,
     },
 };
 
