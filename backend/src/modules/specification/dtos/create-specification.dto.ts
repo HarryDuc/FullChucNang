@@ -36,10 +36,10 @@ export class CreateSpecificationDto {
   @ArrayMinSize(1)
   groups: SpecificationGroupDto[];
 
-  // @IsArray()
-  // @IsString({ each: true })
-  // @IsOptional()
-  // categories?: string[];
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  categories?: string[];
 
   @IsBoolean()
   @IsOptional()

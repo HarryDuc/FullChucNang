@@ -27,13 +27,13 @@ export const EditSpecificationPage = ({ slug }: EditSpecificationPageProps) => {
   };
 
   if (!selectedSpec) {
-    return <div>Loading...</div>;
+    return <div>Đang tải...</div>;
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Edit Specification</h1>
+        <h1 className="text-2xl font-bold">Sửa thông số kỹ thuật</h1>
       </div>
 
       <div className="bg-white p-6 rounded-lg shadow">

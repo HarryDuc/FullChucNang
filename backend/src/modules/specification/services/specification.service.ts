@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Specification, SpecificationDocument } from '../schemas/specification.schema';
 import { CreateSpecificationDto } from '../dtos/create-specification.dto';
 import { UpdateSpecificationDto } from '../dtos/update-specification.dto';
@@ -68,5 +68,12 @@ export class SpecificationService {
       throw new NotFoundException(`Specification with slug "${slug}" not found`);
     }
     return specification;
+  }
+
+  async findByCategory(categoryId: string): Promise<Specification[]> {
+    return this.specificationModel
+      .find({ categories: new Types.ObjectId(categoryId) })
+      .populate('categories')
+      .exec();
   }
 } 

@@ -70,4 +70,9 @@ export class FilterController {
   async findByCategory(@Param('categoryId') categoryId: string) {
     return this.filterService.findByCategory(categoryId);
   }
+
+  @Get('debug/:id')
+  async debugFilter(@Param('id') id: string) {
+    return this.filterService.debugFilterCategories(id);
+  }
 }

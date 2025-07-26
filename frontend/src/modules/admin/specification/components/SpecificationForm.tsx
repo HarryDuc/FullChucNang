@@ -1,6 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm, useFieldArray, useWatch, Control } from 'react-hook-form';
 import { ISpecification, ICreateSpecification } from '../models/specification.model';
+import { ClientCategoryService } from '@/common/services/client.product.category.service';
+import CategoryTree, { Category } from './CategoryTree';
+
+interface CategoryOption {
+  _id: string;
+  name: string;
+}
 
 interface SpecificationFormProps {
   initialData?: ISpecification;
@@ -32,7 +39,7 @@ const GroupField: React.FC<GroupFieldProps> = ({
       <div className="flex justify-between items-center mb-2">
         <input
           type="text"
-          {...register(`groups.${groupIndex}.title` as const, { required: 'Group title is required' })}
+          {...register(`groups.${groupIndex}.title` as const, { required: 'Nhóm thông số kỹ thuật là bắt buộc' })}
           placeholder="Group Title"
           className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
         />
@@ -41,26 +48,26 @@ const GroupField: React.FC<GroupFieldProps> = ({
           onClick={onRemove}
           className="ml-2 text-red-600 hover:text-red-800"
         >
-          Remove Group
+          Xóa nhóm
         </button>
       </div>
 
       {/* Specs Section */}
       <div className="mt-4">
-        <label className="block text-sm font-medium text-gray-700">Specifications</label>
+        <label className="block text-sm font-medium text-gray-700">Thông số kỹ thuật</label>
         <div className="space-y-2">
           {fields.map((field, index) => (
             <div key={field.id} className="flex gap-2">
               <input
                 type="text"
                 {...register(`groups.${groupIndex}.specs.${index}.name` as const, { required: true })}
-                placeholder="Spec Name"
+                placeholder="Tên thông số kỹ thuật"
                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
               />
               <input
                 type="text"
                 {...register(`groups.${groupIndex}.specs.${index}.value` as const, { required: true })}
-                placeholder="Spec Value"
+                placeholder="Giá trị thông số kỹ thuật"
                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
               />
               <button
@@ -68,7 +75,7 @@ const GroupField: React.FC<GroupFieldProps> = ({
                 onClick={() => remove(index)}
                 className="text-red-600 hover:text-red-800"
               >
-                Remove
+                Xóa
               </button>
             </div>
           ))}
@@ -77,7 +84,7 @@ const GroupField: React.FC<GroupFieldProps> = ({
             onClick={() => append({ name: '', value: '' })}
             className="mt-2 px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
           >
-            Add Specification
+            Thêm thông số kỹ thuật
           </button>
         </div>
       </div>
@@ -103,7 +110,20 @@ export const SpecificationForm: React.FC<SpecificationFormProps> = ({
   loading,
   mode
 }) => {
-  const { register, control, handleSubmit, setValue, formState: { errors } } = useForm<ICreateSpecification>({
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [catLoading, setCatLoading] = useState(false);
+
+  useEffect(() => {
+    setCatLoading(true);
+    ClientCategoryService.getAllCategories()
+      .then((data) => {
+        setCategories(data);
+      })
+      .catch(() => setCategories([]))
+      .finally(() => setCatLoading(false));
+  }, []);
+
+  const { register, control, handleSubmit, setValue, getValues, formState: { errors } } = useForm<ICreateSpecification>({
     defaultValues: initialData || {
       name: '',
       slug: '',
@@ -136,86 +156,117 @@ export const SpecificationForm: React.FC<SpecificationFormProps> = ({
     name: 'groups'
   });
 
+  // Handle checkbox change for categories
+  const   handleCategoryChange = (category: Category, checked: boolean) => {
+    const current = getValues('categories') || [];
+    let updated: string[];
+    if (checked) {
+      updated = [...current, category._id];
+    } else {
+      updated = current.filter((id: string) => id !== category._id);
+    }
+    setValue('categories', updated, { shouldValidate: true });
+  };
+
+  // Watch categories for validation
+  const selectedCategories = useWatch({ control, name: 'categories' }) || [];
+
+  // Đưa phần "Gán cho danh mục" sang bên phải, tỉ lệ 6:4
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Name</label>
-          <input
-            type="text"
-            {...register('name', { required: 'Name is required' })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-          {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
+      {/* Grid chia 2 cột, trái 6, phải 4 */}
+      <div className="grid grid-cols-10 gap-6">
+        {/* Cột trái: Thông tin chính, chiếm 6/10 */}
+        <div className="col-span-6 space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Tên thông số kỹ thuật</label>
+              <input
+                type="text"
+                {...register('name', { required: 'Tên thông số kỹ thuật là bắt buộc' })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              />
+              {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Slug</label>
+              <input
+                type="text" 
+                {...register('slug', { required: 'Slug là bắt buộc' })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                readOnly={mode === 'create'}
+              />
+              {errors.slug && <p className="mt-1 text-sm text-red-600">{errors.slug.message}</p>}
+              {mode === 'create' && (
+                <p className="mt-1 text-sm text-gray-500">Slug sẽ được tự động tạo từ tên</p>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Nhóm thông số kỹ thuật</label>
+            {groupFields.map((field, index) => (
+              <GroupField
+                key={field.id}
+                control={control}
+                register={register}
+                groupIndex={index}
+                onRemove={() => removeGroup(index)}
+              />
+            ))}
+            <button
+              type="button"
+              onClick={() => appendGroup({ 
+                title: '', 
+                specs: [{ name: '', value: '' }]
+              })}
+              className="mt-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+            >
+              Thêm nhóm
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Thứ tự</label>
+              <input
+                type="number"
+                {...register('displayOrder')}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Trạng thái</label>
+              <select
+                {...register('isActive')}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              >
+                <option value="true">Hoạt động</option>
+                <option value="false">Không hoạt động</option>
+              </select>
+            </div>
+          </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Slug</label>
-          <input
-            type="text"
-            {...register('slug', { required: 'Slug is required' })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            readOnly={mode === 'create'}
-          />
-          {errors.slug && <p className="mt-1 text-sm text-red-600">{errors.slug.message}</p>}
-          {mode === 'create' && (
-            <p className="mt-1 text-sm text-gray-500">Slug will be auto-generated from name</p>
-          )}
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Title</label>
-        <input
-          type="text"
-          {...register('title', { required: 'Title is required' })}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-        />
-        {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>}
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Groups</label>
-        {groupFields.map((field, index) => (
-          <GroupField
-            key={field.id}
-            control={control}
-            register={register}
-            groupIndex={index}
-            onRemove={() => removeGroup(index)}
-          />
-        ))}
-        <button
-          type="button"
-          onClick={() => appendGroup({ 
-            title: '', 
-            specs: [{ name: '', value: '' }]
-          })}
-          className="mt-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-        >
-          Add Group
-        </button>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Display Order</label>
-          <input
-            type="number"
-            {...register('displayOrder')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Status</label>
-          <select
-            {...register('isActive')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          >
-            <option value="true">Active</option>
-            <option value="false">Inactive</option>
-          </select>
+        {/* Cột phải: Gán cho danh mục, chiếm 4/10 */}
+        <div className="col-span-4">
+          <label className="block text-sm font-medium text-gray-700">Gán cho danh mục</label>
+          <div>
+            {catLoading ? (
+              <span className="col-span-6">Đang tải danh mục...</span>
+            ) : categories.length === 0 ? (
+              <span className="col-span-6">Không có danh mục</span>
+            ) : (
+              <CategoryTree
+                categories={categories}
+                selectedCategoryNames={selectedCategories}
+                handleCategoryChange={handleCategoryChange}
+              />
+            )}
+          </div>
+          {errors.categories && <p className="mt-1 text-sm text-red-600">{errors.categories.message as string}</p>}
         </div>
       </div>
 
@@ -225,7 +276,7 @@ export const SpecificationForm: React.FC<SpecificationFormProps> = ({
           disabled={loading}
           className="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
         >
-          {loading ? 'Saving...' : mode === 'create' ? 'Create Specification' : 'Update Specification'}
+          {loading ? 'Đang lưu...' : mode === 'create' ? 'Tạo thông số kỹ thuật' : 'Cập nhật thông số kỹ thuật'}
         </button>
       </div>
     </form>

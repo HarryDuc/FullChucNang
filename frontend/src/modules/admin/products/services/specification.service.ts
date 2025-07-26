@@ -19,5 +19,15 @@ export const specificationService = {
       }
     });
     return response.data;
-  }
+  },
+
+  async getByCategoryIds(categoryIds: string[]) {
+    const response = await api.get(API_ROUTES.SPECIFICATIONS.GET_BY_CATEGORIES, {
+      params: { categories: categoryIds.join(',') },
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    return response.data;
+  },
 }; 

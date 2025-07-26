@@ -28,8 +28,6 @@ export interface Category {
 interface CategoryTreeProps {
   categories: Category[];
   selectedCategoryNames: string[];
-  selectedFilters: Record<string, any>;
-  onFilterChange: (filters: Record<string, any>) => void;
   handleCategoryChange: (category: Category, checked: boolean) => void;
   loading?: boolean;
   error?: string;
@@ -38,8 +36,7 @@ interface CategoryTreeProps {
 const CategoryTree: React.FC<CategoryTreeProps> = ({
   categories,
   selectedCategoryNames,
-  selectedFilters,
-  onFilterChange,
+
   handleCategoryChange,
   loading = false,
   error,
@@ -77,7 +74,7 @@ const CategoryTree: React.FC<CategoryTreeProps> = ({
 
     const hasChildren = children.length > 0;
     // Nếu danh mục được chọn (đang mở) thì hiện checkbox checked
-    const isOpen = selectedCategoryNames.includes(category.name);
+    const isChecked = selectedCategoryNames.includes(category._id);
     const isExpanded = expandedNodes.has(category._id);
 
     // Hiển thị icon mũi tên nếu có con
@@ -106,7 +103,7 @@ const CategoryTree: React.FC<CategoryTreeProps> = ({
             <input
               type="checkbox"
               id={category._id}
-              checked={isOpen}
+              checked={isChecked}
               onChange={(e) => handleCategoryChange(category, e.target.checked)}
               className="form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded"
             />
@@ -173,16 +170,7 @@ const CategoryTree: React.FC<CategoryTreeProps> = ({
           {hasChildren && arrowIcon}
         </div>
 
-        {/* Hiển thị bộ lọc nếu danh mục được chọn */}
-        {isOpen && !hasChildren && (
-          <div className="ml-6 mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <ProductFilterSelector
-              categoryId={category._id}
-              selectedFilters={selectedFilters}
-              onChange={onFilterChange}
-            />
-          </div>
-        )}
+
 
         {/* Render danh mục con nếu node được mở */}
         {hasChildren && isExpanded && (
@@ -283,14 +271,17 @@ const CategoryTree: React.FC<CategoryTreeProps> = ({
         <div className="p-3 bg-blue-50 border-t border-gray-200">
           <div className="text-xs text-gray-600 mb-2">Danh mục đã chọn:</div>
           <div className="flex flex-wrap gap-1">
-            {selectedCategoryNames.map((categoryName, index) => (
-              <span
-                key={index}
-                className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded"
-              >
-                {categoryName}
-              </span>
-            ))}
+            {selectedCategoryNames.map((categoryId, index) => {
+              const category = categories.find(cat => cat._id === categoryId);
+              return (
+                <span
+                  key={categoryId}
+                  className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded"
+                >
+                  {category?.name || categoryId}
+                </span>
+              );
+            })}
           </div>
         </div>
       )}

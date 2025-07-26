@@ -30,6 +30,15 @@ const FiltersPage = () => {
 
   // Debug log
   console.log('Filters data:', filters);
+  
+  // Debug categories
+  filters.forEach((filter, index) => {
+    console.log(`Filter ${index + 1} categories:`, {
+      filterName: filter.name,
+      categoriesCount: filter.categories?.length || 0,
+      categories: filter.categories
+    });
+  });
 
   return (
     <div className="max-w-6xl mx-auto p-6">
@@ -89,9 +98,9 @@ const FiltersPage = () => {
                         <span
                           key={cat._id}
                           className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded"
-                          title={`ID: ${cat._id}`}
+                          title={`ID: ${cat._id}, Name: ${cat.name || 'N/A'}`}
                         >
-                          {cat.name || 'Không có tên'}
+                          {cat.name || `Category ${cat._id?.slice(-6) || 'Unknown'}`}
                         </span>
                       ))}
                     </div>

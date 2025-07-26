@@ -20,22 +20,22 @@ export const SpecificationList: React.FC<SpecificationListProps> = ({
         <thead className="bg-gray-50">
           <tr>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Name
+              Tên thông số kỹ thuật
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Title
+              Tiêu đề
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Groups
+              Nhóm thông số kỹ thuật
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Status
+              Trạng thái
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Order
+              Thứ tự
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Actions
+              Hành động
             </th>
           </tr>
         </thead>
@@ -58,8 +58,8 @@ export const SpecificationList: React.FC<SpecificationListProps> = ({
                   onChange={(e) => onStatusChange(spec.slug, e.target.value === 'true')}
                   className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                 >
-                  <option value="true">Active</option>
-                  <option value="false">Inactive</option>
+                  <option value="true">Hoạt động</option>
+                  <option value="false">Không hoạt động</option>
                 </select>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -70,13 +70,13 @@ export const SpecificationList: React.FC<SpecificationListProps> = ({
                   onClick={() => onEdit(spec)}
                   className="text-indigo-600 hover:text-indigo-900 mr-4"
                 >
-                  Edit
+                  Sửa
                 </button>
                 <button
                   onClick={() => onDelete(spec.slug)}
                   className="text-red-600 hover:text-red-900"
                 >
-                  Delete
+                  Xóa
                 </button>
               </td>
             </tr>

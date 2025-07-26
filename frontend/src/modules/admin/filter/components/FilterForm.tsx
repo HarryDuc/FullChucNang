@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Filter, CreateFilterDto, RangeOption } from '../types/filter.types';
 import { CategoriesProduct } from '../../categories-product/types/categories-product.types';
 import { getCategoriesProduct } from '../../categories-product/services/categories-product.service';
+import CategoryTreeSelector, { Category } from './CategoryTreeSelector';
 
 interface Props {
   filter?: Filter;
@@ -29,7 +30,7 @@ const FilterForm: React.FC<Props> = ({ filter, onSuccess }) => {
       : []
   );
   const [newOption, setNewOption] = useState('');
-  const [categories, setCategories] = useState<CategoriesProduct[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   // State cho range option mới
   const [newRangeOption, setNewRangeOption] = useState<RangeOption>({
@@ -41,7 +42,18 @@ const FilterForm: React.FC<Props> = ({ filter, onSuccess }) => {
   useEffect(() => {
     const fetchCategories = async () => {
       const data = await getCategoriesProduct();
-      setCategories(data);
+      // Chuyển đổi CategoriesProduct sang Category
+      const convertedCategories: Category[] = data.map(cat => ({
+        _id: cat._id,
+        name: cat.name,
+        slug: cat.slug,
+        parentCategory: cat.parentCategory || null,
+        subCategories: cat.subCategories || [],
+        description: cat.description || '',
+        level: cat.level || 0,
+        isActive: cat.isActive !== false
+      }));
+      setCategories(convertedCategories);
     };
     fetchCategories();
   }, []);
@@ -77,12 +89,12 @@ const FilterForm: React.FC<Props> = ({ filter, onSuccess }) => {
     setRangeOptions(rangeOptions.filter((_, i) => i !== index));
   };
 
-  const handleCategoryChange = (categoryId: string) => {
+  const handleCategoryChange = (categoryId: string, checked: boolean) => {
     setSelectedCategories(prev => {
-      if (prev.includes(categoryId)) {
-        return prev.filter(id => id !== categoryId);
+      if (checked) {
+        return prev.includes(categoryId) ? prev : [...prev, categoryId];
       } else {
-        return [...prev, categoryId];
+        return prev.filter(id => id !== categoryId);
       }
     });
   };
@@ -115,182 +127,198 @@ const FilterForm: React.FC<Props> = ({ filter, onSuccess }) => {
     }).format(value);
   };
 
+  // Chia layout thành 2 cột: trái (6 phần) cho thông tin filter, phải (4 phần) cho danh mục
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="flex flex-col">
-        <label htmlFor="name" className="mb-1 text-gray-700 font-medium">
-          Tên bộ lọc
-        </label>
-        <input
-          type="text"
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Ví dụ: Màu sắc, Kích thước..."
-          required
-          className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-300"
-        />
-      </div>
-
-      <div className="flex flex-col">
-        <label htmlFor="type" className="mb-1 text-gray-700 font-medium">
-          Loại bộ lọc
-        </label>
-        <select
-          id="type"
-          value={type}
-          onChange={(e) => setType(e.target.value as Filter['type'])}
-          className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-300"
-        >
-          <option value="select">Select (Dropdown)</option>
-          <option value="checkbox">Checkbox (Multi-select)</option>
-          <option value="range">Range (Khoảng giá)</option>
-          <option value="text">Text (Văn bản)</option>
-          <option value="number">Number (Số)</option>
-        </select>
-      </div>
-
-      <div className="flex flex-col">
-        <label className="mb-1 text-gray-700 font-medium">
-          Danh mục sản phẩm (có thể chọn nhiều)
-        </label>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3 border border-gray-300 rounded max-h-60 overflow-y-auto">
-          {categories.map((cat) => (
-            <div key={cat._id} className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id={`cat-${cat._id}`}
-                checked={selectedCategories.includes(cat._id)}
-                onChange={() => handleCategoryChange(cat._id)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <label htmlFor={`cat-${cat._id}`} className="text-sm">
-                {cat.name}
-              </label>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {type === 'range' ? (
-        <div className="flex flex-col">
-          <label className="mb-1 text-gray-700 font-medium">Khoảng giá</label>
-          <div className="space-y-4">
-            {/* Form thêm khoảng giá mới */}
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm text-gray-600">Nhãn</label>
-                <input
-                  type="text"
-                  value={newRangeOption.label}
-                  onChange={(e) =>
-                    setNewRangeOption({ ...newRangeOption, label: e.target.value })
-                  }
-                  placeholder="Ví dụ: Dưới 500k"
-                  className="mt-1 w-full p-2 border rounded"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-600">Giá từ</label>
-                <input
-                  type="number"
-                  value={newRangeOption.min}
-                  onChange={(e) =>
-                    setNewRangeOption({
-                      ...newRangeOption,
-                      min: Number(e.target.value)
-                    })
-                  }
-                  min="0"
-                  className="mt-1 w-full p-2 border rounded"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-600">Đến</label>
-                <input
-                  type="number"
-                  value={newRangeOption.max}
-                  onChange={(e) =>
-                    setNewRangeOption({
-                      ...newRangeOption,
-                      max: Number(e.target.value)
-                    })
-                  }
-                  min="0"
-                  className="mt-1 w-full p-2 border rounded"
-                />
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={handleAddRangeOption}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-            >
-              Thêm khoảng giá
-            </button>
-
-            {/* Danh sách khoảng giá */}
-            <div className="space-y-2">
-              {rangeOptions.map((range, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between bg-gray-50 p-3 rounded"
-                >
-                  <div>
-                    <span className="font-medium">{range.label}</span>
-                    <span className="text-sm text-gray-500 ml-2">
-                      ({formatPrice(range.min)} - {formatPrice(range.max)})
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveRangeOption(index)}
-                    className="text-red-500 hover:text-red-600"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="flex flex-col">
-          <label className="mb-1 text-gray-700 font-medium">Tùy chọn lọc</label>
-          <div className="flex gap-2 mb-2">
+      <div className="grid grid-cols-1 md:grid-cols-10 gap-8">
+        {/* Cột trái: Thông tin bộ lọc (6/10) */}
+        <div className="md:col-span-6 flex flex-col space-y-6">
+          <div className="flex flex-col">
+            <label htmlFor="name" className="mb-1 text-gray-700 font-medium">
+              Tên bộ lọc
+            </label>
             <input
               type="text"
-              value={newOption}
-              onChange={(e) => setNewOption(e.target.value)}
-              placeholder="Nhập tùy chọn mới"
-              className="flex-1 p-3 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-300"
+              id="name"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="Ví dụ: Màu sắc, Kích thước..."
+              required
+              className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-300"
             />
-            <button
-              type="button"
-              onClick={handleAddOption}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-            >
-              Thêm
-            </button>
           </div>
-          <div className="space-y-2">
-            {options.map((option, index) => (
-              <div key={index} className="flex items-center gap-2 bg-gray-50 p-2 rounded">
-                <span className="flex-1">{option}</span>
+
+          <div className="flex flex-col">
+            <label htmlFor="type" className="mb-1 text-gray-700 font-medium">
+              Loại bộ lọc
+            </label>
+            <select
+              id="type"
+              value={type}
+              onChange={e => setType(e.target.value as Filter['type'])}
+              className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-300"
+            >
+              <option value="select">Select (Dropdown)</option>
+              <option value="checkbox">Checkbox (Multi-select)</option>
+              <option value="range">Range (Khoảng giá)</option>
+              <option value="text">Text (Văn bản)</option>
+              <option value="number">Number (Số)</option>
+            </select>
+          </div>
+
+          {type === 'range' ? (
+            <div className="flex flex-col">
+              <label className="mb-1 text-gray-700 font-medium">Khoảng giá</label>
+              <div className="space-y-4">
+                {/* Form thêm khoảng giá mới */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm text-gray-600">Nhãn</label>
+                    <input
+                      type="text"
+                      value={newRangeOption.label}
+                      onChange={e =>
+                        setNewRangeOption({ ...newRangeOption, label: e.target.value })
+                      }
+                      placeholder="Ví dụ: Dưới 500k"
+                      className="mt-1 w-full p-2 border rounded"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-600">Giá từ</label>
+                    <input
+                      type="number"
+                      value={newRangeOption.min}
+                      onChange={e =>
+                        setNewRangeOption({
+                          ...newRangeOption,
+                          min: Number(e.target.value)
+                        })
+                      }
+                      min="0"
+                      className="mt-1 w-full p-2 border rounded"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-600">Đến</label>
+                    <input
+                      type="number"
+                      value={newRangeOption.max}
+                      onChange={e =>
+                        setNewRangeOption({
+                          ...newRangeOption,
+                          max: Number(e.target.value)
+                        })
+                      }
+                      min="0"
+                      className="mt-1 w-full p-2 border rounded"
+                    />
+                  </div>
+                </div>
                 <button
                   type="button"
-                  onClick={() => handleRemoveOption(index)}
-                  className="text-red-500 hover:text-red-600"
+                  onClick={handleAddRangeOption}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
                 >
-                  ×
+                  Thêm khoảng giá
+                </button>
+
+                {/* Danh sách khoảng giá */}
+                <div className="space-y-2">
+                  {rangeOptions.map((range, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between bg-gray-50 p-3 rounded"
+                    >
+                      <div>
+                        <span className="font-medium">{range.label}</span>
+                        <span className="text-sm text-gray-500 ml-2">
+                          ({formatPrice(range.min)} - {formatPrice(range.max)})
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveRangeOption(index)}
+                        className="text-red-500 hover:text-red-600"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col">
+              <label className="mb-1 text-gray-700 font-medium">Tùy chọn lọc</label>
+              <div className="flex gap-2 mb-2">
+                <input
+                  type="text"
+                  value={newOption}
+                  onChange={e => setNewOption(e.target.value)}
+                  placeholder="Nhập tùy chọn mới"
+                  className="flex-1 p-3 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-300"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddOption}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                >
+                  Thêm
                 </button>
               </div>
-            ))}
-          </div>
+              <div className="space-y-2">
+                {options.map((option, index) => (
+                  <div key={index} className="flex items-center gap-2 bg-gray-50 p-2 rounded">
+                    <span className="flex-1">{option}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveOption(index)}
+                      className="text-red-500 hover:text-red-600"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-      )}
 
-      <div className="flex gap-4">
+        {/* Cột phải: Danh mục sản phẩm (4/10) */}
+        <div className="md:col-span-4 flex flex-col">
+          <label className="mb-1 text-gray-700 font-medium">
+            Danh mục sản phẩm (có thể chọn nhiều)
+          </label>
+          <CategoryTreeSelector
+            categories={categories}
+            selectedCategories={selectedCategories}
+            onCategoryChange={handleCategoryChange}
+          />
+          {selectedCategories.length > 0 && (
+            <div className="mt-2">
+              <div className="text-sm text-gray-600 mb-2">
+                Đã chọn {selectedCategories.length} danh mục:
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {selectedCategories.map(catId => {
+                  const category = categories.find(cat => cat._id === catId);
+                  return (
+                    <span
+                      key={catId}
+                      className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded"
+                    >
+                      {category?.name || `Category ${catId.slice(-6)}`}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="flex gap-4 mt-8">
         <button
           type="submit"
           className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded transition-colors"

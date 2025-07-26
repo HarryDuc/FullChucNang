@@ -36,12 +36,12 @@ export const SpecificationsPage = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Specifications Management</h1>
+        <h1 className="text-2xl font-bold">Quản lý thông số kỹ thuật</h1>
         <button
           onClick={() => router.push('/admin/specifications/create')}
           className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
         >
-          Add New Specification
+          Thêm thông số kỹ thuật mới
         </button>
       </div>
 

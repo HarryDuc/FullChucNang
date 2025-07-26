@@ -19,7 +19,7 @@ export const CreateSpecificationPage = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Create New Specification</h1>
+          <h1 className="text-2xl font-bold">Tạo thông số kỹ thuật mới</h1>
       </div>
 
       <div className="bg-white p-6 rounded-lg shadow">

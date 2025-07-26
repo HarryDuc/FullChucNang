@@ -44,8 +44,8 @@ export class Specification {
   @Prop({ type: () => [SpecificationGroup], default: [] })
   groups: SpecificationGroup[];
 
-  // @Prop({ type: [String], default: [] })
-  // categories: string[]; // Danh sách category ID mà template này áp dụng được
+  @Prop({ type: [String], default: [] })
+  categories: string[]; // Danh sách category ID mà template này áp dụng được
 
   @Prop({ default: true })
   isActive: boolean;
