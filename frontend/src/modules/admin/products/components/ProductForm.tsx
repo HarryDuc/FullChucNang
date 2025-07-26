@@ -16,6 +16,8 @@ import { VariantOptions } from "./VariantOptions";
 import Image from "next/image";
 import SunEditerUploadImage from "../../common/components/SunEditer";
 import { useProductSpecification } from '../hooks/useProductSpecification';
+import { useCategoryFilters } from '../hooks/useCategoryFilters';
+import ProductFilterSelector from './ProductFilterSelector';
 
 interface SelectedCategory {
   id: string;
@@ -519,12 +521,105 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           <CategoryTree
             categories={categories}
             selectedCategoryNames={selectedCategories.map(c => c.name)}
-            selectedFilters={filters}
-            onFilterChange={handleFilterChange}
             handleCategoryChange={handleCategoryChange}
           />
         </div>
       </div>
+
+      {/* Bộ lọc sản phẩm - Hiển thị riêng cho từng danh mục */}
+      {(() => {
+        // Get all selected categories with valid data
+        const validCategories = selectedCategories.filter((category) => {
+          const categoryData = categories.find(cat => cat._id === category.id || cat.name === category.name);
+          return categoryData;
+        });
+        
+        // Filter categories that actually have filters (to avoid showing empty sections)
+        const categoriesWithFilters = validCategories.filter((category) => {
+          const categoryData = categories.find(cat => cat._id === category.id || cat.name === category.name);
+          if (!categoryData) return false;
+          
+          // Check if this category has filters by using the same logic as ProductFilterSelector
+          // We'll simulate the filter check here to avoid rendering empty sections
+          return categoryData._id; // For now, include all valid categories and let React handle the filtering
+        });
+        
+        // If no valid categories, don't show the section
+        if (categoriesWithFilters.length === 0) return null;
+        
+        return (
+          <div className="bg-white rounded-xl shadow p-6 space-y-6">
+            <h2 className="text-xl font-bold text-gray-800 border-b border-gray-200 pb-3">
+              Bộ lọc sản phẩm ({categoriesWithFilters.length} danh mục)
+            </h2>
+            
+            <div className="space-y-6">
+              {categoriesWithFilters.map((category) => {
+                const categoryData = categories.find(cat => cat._id === category.id || cat.name === category.name);
+                if (!categoryData) return null;
+                
+                // Build breadcrumb for this specific category
+                const buildCategoryBreadcrumb = (cat: Category) => {
+                  const breadcrumbs: string[] = [];
+                  let currentCat: Category | undefined = cat;
+                  
+                  // Build breadcrumb from current category up to root
+                  while (currentCat) {
+                    breadcrumbs.unshift(currentCat.name);
+                    if (currentCat.parentCategory) {
+                      currentCat = categories.find(c => c._id === currentCat!.parentCategory);
+                    } else {
+                      break;
+                    }
+                  }
+                  
+                  return breadcrumbs.join(' > ');
+                };
+                
+                // Create inline component to check if category has filters
+                const CategoryFilterWrapper = ({ categoryData, filters, onFilterChange, buildCategoryBreadcrumb }: any) => {
+                  const { filters: categoryFilters, loading, error } = useCategoryFilters(categoryData._id);
+                  
+                  // Don't render if no categoryId, loading, error, or no filters
+                  if (!categoryData._id || loading || error || !categoryFilters?.length) {
+                    return null;
+                  }
+                  
+                  return (
+                    <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-lg font-semibold text-gray-700">Danh mục</h3>
+                        <div className="text-sm text-gray-600 bg-white px-3 py-1 rounded-full border">
+                          <span className="font-medium">
+                            {buildCategoryBreadcrumb(categoryData)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="bg-white border border-gray-200 rounded-lg p-4">
+                        <ProductFilterSelector
+                          categoryId={categoryData._id}
+                          selectedFilters={filters}
+                          onChange={onFilterChange}
+                        />
+                      </div>
+                    </div>
+                  );
+                };
+                
+                return (
+                  <CategoryFilterWrapper
+                    key={category.id}
+                    categoryData={categoryData}
+                    filters={filters}
+                    onFilterChange={handleFilterChange}
+                    buildCategoryBreadcrumb={buildCategoryBreadcrumb}
+                  />
+                );
+              }).filter(Boolean)}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Stock Management Section */}
       <div className="bg-white rounded-xl shadow p-6 space-y-4">

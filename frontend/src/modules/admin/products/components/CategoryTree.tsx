@@ -1,7 +1,6 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { GoChevronDown, GoChevronRight } from "react-icons/go";
-import ProductFilterSelector from '../../../client/products/components/ProductFilterSelector';
 
 // Định nghĩa kiểu Category
 export interface Category {
@@ -27,9 +26,7 @@ export interface Category {
 
 interface CategoryTreeProps {
   categories: Category[];
-  selectedCategoryNames: string[];
-  selectedFilters: Record<string, any>;
-  onFilterChange: (filters: Record<string, any>) => void;
+  selectedCategoryNames: string[]; // Có thể là name hoặc _id
   handleCategoryChange: (category: Category, checked: boolean) => void;
   loading?: boolean;
   error?: string;
@@ -38,13 +35,30 @@ interface CategoryTreeProps {
 const CategoryTree: React.FC<CategoryTreeProps> = ({
   categories,
   selectedCategoryNames,
-  selectedFilters,
-  onFilterChange,
   handleCategoryChange,
   loading = false,
   error,
 }) => {
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+
+  // Tự động mở node khi danh mục được chọn
+  useEffect(() => {
+    const newExpandedNodes = new Set<string>();
+    selectedCategoryNames.forEach(categoryIdOrName => {
+      const category = categories.find(cat => 
+        cat._id === categoryIdOrName || cat.name === categoryIdOrName
+      );
+      if (category) {
+        // Mở node hiện tại và tất cả parent nodes
+        let currentCategory = category;
+        while (currentCategory.parentCategory) {
+          newExpandedNodes.add(currentCategory.parentCategory);
+          currentCategory = categories.find(cat => cat._id === currentCategory.parentCategory) || currentCategory;
+        }
+      }
+    });
+    setExpandedNodes(newExpandedNodes);
+  }, [selectedCategoryNames, categories]);
 
   const toggleNode = (categoryId: string) => {
     setExpandedNodes((prev: Set<string>) => {
@@ -77,7 +91,8 @@ const CategoryTree: React.FC<CategoryTreeProps> = ({
 
     const hasChildren = children.length > 0;
     // Nếu danh mục được chọn (đang mở) thì hiện checkbox checked
-    const isOpen = selectedCategoryNames.includes(category.name);
+    // Kiểm tra xem danh mục có được chọn không (có thể là name hoặc _id)
+    const isOpen = selectedCategoryNames.includes(category.name) || selectedCategoryNames.includes(category._id);
     const isExpanded = expandedNodes.has(category._id);
 
     // Hiển thị icon mũi tên nếu có con
@@ -172,17 +187,6 @@ const CategoryTree: React.FC<CategoryTreeProps> = ({
           </label>
           {hasChildren && arrowIcon}
         </div>
-
-        {/* Hiển thị bộ lọc nếu danh mục được chọn */}
-        {isOpen && !hasChildren && (
-          <div className="ml-6 mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <ProductFilterSelector
-              categoryId={category._id}
-              selectedFilters={selectedFilters}
-              onChange={onFilterChange}
-            />
-          </div>
-        )}
 
         {/* Render danh mục con nếu node được mở */}
         {hasChildren && isExpanded && (
@@ -283,14 +287,20 @@ const CategoryTree: React.FC<CategoryTreeProps> = ({
         <div className="p-3 bg-blue-50 border-t border-gray-200">
           <div className="text-xs text-gray-600 mb-2">Danh mục đã chọn:</div>
           <div className="flex flex-wrap gap-1">
-            {selectedCategoryNames.map((categoryName, index) => (
-              <span
-                key={index}
-                className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded"
-              >
-                {categoryName}
-              </span>
-            ))}
+            {selectedCategoryNames.map((categoryIdOrName, index) => {
+              // Tìm category theo _id hoặc name
+              const category = categories.find(cat => 
+                cat._id === categoryIdOrName || cat.name === categoryIdOrName
+              );
+              return (
+                <span
+                  key={index}
+                  className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded"
+                >
+                  {category?.name || categoryIdOrName}
+                </span>
+              );
+            })}
           </div>
         </div>
       )}
