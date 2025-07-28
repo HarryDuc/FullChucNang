@@ -107,7 +107,7 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
     {
       href: "/admin/specifications",
       icon: <MdOutlineStyle />,
-      label: "Thông số kỹ thuật",
+      label: "Thông số nâng cao",
       group: "Thương mại điện tử",
       requiredPermission: {
         resource: "specifications",

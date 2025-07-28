@@ -15,9 +15,11 @@ import CategoryTree, { Category } from "./CategoryTree";
 import { VariantOptions } from "./VariantOptions";
 import Image from "next/image";
 import SunEditerUploadImage from "../../common/components/SunEditer";
+import SunEditerForSpecification from "../../common/components/SunEditerForSpecification";
 import { useProductSpecification } from '../hooks/useProductSpecification';
 import { useCategoryFilters } from '../hooks/useCategoryFilters';
 import ProductFilterSelector from './ProductFilterSelector';
+import { getFiltersByCategory, CategoryFilter } from '../hooks/useCategoryFilters';
 import { specificationService } from '../services/specification.service';
 
 interface SelectedCategory {
@@ -44,10 +46,17 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   // Basic Information
   const [name, setName] = useState(initialData?.name || "");
   const [slug, setSlug] = useState(initialData?.slug || "");
-  // const [filters, setFilters] = useState<Record<string, any>>({});
-  const handleFilterChange = (newFilters: Record<string, any>) => {
+  
+  // Khởi tạo filters từ initialData
+  const [filters, setFilters] = useState<Record<string, any>>(
+    initialData?.filterAttributes || {}
+  );
+  
+  // Memoize filter change handler to prevent unnecessary re-renders
+  const handleFilterChange = React.useCallback((newFilters: Record<string, any>) => {
+    console.log('Filter changed:', newFilters);
     setFilters(newFilters);
-  };
+  }, []);
   const [description, setDescription] = useState(
     initialData?.description || ""
   );
@@ -103,6 +112,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     groups: initialData?.specification?.groups || [],
   });
 
+  // Specification Description
+  const [specificationDescription, setSpecificationDescription] = useState(
+    initialData?.specificationDescription || ""
+  );
+
   // Status and Visibility
   const [status, setStatus] = useState<
     "draft" | "published" | "archived" | "outOfStock" | "comingSoon"
@@ -139,10 +153,42 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const [isLoadingSpecifications, setIsLoadingSpecifications] = useState(false);
   const [autoPopulatedCategories, setAutoPopulatedCategories] = useState<string[]>([]);
 
-  // Khởi tạo filters từ initialData
-  const [filters, setFilters] = useState<Record<string, any>>(
-    initialData?.filterAttributes || {}
-  );
+  // State lưu filter options theo category
+  const [categoryFilterOptions, setCategoryFilterOptions] = useState<CategoryFilter[]>([]);
+  
+  // Cache để lưu filter options đã fetch
+  const [filterOptionsCache, setFilterOptionsCache] = useState<Record<string, CategoryFilter[]>>({});
+
+  // Fetch filter options khi đổi category (chỉ lấy theo category đầu tiên)
+  useEffect(() => {
+    const fetchCategoryFilters = async () => {
+      if (selectedCategories.length === 0 || !selectedCategories[0].id) {
+        setCategoryFilterOptions([]);
+        return;
+      }
+      
+      const categoryId = selectedCategories[0].id;
+      
+      // Kiểm tra cache trước
+      if (filterOptionsCache[categoryId]) {
+        setCategoryFilterOptions(filterOptionsCache[categoryId]);
+        return;
+      }
+      
+      try {
+        const data = await getFiltersByCategory(categoryId);
+        // Lưu vào cache
+        setFilterOptionsCache(prev => ({
+          ...prev,
+          [categoryId]: data
+        }));
+        setCategoryFilterOptions(data);
+      } catch (err) {
+        setCategoryFilterOptions([]);
+      }
+    };
+    fetchCategoryFilters();
+  }, [selectedCategories]); // Remove filterOptionsCache from dependencies to avoid loop
 
   // Load filters khi có initialData hoặc khi category thay đổi
   useEffect(() => {
@@ -515,6 +561,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           specification.title || specification.groups.length > 0
             ? specification
             : undefined,
+        specificationDescription,
         seo: {
           title: seoTitle,
           description: seoDescription,
@@ -540,6 +587,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       setErrorMsg(error instanceof Error ? error.message : "Có lỗi xảy ra");
     }
   };
+
+  // Memoize filter change handler to prevent unnecessary re-renders
+  const memoizedCategoryFilterOptions = React.useMemo(() => categoryFilterOptions, [categoryFilterOptions]);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
@@ -739,27 +789,17 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           return categoryData;
         });
         
-        // Filter categories that actually have filters (to avoid showing empty sections)
-        const categoriesWithFilters = validCategories.filter((category) => {
-          const categoryData = categories.find(cat => cat._id === category.id || cat.name === category.name);
-          if (!categoryData) return false;
-          
-          // Check if this category has filters by using the same logic as ProductFilterSelector
-          // We'll simulate the filter check here to avoid rendering empty sections
-          return categoryData._id; // For now, include all valid categories and let React handle the filtering
-        });
-        
         // If no valid categories, don't show the section
-        if (categoriesWithFilters.length === 0) return null;
+        if (validCategories.length === 0) return null;
         
         return (
           <div className="bg-white rounded-xl shadow p-6 space-y-6">
             <h2 className="text-xl font-bold text-gray-800 border-b border-gray-200 pb-3">
-              Bộ lọc sản phẩm ({categoriesWithFilters.length} danh mục)
+              Bộ lọc sản phẩm ({validCategories.length} danh mục)
             </h2>
             
             <div className="space-y-6">
-              {categoriesWithFilters.map((category) => {
+              {validCategories.map((category) => {
                 const categoryData = categories.find(cat => cat._id === category.id || cat.name === category.name);
                 if (!categoryData) return null;
                 
@@ -781,46 +821,26 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   return breadcrumbs.join(' > ');
                 };
                 
-                // Create inline component to check if category has filters
-                const CategoryFilterWrapper = ({ categoryData, filters, onFilterChange, buildCategoryBreadcrumb }: any) => {
-                  const { filters: categoryFilters, loading, error } = useCategoryFilters(categoryData._id);
-                  
-                  // Don't render if no categoryId, loading, error, or no filters
-                  if (!categoryData._id || loading || error || !categoryFilters?.length) {
-                    return null;
-                  }
-                  
-                  return (
-                    <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-lg font-semibold text-gray-700">Danh mục</h3>
-                        <div className="text-sm text-gray-600 bg-white px-3 py-1 rounded-full border">
-                          <span className="font-medium">
-                            {buildCategoryBreadcrumb(categoryData)}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="bg-white border border-gray-200 rounded-lg p-4">
-                        <ProductFilterSelector
-                          categoryId={categoryData._id}
-                          selectedFilters={filters}
-                          onChange={onFilterChange}
-                        />
+                return (
+                  <div key={category.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-lg font-semibold text-gray-700">Danh mục</h3>
+                      <div className="text-sm text-gray-600 bg-white px-3 py-1 rounded-full border">
+                        <span className="font-medium">
+                          {buildCategoryBreadcrumb(categoryData)}
+                        </span>
                       </div>
                     </div>
-                  );
-                };
-                
-                return (
-                  <CategoryFilterWrapper
-                    key={category.id}
-                    categoryData={categoryData}
-                    filters={filters}
-                    onFilterChange={handleFilterChange}
-                    buildCategoryBreadcrumb={buildCategoryBreadcrumb}
-                  />
+                    <div className="bg-white border border-gray-200 rounded-lg p-4">
+                      <ProductFilterSelector
+                        filterOptions={memoizedCategoryFilterOptions}
+                        selectedFilters={filters}
+                        onChange={handleFilterChange}
+                      />
+                    </div>
+                  </div>
                 );
-              }).filter(Boolean)}
+              })}
             </div>
           </div>
         );
@@ -956,21 +976,42 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 if (slug) {
                   const spec = await fetchSpecificationBySlug(slug);
                   if (spec) {
-                    setSpecification({
-                      title: spec.title,
-                      groups: spec.groups.map((group: any) => ({
-                        title: group.title,
-                        specs: group.specs
-                      }))
-                    });
+                    // Check if this is a specification template (isSpecification == true)
+                    if (spec.isSpecification === true) {
+                      // If it's a specification template, populate specificationDescription
+                      setSpecificationDescription(spec.isSpecificationProduct || '');
+                      // Set the title from the template but clear groups since this is a description-only template
+                      setSpecification({
+                        title: spec.title || '',
+                        groups: []
+                      });
+                    } else {
+                      // If it's a regular template, populate specification groups
+                      setSpecification({
+                        title: spec.title || '',
+                        groups: spec.groups.map((group: any) => ({
+                          title: group.title,
+                          specs: group.specs
+                        }))
+                      });
+                      // Clear specificationDescription since this is a groups template
+                      setSpecificationDescription('');
+                    }
                   }
+                } else {
+                  // If no template selected, clear both
+                  setSpecification({
+                    title: specification.title || '',
+                    groups: []
+                  });
+                  setSpecificationDescription('');
                 }
               }}
             >
               <option value="">-- Chọn template --</option>
               {specifications.map((spec) => (
                 <option key={spec._id} value={spec.slug}>
-                  {spec.name}
+                  {spec.name} {spec.isSpecification === true ? '(Mô tả)' : '(Nhóm)'}
                 </option>
               ))}
             </select>
@@ -1114,6 +1155,23 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           >
             + Thêm nhóm thông số
           </button>
+
+          {/* Mô tả thông số kỹ thuật */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <h4 className="text-md font-semibold mb-3">Mô tả thông số kỹ thuật</h4>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Mô tả chi tiết thông số kỹ thuật
+              </label>
+              <SunEditerForSpecification
+                postData={specificationDescription}
+                setPostData={setSpecificationDescription}
+              />
+              <p className="text-xs text-gray-500 mt-2">
+                Sử dụng để mô tả chi tiết thông số kỹ thuật của sản phẩm. Có thể bao gồm hình ảnh, bảng biểu, và định dạng văn bản phong phú.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -27,6 +27,8 @@ export interface ISpecification {
   categories: string[];
   isActive: boolean;
   displayOrder: number;
+  isSpecification?: boolean | string;
+  isSpecificationProduct?: string;
   createdAt: string;
   updatedAt: string;
 }

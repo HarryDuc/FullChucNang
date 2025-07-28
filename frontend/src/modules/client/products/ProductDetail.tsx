@@ -644,6 +644,7 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
                 setShowAllImages={setShowAllImages}
                 productName={product.name}
                 specification={product.specification}
+                specificationDescription={product.specificationDescription}
               />
             </div>
             {/* Right Sidebar Banner Section - 3 cols on large screens */}

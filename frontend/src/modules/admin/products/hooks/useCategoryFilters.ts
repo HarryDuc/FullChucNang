@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getFiltersByCategory } from '../services/filter.service';
+export { getFiltersByCategory };
 
 export interface RangeOption {
   label: string;
@@ -18,6 +19,9 @@ export interface CategoryFilter {
   rangeOptions?: RangeOption[];
 }
 
+// Cache to store filters by categoryId
+const filtersCache: Record<string, CategoryFilter[]> = {};
+
 export const useCategoryFilters = (categoryId?: string) => {
   const [filters, setFilters] = useState<CategoryFilter[]>([]);
   const [loading, setLoading] = useState(false);
@@ -30,12 +34,21 @@ export const useCategoryFilters = (categoryId?: string) => {
         return;
       }
 
+      // Check cache first
+      if (filtersCache[categoryId]) {
+        setFilters(filtersCache[categoryId]);
+        return;
+      }
+
       setLoading(true);
       setError(null);
 
       try {
         const data = await getFiltersByCategory(categoryId);
         console.log('Fetched filters:', data); // Debug log
+        
+        // Store in cache
+        filtersCache[categoryId] = data;
         setFilters(data);
       } catch (err) {
         console.error('Error fetching filters:', err); // Debug log

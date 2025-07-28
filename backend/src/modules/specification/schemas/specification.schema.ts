@@ -44,6 +44,12 @@ export class Specification {
   @Prop({ type: () => [SpecificationGroup], default: [] })
   groups: SpecificationGroup[];
 
+  @Prop({ default: false })
+  isSpecification?: boolean;
+  
+  @Prop({ default: '' })
+  isSpecificationProduct?: string;
+
   @Prop({ type: [String], default: [] })
   categories: string[]; // Danh sách category ID mà template này áp dụng được
 

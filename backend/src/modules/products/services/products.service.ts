@@ -298,6 +298,7 @@ export class ProductService {
           'filterAttributes',
           'hasVariants',
           'specification',
+          'specificationDescription',
           'createdAt',
           'updatedAt',
           'publishedAt'

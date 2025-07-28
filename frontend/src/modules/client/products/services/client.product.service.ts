@@ -69,6 +69,8 @@ export interface Product {
   hasVariants: boolean;
   variantAttributes?: VariantAttribute[];
   variants?: ProductVariant[];
+  specification?: Specification;
+  specificationDescription?: string;
 }
 
 import { config } from "@/config/config";

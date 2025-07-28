@@ -195,6 +195,9 @@ export class Product {
     groups: SpecificationGroup[];
   };
 
+  @Prop({ type: String, default: '' })
+  specificationDescription?: string;
+
   @Prop({ default: '' })
   isSpecificationProduct?: string;
 

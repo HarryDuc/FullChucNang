@@ -161,6 +161,7 @@ export interface Product {
 
   // Thông số kỹ thuật
   specification?: Specification;
+  specificationDescription?: string;
 
   // Thông tin thời gian
   publishedAt?: string;

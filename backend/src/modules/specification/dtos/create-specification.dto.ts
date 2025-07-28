@@ -1,4 +1,4 @@
-import { IsString, IsArray, IsBoolean, IsNumber, IsOptional, ValidateNested, ArrayMinSize } from 'class-validator';
+import { IsString, IsArray, IsBoolean, IsNumber, IsOptional, ValidateNested, ArrayMinSize, ValidateIf } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class TechnicalSpecDto {
@@ -31,11 +31,21 @@ export class CreateSpecificationDto {
   @IsString()
   title: string;
 
+  @ValidateIf((o) => o.isSpecification !== true)
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => SpecificationGroupDto)
   @ArrayMinSize(1)
   groups: SpecificationGroupDto[];
+
+  @IsBoolean()
+  @IsOptional()
+  isSpecification?: boolean;
+
+  @ValidateIf((o) => o.isSpecification === true)
+  @IsString()
+  @IsOptional()
+  isSpecificationProduct?: string;
 
   @IsArray()
   @IsString({ each: true })

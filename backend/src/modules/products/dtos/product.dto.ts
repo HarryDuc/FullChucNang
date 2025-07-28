@@ -349,6 +349,10 @@ export class CreateProductDto {
   isSpecificationProduct?: string;
 
   @IsOptional()
+  @IsString()
+  specificationDescription?: string;
+
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => VariantAttributeDto)
@@ -482,6 +486,14 @@ export class UpdateProductDto implements Partial<CreateProductDto> {
 
   @IsOptional()
   @IsBoolean()
+  isSpecification?: boolean;
+
+  @IsOptional()
+  @IsString()
+  isSpecificationProduct?: string;
+
+  @IsOptional()
+  @IsBoolean()
   hasVariants?: boolean;
 
   @IsOptional()
@@ -558,11 +570,8 @@ export class UpdateProductDto implements Partial<CreateProductDto> {
 
   @IsOptional()
   @IsString()
-  isSpecificationProduct?: string;
+  specificationDescription?: string;
 
-  @IsOptional()
-  @IsBoolean()
-  isSpecification?: boolean;
 }
 
 /**

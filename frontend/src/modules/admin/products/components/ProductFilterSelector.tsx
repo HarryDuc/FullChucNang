@@ -1,28 +1,21 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { useCategoryFilters, CategoryFilter } from '../../../admin/products/hooks/useCategoryFilters';
+import React, { useCallback, useMemo } from 'react';
+import { CategoryFilter } from '../hooks/useCategoryFilters';
 
 interface Props {
-  categoryId?: string;
+  filterOptions: CategoryFilter[];
   selectedFilters: Record<string, any>;
   onChange: (filters: Record<string, any>) => void;
 }
 
-const ProductFilterSelector: React.FC<Props> = ({
-  categoryId,
+const ProductFilterSelector: React.FC<Props> = React.memo(({
+  filterOptions,
   selectedFilters,
   onChange,
 }) => {
-  const { filters, loading, error } = useCategoryFilters(categoryId);
-
-  // Log khi filters hoặc selectedFilters thay đổi
-  useEffect(() => {
-    console.log('Available filters:', filters);
-    console.log('Selected filters:', selectedFilters);
-  }, [filters, selectedFilters]);
-
-  const handleFilterChange = (filter: CategoryFilter, value: any) => {
+  // Memoize filter change handler to prevent unnecessary re-renders
+  const handleFilterChange = useCallback((filter: CategoryFilter, value: any) => {
     console.log('Changing filter:', filter.slug, 'to value:', value);
     
     // Remove filter if value is empty
@@ -37,35 +30,26 @@ const ProductFilterSelector: React.FC<Props> = ({
         [filter.slug]: value,
       });
     }
-  };
+  }, [selectedFilters, onChange]);
 
-  const formatPrice = (value: number) => {
+  const formatPrice = useCallback((value: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND'
     }).format(value);
-  };
+  }, []);
 
-  if (!categoryId) {
-    return null;
-  }
+  // Memoize the filter options to prevent unnecessary re-renders
+  const memoizedFilterOptions = useMemo(() => filterOptions, [filterOptions]);
 
-  if (loading) {
-    return <div className="text-gray-500">Đang tải bộ lọc...</div>;
-  }
-
-  if (error) {
-    return <div className="text-red-500">{error}</div>;
-  }
-
-  if (!filters.length) {
-    return null;
+  if (!memoizedFilterOptions.length) {
+    return <div className="text-gray-500">Danh mục này chưa có bộ lọc</div>;
   }
 
   return (
     <div className="space-y-4">
       <div className="space-y-6">
-        {filters.map((filter) => (
+        {memoizedFilterOptions.map((filter: CategoryFilter) => (
           <div key={filter._id} className="space-y-3">
             <label className="block text-sm font-medium text-gray-700">
               {filter.name}
@@ -203,6 +187,8 @@ const ProductFilterSelector: React.FC<Props> = ({
       </div>
     </div>
   );
-};
+});
 
-export default ProductFilterSelector; 
+ProductFilterSelector.displayName = 'ProductFilterSelector';
+
+export default ProductFilterSelector;

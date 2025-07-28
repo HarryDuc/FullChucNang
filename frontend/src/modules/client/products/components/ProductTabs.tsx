@@ -29,6 +29,7 @@ interface ProductTabsProps {
   productName: string;
   productSlug: string;
   specification?: Specification;
+  specificationDescription?: string;
 }
 
 const ProductTabs: React.FC<ProductTabsProps> = ({
@@ -41,6 +42,7 @@ const ProductTabs: React.FC<ProductTabsProps> = ({
   productName,
   productSlug,
   specification,
+  specificationDescription,
 }) => {
   const { isAuthenticated } = useAuth();
   const { user } = useUser();
@@ -241,6 +243,12 @@ const ProductTabs: React.FC<ProductTabsProps> = ({
             aria-labelledby="specification-tab"
           >
             {renderSpecifications()}
+            <div
+              className="text-gray-600 mb-6 bg-gray-50 overflow-hidden product-description-container p-4 rounded-lg"
+              dangerouslySetInnerHTML={{
+                __html: specificationDescription || "",
+              }}
+            />
           </div>
         ) : (
           <div role="tabpanel" id="reviews-panel" aria-labelledby="reviews-tab">
