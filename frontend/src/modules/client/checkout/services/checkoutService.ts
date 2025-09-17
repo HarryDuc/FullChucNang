@@ -1,5 +1,7 @@
 import { config } from "@/config/config";
 import { API_URL_CLIENT } from "@/config/apiRoutes";
+import { useCallback } from 'react';
+
 const API_URL = API_URL_CLIENT + config.ROUTES.CHECKOUTS.BASE;
 
 export interface Checkout {
@@ -112,4 +114,25 @@ export async function deleteCheckout(slug: string) {
   });
   if (!response.ok) throw new Error("Không thể xóa thanh toán.");
   return response.json();
+}
+
+/**
+ * Custom hook for checkout logic, including PayOS payment flow.
+ * Usage:
+ *   const { createCheckoutWithPayos } = useCheckout();
+ */
+export function useCheckout() {
+  /**
+   * Create checkout and handle PayOS redirect if needed.
+   * @param data - Checkout data (should include paymentMethod, etc.)
+   */
+  const createCheckoutWithPayos = useCallback(async (data: Partial<Checkout>) => {
+    const res = await createCheckout(data);
+    if (data.paymentMethod === 'payos' && res?.payosPaymentLink) {
+      window.location.href = res.payosPaymentLink;
+    }
+    return res;
+  }, []);
+
+  return { createCheckoutWithPayos };
 }

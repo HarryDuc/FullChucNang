@@ -235,7 +235,7 @@ export default function ProductListSection({ slug }: { slug: string }) {
       if (page > 1 && products.length === 0) {
         setHasMore(false);
       } else {
-        const visibleProducts = products.filter((p) => p.isVisible !== false);
+        const visibleProducts = products.filter((p) => p.isVisible === false);
         setAllProducts((prev) =>
           page === 1
             ? visibleProducts

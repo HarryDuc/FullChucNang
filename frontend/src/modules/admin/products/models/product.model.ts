@@ -131,7 +131,7 @@ export interface Product {
   shortDescription?: string;
 
   // Thông tin giá
-  basePrice: number; // Giá cơ bản (bắt buộc)
+  basePrice?: number; // Giá cơ bản (bắt buộc)
   importPrice?: number;
   currentPrice?: number;
   discountPrice?: number;

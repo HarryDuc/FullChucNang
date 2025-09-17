@@ -21,7 +21,6 @@ import { normalizeForSearch } from '../../../common/utils/normalizeForSearch';
 import { RedirectsService } from '../../redirects/services/redirects.service';
 import { FRONTEND_ROUTES } from '../../../config/routes.config';
 import { FilterService } from '../../filters/services/filter.service';
-import { CategoriesProductService } from '../../categories-product/services/categories-product.service';
 import { Category, CategoryDocument } from '../../categories-product/schemas/category.schema';
 
 interface MongoQuery {
@@ -40,12 +39,6 @@ interface PriceRangeQuery {
       $lte: number;
     };
     currentPrice?: {
-      $exists: boolean;
-      $ne: null;
-      $gte: number;
-      $lte: number;
-    };
-    basePrice?: {
       $exists: boolean;
       $ne: null;
       $gte: number;
@@ -81,7 +74,7 @@ export class ProductService {
     @Inject(forwardRef(() => RedirectsService))
     private redirectsService: RedirectsService,
     private filterService: FilterService,
-  ) {}
+  ) { }
 
   /**
    * Tạo slug duy nhất dựa trên tên sản phẩm.
@@ -105,28 +98,66 @@ export class ProductService {
    * @returns Sản phẩm mới được tạo.
    */
   async create(createProductDto: CreateProductDto): Promise<Product> {
-    const { name, basePrice, ...updateFields } = createProductDto;
+    const { name, ...updateFields } = createProductDto;
 
     if (!name) {
       throw new BadRequestException('Tên sản phẩm là bắt buộc.');
     }
 
-    if (!basePrice || basePrice <= 0) {
-      throw new BadRequestException('Giá cơ bản phải lớn hơn 0.');
-    }
-
     const generatedSlug = await this.generateUniqueSlug(name);
 
+    // Xử lý logic stock dựa trên hasVariants
+    let stockValue = updateFields.stock;
+    if (updateFields.hasVariants === true) {
+      // Nếu có biến thể, stock có thể là undefined hoặc 0
+      stockValue = updateFields.stock || 0;
+    } else if (updateFields.hasVariants === false) {
+      // Nếu không có biến thể, stock phải có giá trị
+      if (updateFields.stock === undefined || updateFields.stock === null) {
+        throw new BadRequestException('Stock là bắt buộc khi sản phẩm không có biến thể.');
+      }
+      stockValue = updateFields.stock;
+    }
+
     try {
-      const createdProduct = await this.productModel.create({
-        ...updateFields,
+      // Log để debug
+      console.log('Creating product with data:', {
         name,
         slug: generatedSlug,
-        basePrice,
+        stock: stockValue,
+        sold: updateFields.sold || 0,
+        specification: updateFields.specification,
+        specificationDescription: updateFields.specificationDescription,
+        hasVariants: updateFields.hasVariants,
         variantAttributes: updateFields.variantAttributes || [],
         variants: updateFields.variants || [],
       });
 
+      console.log('Full updateFields:', JSON.stringify(updateFields, null, 2));
+
+      const productData = {
+        ...updateFields,
+        name,
+        slug: generatedSlug,
+        stock: stockValue,
+        sold: updateFields.sold || 0,
+        variantAttributes: updateFields.variantAttributes || [],
+        variants: updateFields.variants || [],
+      };
+
+      // Xử lý specification riêng biệt để đảm bảo nested object được lưu đúng
+      if (updateFields.specification) {
+        productData.specification = updateFields.specification;
+      }
+      if (updateFields.specificationDescription) {
+        productData.specificationDescription = updateFields.specificationDescription;
+      }
+
+      console.log('Final productData before create:', JSON.stringify(productData, null, 2));
+
+      const createdProduct = await this.productModel.create(productData);
+
+      console.log('Created product:', createdProduct);
       return createdProduct;
     } catch (error) {
       console.error('Error creating product:', error);
@@ -146,7 +177,7 @@ export class ProductService {
     const [data, total] = await Promise.all([
       this.productModel
         .find()
-        .select('name slug basePrice currentPrice discountPrice thumbnail hasVariants variants specification')
+        .select('name slug currentPrice discountPrice thumbnail hasVariants variants specification isVisible')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -191,7 +222,7 @@ export class ProductService {
     // Truy vấn dữ liệu với phân trang và chỉ lấy các trường cần thiết
     const data = await this.productModel
       .find(query)
-      .select('name slug basePrice currentPrice discountPrice thumbnail hasVariants variants publishedAt createdAt specification') // Chỉ lấy các trường cần thiết
+      .select('name slug currentPrice discountPrice thumbnail isVisible hasVariants variants publishedAt createdAt specification') // Chỉ lấy các trường cần thiết
       .sort({ publishedAt: -1, createdAt: -1 }) // 👈 Thêm dòng này để sản phẩm mới nhất lên đầu
       .skip((page - 1) * limit)
       .limit(limit)
@@ -218,7 +249,7 @@ export class ProductService {
       this.productModel
         .find(
           query,
-          'name slug basePrice currentPrice discountPrice thumbnail hasVariants variants publishedAt createdAt specification',
+          'name slug currentPrice discountPrice thumbnail isVisible hasVariants variants publishedAt createdAt specification',
         )
         .sort({ publishedAt: -1, createdAt: -1 }) // Sắp xếp sản phẩm mới nhất lên trước
         .lean() // Giúp truy vấn nhanh hơn
@@ -255,7 +286,7 @@ export class ProductService {
     // Truy vấn dữ liệu với phân trang
     const data = await this.productModel
       .find(query)
-      .select('name slug basePrice currentPrice discountPrice thumbnail hasVariants variants publishedAt createdAt specification') // Chỉ lấy các trường cần thiết
+      .select('name slug currentPrice discountPrice thumbnail isVisible hasVariants variants publishedAt createdAt specification') // Chỉ lấy các trường cần thiết
       .skip((page - 1) * limit)
       .limit(limit)
       .exec();
@@ -279,7 +310,6 @@ export class ProductService {
           'sku',
           'description',
           'shortDescription',
-          'basePrice',
           'importPrice',
           'currentPrice',
           'discountPrice',
@@ -332,7 +362,6 @@ export class ProductService {
 
   /**
    * Lấy danh sách tất cả sản phẩm với thông tin cơ bản.
-   * Chỉ trả về các trường: name, slug, basePrice, thumbnail, category.
    * Có phân trang với số lượng sản phẩm mỗi trang mặc định là 10 (có thể chỉnh sửa).
    * @param page Số trang (mặc định là 1).
    * @param limit Số sản phẩm mỗi trang (mặc định là 10).
@@ -351,7 +380,7 @@ export class ProductService {
     const total = await this.productModel.countDocuments().exec();
     const data = await this.productModel
       .find()
-      .select('name slug basePrice currentPrice discountPrice thumbnail hasVariants variants category publishedAt createdAt specification')
+      .select('name slug currentPrice discountPrice thumbnail isVisible hasVariants variants category publishedAt createdAt specification')
       // Sắp xếp dựa trên publishedAt giảm dần; nếu publishedAt không có thì dùng createdAt giảm dần
       .sort({ publishedAt: -1, createdAt: -1 })
       .skip(skip)
@@ -718,92 +747,520 @@ export class ProductService {
     page: number = 1,
     limit: number = 16,
   ): Promise<{
-    data: Product[];
+    data: Pick<Product, 'name' | 'slug' | 'currentPrice' | 'discountPrice' | 'thumbnail'>[];
     total: number;
     page: number;
     totalPages: number;
   }> {
     const skip = (page - 1) * limit;
 
-    // ✅ Chuẩn hóa từ khóa và tách từ
-    const normalized = normalizeForSearch(searchTerm);
-    const keywords = normalized.split(/\s+/).filter(Boolean);
-
-    // ✅ Lấy toàn bộ sản phẩm với thêm trường SKU
     const allProducts = await this.productModel
       .find()
-      .select('name slug basePrice currentPrice discountPrice hasVariants variants thumbnail sku')
+      .select('name slug currentPrice discountPrice thumbnail isVisible')
       .lean();
 
-    // ✅ Lọc sản phẩm với tìm kiếm chính xác hơn
-    const filtered = allProducts.filter((product) => {
-      const normalizedName = normalizeForSearch(product.name);
-      const nameWords = normalizedName.split(/\s+/);
-      const sku = (product.sku || '').toLowerCase();
+    // Chuẩn hóa searchTerm
+    const { normalized: normalizedSearchTerm, withDiacritics: diacriticSearchTerm } = normalizeForSearch(searchTerm);
+    const normalizedLower = normalizedSearchTerm.toLowerCase();
+    const diacriticLower = diacriticSearchTerm.toLowerCase();
 
-      // Kiểm tra từng keyword
-      return keywords.every((keyword) => {
-        // 1. Kiểm tra match chính xác với SKU
-        if (sku && sku === keyword) return true;
+    // Cắt từ khóa tìm kiếm thành từng từ
+    const searchWords = normalizedLower.split(' ').filter(Boolean);
+    const diacriticWords = diacriticLower.split(' ').filter(Boolean);
 
-        // 2. Kiểm tra SKU có chứa keyword
-        if (sku && sku.includes(keyword)) return true;
-
-        // 3. Kiểm tra match trong tên sản phẩm
-        return nameWords.some(word => {
-          // Match chính xác
-          if (word === keyword) return true;
-
-          // Match một phần từ, nhưng phải đủ dài để tránh match nhầm
-          // Chỉ match nếu độ dài từ khóa >= 4 ký tự hoặc là số
-          if (keyword.length >= 4 || /\d/.test(keyword)) {
-            return word.includes(keyword);
-          }
-
-          return false;
-        });
-      });
+    // 1. Ưu tiên tuyệt đối: Tìm sản phẩm có tên (không dấu hoặc có dấu) === từ khóa tìm kiếm (không dấu hoặc có dấu)
+    const absoluteMatched = allProducts.filter(product => {
+      const { normalized, withDiacritics } = normalizeForSearch(product.name);
+      return (
+        normalized.toLowerCase() === normalizedLower ||
+        withDiacritics.toLowerCase() === diacriticLower
+      );
     });
 
-    // ✅ Sắp xếp kết quả theo độ phù hợp
-    const scoredResults = filtered.map(product => {
+    if (absoluteMatched.length > 0) {
+      // Trả về luôn, ưu tiên tuyệt đối
+      const result = {
+        data: absoluteMatched.slice(skip, skip + limit),
+        total: absoluteMatched.length,
+        page,
+        totalPages: Math.ceil(absoluteMatched.length / limit),
+      };
+
+      return result;
+    }
+
+    // 2. Nếu searchTerm chỉ có 1 từ, ưu tiên tìm sản phẩm có từ đó là một từ riêng biệt trong tên sản phẩm
+    if (searchWords.length === 1 && diacriticWords.length === 1) {
+      const word = searchWords[0];
+      const wordWithDiacritic = diacriticWords[0];
+
+      // Tìm sản phẩm có từ khóa là một từ riêng biệt (không dấu hoặc có dấu)
+      const exactWordMatched = allProducts.filter(product => {
+        const { normalized, withDiacritics } = normalizeForSearch(product.name);
+        const normTokens = normalized.toLowerCase().split(' ');
+        const diaTokens = withDiacritics.toLowerCase().split(' ');
+        return normTokens.includes(word) || diaTokens.includes(wordWithDiacritic);
+      });
+
+      if (exactWordMatched.length > 0) {
+        // Trả về luôn, chỉ lấy sản phẩm có từ khóa là một từ riêng biệt
+        const result = {
+          data: exactWordMatched.slice(skip, skip + limit),
+          total: exactWordMatched.length,
+          page,
+          totalPages: Math.ceil(exactWordMatched.length / limit),
+        };
+
+        return result;
+      }
+    }
+
+    // 3. Tìm sản phẩm chứa tất cả các từ khóa (theo từng từ, không dấu hoặc có dấu)
+    // Ví dụ: "so tay" -> ['so', 'tay'] -> tên sản phẩm phải chứa cả 2 từ (không dấu hoặc có dấu)
+    const allWordsMatched = allProducts.filter(product => {
+      const { normalized, withDiacritics } = normalizeForSearch(product.name);
+      const norm = normalized.toLowerCase();
+      const dia = withDiacritics.toLowerCase();
+
+      // Mỗi từ trong searchWords hoặc diacriticWords phải xuất hiện trong tên sản phẩm (không dấu hoặc có dấu)
+      return searchWords.every(word => norm.includes(word) || dia.includes(word));
+    });
+
+    if (allWordsMatched.length > 0) {
+      // Sắp xếp theo số lượng từ khóa trùng khớp tuyệt đối (ưu tiên sản phẩm có từ trùng khớp hoàn toàn)
+      const scored = allWordsMatched.map(product => {
+        const { normalized, withDiacritics } = normalizeForSearch(product.name);
+        const normTokens = normalized.toLowerCase().split(' ');
+        const diaTokens = withDiacritics.toLowerCase().split(' ');
+
+        // Số từ khóa trùng khớp tuyệt đối (không dấu hoặc có dấu)
+        let exactCount = 0;
+        for (const word of searchWords) {
+          if (normTokens.includes(word)) exactCount += 1;
+        }
+        for (const word of diacriticWords) {
+          if (diaTokens.includes(word)) exactCount += 1;
+        }
+
+        // Số từ khóa xuất hiện ở đầu tên sản phẩm
+        let prefixCount = 0;
+        for (const word of searchWords) {
+          if (normTokens[0] === word) prefixCount += 1;
+        }
+        for (const word of diacriticWords) {
+          if (diaTokens[0] === word) prefixCount += 1;
+        }
+
+        // Tổng điểm: exact match ưu tiên, sau đó prefix
+        const score = exactCount * 10 + prefixCount * 2;
+        return { ...product, score };
+      });
+
+      // Sắp xếp giảm dần theo score
+      scored.sort((a, b) => b.score - a.score);
+
+      const paged = scored.slice(skip, skip + limit).map(({ score, ...rest }) => rest);
+
+      const result = {
+        data: paged,
+        total: scored.length,
+        page,
+        totalPages: Math.ceil(scored.length / limit),
+      };
+
+      return result;
+    }
+
+    // 4. Nếu vẫn không có, tìm sản phẩm chứa bất kỳ từ khóa nào (theo từng từ, không dấu hoặc có dấu)
+    const anyWordMatched = allProducts.filter(product => {
+      const { normalized, withDiacritics } = normalizeForSearch(product.name);
+      const norm = normalized.toLowerCase();
+      const dia = withDiacritics.toLowerCase();
+
+      return (
+        searchWords.some(word => norm.includes(word) || dia.includes(word)) ||
+        diacriticWords.some(word => norm.includes(word) || dia.includes(word))
+      );
+    });
+
+    if (anyWordMatched.length > 0) {
+      // Sắp xếp theo số lượng từ khóa trùng khớp (ưu tiên nhiều từ khớp hơn)
+      const scored = anyWordMatched.map(product => {
+        const { normalized, withDiacritics } = normalizeForSearch(product.name);
+        const norm = normalized.toLowerCase();
+        const dia = withDiacritics.toLowerCase();
+
+        let matchCount = 0;
+        for (const word of searchWords) {
+          if (norm.includes(word) || dia.includes(word)) matchCount += 1;
+        }
+        for (const word of diacriticWords) {
+          if (norm.includes(word) || dia.includes(word)) matchCount += 1;
+        }
+
+        // Ưu tiên nếu từ khóa xuất hiện ở đầu tên sản phẩm
+        let prefixCount = 0;
+        for (const word of searchWords) {
+          if (norm.startsWith(word) || dia.startsWith(word)) prefixCount += 1;
+        }
+        for (const word of diacriticWords) {
+          if (norm.startsWith(word) || dia.startsWith(word)) prefixCount += 1;
+        }
+
+        // Tổng điểm: matchCount ưu tiên, sau đó prefix
+        const score = matchCount * 5 + prefixCount * 2;
+        return { ...product, score };
+      });
+
+      // Sắp xếp giảm dần theo score
+      scored.sort((a, b) => b.score - a.score);
+
+      const paged = scored.slice(skip, skip + limit).map(({ score, ...rest }) => rest);
+
+      const result = {
+        data: paged,
+        total: scored.length,
+        page,
+        totalPages: Math.ceil(scored.length / limit),
+      };
+
+      return result;
+    }
+
+    // 5. Nếu vẫn không có, thực hiện fuzzy search (so sánh prefix từng từ)
+    function generatePrefixes(word: string): string[] {
+      const prefixes: string[] = [];
+      for (let i = 1; i <= word.length; i++) {
+        prefixes.push(word.slice(0, i));
+      }
+      return prefixes;
+    }
+
+    const fuzzyScored = allProducts.map(product => {
+      const { normalized: normalizedProductName, withDiacritics: diacriticProductName } = normalizeForSearch(product.name);
+
       let score = 0;
-      const normalizedName = normalizeForSearch(product.name);
-      const nameWords = normalizedName.split(/\s+/);
-      const sku = (product.sku || '').toLowerCase();
 
-      keywords.forEach(keyword => {
-        // Điểm cho match SKU
-        if (sku === keyword) score += 100; // Match chính xác SKU được ưu tiên cao nhất
-        else if (sku.includes(keyword)) score += 50;
+      // Fuzzy cho không dấu
+      for (const word of searchWords) {
+        const prefixes = generatePrefixes(word);
+        for (const prefix of prefixes) {
+          if (normalizedProductName.toLowerCase().includes(prefix)) {
+            score += 0.3;
+            if (normalizedProductName.toLowerCase().startsWith(prefix)) score += 0.3;
+            if (new RegExp(`\\b${prefix}\\b`).test(normalizedProductName.toLowerCase())) score += 0.2;
+          }
+        }
+      }
 
-        // Điểm cho match tên sản phẩm
-        nameWords.forEach(word => {
-          if (word === keyword) score += 10; // Match chính xác từ
-          else if (keyword.length >= 4 && word.includes(keyword)) score += 5; // Match một phần từ (từ 4 ký tự)
-          else if (/\d/.test(keyword) && word.includes(keyword)) score += 5; // Match số
-        });
-      });
+      // Fuzzy cho có dấu
+      for (const word of diacriticWords) {
+        const prefixes = generatePrefixes(word);
+        for (const prefix of prefixes) {
+          if (diacriticProductName.toLowerCase().includes(prefix)) {
+            score += 0.5;
+            if (diacriticProductName.toLowerCase().startsWith(prefix)) score += 0.5;
+            if (new RegExp(`\\b${prefix}\\b`).test(diacriticProductName.toLowerCase())) score += 0.3;
+          }
+        }
+      }
 
-      return { product, score };
+      // Ưu tiên số lượng từ khóa khớp
+      const keywordMatchCount =
+        searchWords.filter(w => normalizedProductName.toLowerCase().includes(w)).length +
+        diacriticWords.filter(w => diacriticProductName.toLowerCase().includes(w)).length;
+
+      score += keywordMatchCount * 0.5;
+
+      // Cộng thêm theo độ dài từ khóa khớp nhất
+      const maxSearchWordLength = Math.max(...searchWords.map(w => w.length), 0);
+      if (maxSearchWordLength >= 2) {
+        score *= (1 + maxSearchWordLength * 0.1);
+      }
+
+      return {
+        ...product,
+        score,
+      };
     });
 
-    // Sắp xếp theo điểm số và lấy phân trang
-    const sortedResults = scoredResults
-      .sort((a, b) => b.score - a.score)
-      .map(item => item.product);
+    // Lọc sản phẩm có điểm > 0 và sắp xếp theo điểm giảm dần
+    const filtered = fuzzyScored
+      .filter(product => product.score > 0)
+      .sort((a, b) => b.score - a.score);
 
-    const total = sortedResults.length;
-    const pagedData = sortedResults.slice(skip, skip + limit);
+    const total = filtered.length;
+    const pagedData = filtered.slice(skip, skip + limit).map(({ score, ...rest }) => rest);
 
-    return {
+    const result = {
       data: pagedData,
       total,
       page,
       totalPages: Math.ceil(total / limit),
     };
+
+    return result;
   }
 
+  async getVisibleProducts(
+    searchTerm: string,
+    page: number = 1,
+    limit: number = 16,
+  ): Promise<{
+    data: Pick<Product, 'name' | 'slug' | 'currentPrice' | 'discountPrice' | 'thumbnail'>[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> {
+    const skip = (page - 1) * limit;
+
+    const allProducts = await this.productModel
+      .find({ isVisible: false })
+      .select('name slug currentPrice discountPrice thumbnail isVisible')
+      .lean();
+
+    // Chuẩn hóa searchTerm
+    const { normalized: normalizedSearchTerm, withDiacritics: diacriticSearchTerm } = normalizeForSearch(searchTerm);
+    const normalizedLower = normalizedSearchTerm.toLowerCase();
+    const diacriticLower = diacriticSearchTerm.toLowerCase();
+
+    // Cắt từ khóa tìm kiếm thành từng từ
+    const searchWords = normalizedLower.split(' ').filter(Boolean);
+    const diacriticWords = diacriticLower.split(' ').filter(Boolean);
+
+    // 1. Ưu tiên tuyệt đối: Tìm sản phẩm có tên (không dấu hoặc có dấu) === từ khóa tìm kiếm (không dấu hoặc có dấu)
+    const absoluteMatched = allProducts.filter(product => {
+      const { normalized, withDiacritics } = normalizeForSearch(product.name);
+      return (
+        normalized.toLowerCase() === normalizedLower ||
+        withDiacritics.toLowerCase() === diacriticLower
+      );
+    });
+
+    if (absoluteMatched.length > 0) {
+      // Trả về luôn, ưu tiên tuyệt đối
+      const result = {
+        data: absoluteMatched.slice(skip, skip + limit),
+        total: absoluteMatched.length,
+        page,
+        totalPages: Math.ceil(absoluteMatched.length / limit),
+      };
+
+      return result;
+    }
+
+    // 2. Nếu searchTerm chỉ có 1 từ, ưu tiên tìm sản phẩm có từ đó là một từ riêng biệt trong tên sản phẩm
+    if (searchWords.length === 1 && diacriticWords.length === 1) {
+      const word = searchWords[0];
+      const wordWithDiacritic = diacriticWords[0];
+
+      // Tìm sản phẩm có từ khóa là một từ riêng biệt (không dấu hoặc có dấu)
+      const exactWordMatched = allProducts.filter(product => {
+        const { normalized, withDiacritics } = normalizeForSearch(product.name);
+        const normTokens = normalized.toLowerCase().split(' ');
+        const diaTokens = withDiacritics.toLowerCase().split(' ');
+        return normTokens.includes(word) || diaTokens.includes(wordWithDiacritic);
+      });
+
+      if (exactWordMatched.length > 0) {
+        // Trả về luôn, chỉ lấy sản phẩm có từ khóa là một từ riêng biệt
+        const result = {
+          data: exactWordMatched.slice(skip, skip + limit),
+          total: exactWordMatched.length,
+          page,
+          totalPages: Math.ceil(exactWordMatched.length / limit),
+        };
+
+        return result;
+      }
+    }
+
+    // 3. Tìm sản phẩm chứa tất cả các từ khóa (theo từng từ, không dấu hoặc có dấu)
+    // Ví dụ: "so tay" -> ['so', 'tay'] -> tên sản phẩm phải chứa cả 2 từ (không dấu hoặc có dấu)
+    const allWordsMatched = allProducts.filter(product => {
+      const { normalized, withDiacritics } = normalizeForSearch(product.name);
+      const norm = normalized.toLowerCase();
+      const dia = withDiacritics.toLowerCase();
+
+      // Mỗi từ trong searchWords hoặc diacriticWords phải xuất hiện trong tên sản phẩm (không dấu hoặc có dấu)
+      return searchWords.every(word => norm.includes(word) || dia.includes(word));
+    });
+
+    if (allWordsMatched.length > 0) {
+      // Sắp xếp theo số lượng từ khóa trùng khớp tuyệt đối (ưu tiên sản phẩm có từ trùng khớp hoàn toàn)
+      const scored = allWordsMatched.map(product => {
+        const { normalized, withDiacritics } = normalizeForSearch(product.name);
+        const normTokens = normalized.toLowerCase().split(' ');
+        const diaTokens = withDiacritics.toLowerCase().split(' ');
+
+        // Số từ khóa trùng khớp tuyệt đối (không dấu hoặc có dấu)
+        let exactCount = 0;
+        for (const word of searchWords) {
+          if (normTokens.includes(word)) exactCount += 1;
+        }
+        for (const word of diacriticWords) {
+          if (diaTokens.includes(word)) exactCount += 1;
+        }
+
+        // Số từ khóa xuất hiện ở đầu tên sản phẩm
+        let prefixCount = 0;
+        for (const word of searchWords) {
+          if (normTokens[0] === word) prefixCount += 1;
+        }
+        for (const word of diacriticWords) {
+          if (diaTokens[0] === word) prefixCount += 1;
+        }
+
+        // Tổng điểm: exact match ưu tiên, sau đó prefix
+        const score = exactCount * 10 + prefixCount * 2;
+        return { ...product, score };
+      });
+
+      // Sắp xếp giảm dần theo score
+      scored.sort((a, b) => b.score - a.score);
+
+      const paged = scored.slice(skip, skip + limit).map(({ score, ...rest }) => rest);
+
+      const result = {
+        data: paged,
+        total: scored.length,
+        page,
+        totalPages: Math.ceil(scored.length / limit),
+      };
+
+      return result;
+    }
+
+    // 4. Nếu vẫn không có, tìm sản phẩm chứa bất kỳ từ khóa nào (theo từng từ, không dấu hoặc có dấu)
+    const anyWordMatched = allProducts.filter(product => {
+      const { normalized, withDiacritics } = normalizeForSearch(product.name);
+      const norm = normalized.toLowerCase();
+      const dia = withDiacritics.toLowerCase();
+
+      return (
+        searchWords.some(word => norm.includes(word) || dia.includes(word)) ||
+        diacriticWords.some(word => norm.includes(word) || dia.includes(word))
+      );
+    });
+
+    if (anyWordMatched.length > 0) {
+      // Sắp xếp theo số lượng từ khóa trùng khớp (ưu tiên nhiều từ khớp hơn)
+      const scored = anyWordMatched.map(product => {
+        const { normalized, withDiacritics } = normalizeForSearch(product.name);
+        const norm = normalized.toLowerCase();
+        const dia = withDiacritics.toLowerCase();
+
+        let matchCount = 0;
+        for (const word of searchWords) {
+          if (norm.includes(word) || dia.includes(word)) matchCount += 1;
+        }
+        for (const word of diacriticWords) {
+          if (norm.includes(word) || dia.includes(word)) matchCount += 1;
+        }
+
+        // Ưu tiên nếu từ khóa xuất hiện ở đầu tên sản phẩm
+        let prefixCount = 0;
+        for (const word of searchWords) {
+          if (norm.startsWith(word) || dia.startsWith(word)) prefixCount += 1;
+        }
+        for (const word of diacriticWords) {
+          if (norm.startsWith(word) || dia.startsWith(word)) prefixCount += 1;
+        }
+
+        // Tổng điểm: matchCount ưu tiên, sau đó prefix
+        const score = matchCount * 5 + prefixCount * 2;
+        return { ...product, score };
+      });
+
+      // Sắp xếp giảm dần theo score
+      scored.sort((a, b) => b.score - a.score);
+
+      const paged = scored.slice(skip, skip + limit).map(({ score, ...rest }) => rest);
+
+      const result = {
+        data: paged,
+        total: scored.length,
+        page,
+        totalPages: Math.ceil(scored.length / limit),
+      };
+
+      return result;
+    }
+
+    // 5. Nếu vẫn không có, thực hiện fuzzy search (so sánh prefix từng từ)
+    function generatePrefixes(word: string): string[] {
+      const prefixes: string[] = [];
+      for (let i = 1; i <= word.length; i++) {
+        prefixes.push(word.slice(0, i));
+      }
+      return prefixes;
+    }
+
+    const fuzzyScored = allProducts.map(product => {
+      const { normalized: normalizedProductName, withDiacritics: diacriticProductName } = normalizeForSearch(product.name);
+
+      let score = 0;
+
+      // Fuzzy cho không dấu
+      for (const word of searchWords) {
+        const prefixes = generatePrefixes(word);
+        for (const prefix of prefixes) {
+          if (normalizedProductName.toLowerCase().includes(prefix)) {
+            score += 0.3;
+            if (normalizedProductName.toLowerCase().startsWith(prefix)) score += 0.3;
+            if (new RegExp(`\\b${prefix}\\b`).test(normalizedProductName.toLowerCase())) score += 0.2;
+          }
+        }
+      }
+
+      // Fuzzy cho có dấu
+      for (const word of diacriticWords) {
+        const prefixes = generatePrefixes(word);
+        for (const prefix of prefixes) {
+          if (diacriticProductName.toLowerCase().includes(prefix)) {
+            score += 0.5;
+            if (diacriticProductName.toLowerCase().startsWith(prefix)) score += 0.5;
+            if (new RegExp(`\\b${prefix}\\b`).test(diacriticProductName.toLowerCase())) score += 0.3;
+          }
+        }
+      }
+
+      // Ưu tiên số lượng từ khóa khớp
+      const keywordMatchCount =
+        searchWords.filter(w => normalizedProductName.toLowerCase().includes(w)).length +
+        diacriticWords.filter(w => diacriticProductName.toLowerCase().includes(w)).length;
+
+      score += keywordMatchCount * 0.5;
+
+      // Cộng thêm theo độ dài từ khóa khớp nhất
+      const maxSearchWordLength = Math.max(...searchWords.map(w => w.length), 0);
+      if (maxSearchWordLength >= 2) {
+        score *= (1 + maxSearchWordLength * 0.1);
+      }
+
+      return {
+        ...product,
+        score,
+      };
+    });
+
+    // Lọc sản phẩm có điểm > 0 và sắp xếp theo điểm giảm dần
+    const filtered = fuzzyScored
+      .filter(product => product.score > 0)
+      .sort((a, b) => b.score - a.score);
+
+    const total = filtered.length;
+    const pagedData = filtered.slice(skip, skip + limit).map(({ score, ...rest }) => rest);
+
+    const result = {
+      data: pagedData,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    };
+
+    return result;
+  }
   /**
    * Xóa sản phẩm theo slug.
    * @param slug Slug của sản phẩm cần xóa.
@@ -919,7 +1376,7 @@ export class ProductService {
     page: number = 1,
     limit: number = 12,
   ): Promise<{
-    data: Pick<Product, 'name' | 'basePrice' | 'hasVariants' | 'currentPrice' | 'discountPrice' | 'thumbnail' | 'slug' | 'filterAttributes' | 'specification'>[];
+    data: Pick<Product, 'name' | 'hasVariants' | 'currentPrice' | 'discountPrice' | 'thumbnail' | 'slug' | 'filterAttributes' | 'specification'>[];
     total: number;
     page: number;
     totalPages: number;
@@ -945,7 +1402,7 @@ export class ProductService {
 
     // Separate price filter from other filters
     const { 'loc-gia': priceFilter, ...otherFilters } = filters || {};
-    
+
     // Initialize $and array for combining conditions with proper type
     const andConditions: MongoQuery[] = [];
 
@@ -984,7 +1441,6 @@ export class ProductService {
                 }
               ]
             },
-            // Check basePrice if no valid currentPrice
             {
               $and: [
                 {
@@ -993,14 +1449,6 @@ export class ProductService {
                     { currentPrice: null }
                   ]
                 },
-                {
-                  basePrice: {
-                    $exists: true,
-                    $ne: null,
-                    $gte: min,
-                    $lte: max
-                  }
-                }
               ]
             },
             // Check importPrice if no other prices available
@@ -1008,8 +1456,8 @@ export class ProductService {
               $and: [
                 {
                   $or: [
-                    { basePrice: { $exists: false } },
-                    { basePrice: null }
+                    { currentPrice: { $exists: false } },
+                    { currentPrice: null }
                   ]
                 },
                 {
@@ -1041,10 +1489,10 @@ export class ProductService {
 
     // Handle other filter attributes - only include products that have these filter attributes set
     const filterQueries = Object.entries(otherFilters)
-      .filter(([key, value]) => 
-        value !== undefined && 
-        value !== null && 
-        value !== '' && 
+      .filter(([key, value]) =>
+        value !== undefined &&
+        value !== null &&
+        value !== '' &&
         key !== 'filterAttributes' && // Exclude nested filterAttributes
         key !== 'loc-gia' // Exclude price filter as it's handled separately
       )
@@ -1073,7 +1521,7 @@ export class ProductService {
     const [data, total] = await Promise.all([
       this.productModel
         .find(query)
-        .select('name basePrice hasVariants currentPrice discountPrice thumbnail slug filterAttributes variants')
+        .select('name hasVariants currentPrice discountPrice thumbnail slug filterAttributes variants')
         .skip(skip)
         .limit(limit)
         .lean()
@@ -1084,11 +1532,10 @@ export class ProductService {
     // Calculate effective price and sort products
     const processedData = data
       .map(product => {
-        const effectivePrice = 
-          product.discountPrice ?? 
-          product.currentPrice ?? 
-          product.basePrice ?? 
-          (product.variants && product.variants.length > 0 
+        const effectivePrice =
+          product.discountPrice ??
+          product.currentPrice ??
+          (product.variants && product.variants.length > 0
             ? Math.min(...product.variants.map(v => v.variantCurrentPrice || Infinity))
             : null);
 

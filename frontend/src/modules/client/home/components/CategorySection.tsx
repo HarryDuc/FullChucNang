@@ -45,6 +45,7 @@ interface ProductData {
   rating?: number;
   sku?: string;
   hasVariants?: boolean;
+  isVisible?: boolean;
   variants?: {
     variantCurrentPrice?: number;
     variantDiscountPrice?: number;
@@ -173,6 +174,7 @@ const CategorySection: React.FC = () => {
                   1,
                   6
                 );
+                productsData.data = productsData.data.filter((product: ProductData) => product.isVisible === false);
 
                 return {
                   id: category._id,

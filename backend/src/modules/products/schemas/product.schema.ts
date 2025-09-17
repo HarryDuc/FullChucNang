@@ -156,8 +156,8 @@ export class Product {
   @Prop({ type: String })
   description?: string;
 
-  @Prop({ type: Number, required: true })
-  basePrice: number;
+  @Prop({ type: Number, default: 0 })
+  basePrice?: number;
 
   @Prop({ type: Number })
   importPrice?: number;
@@ -180,8 +180,8 @@ export class Product {
   @Prop({ default: false })
   isFeatured?: boolean;
 
-  @Prop({ default: false })
-  isSpecification?: boolean;
+  // @Prop({ default: false })
+  // isSpecification?: boolean;
 
   @Prop({
     type: {

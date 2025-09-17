@@ -8,7 +8,7 @@ import TokenHandler from "@/common/components/TokenHandler";
 import Favicon from "../src/common/components/Favicon";
 import { ScriptLayout } from "@/modules/client/common/layouts/ScriptLayout";
 import { Suspense } from "react";
-
+<script async src="http://localhost:3000/tracker.js" data-ackee-server="http://localhost:3000" data-ackee-domain-id="07967d4b-f737-4c51-8401-04ba61dfaf82"></script>
 export default function RootLayout({
   children,
 }: {

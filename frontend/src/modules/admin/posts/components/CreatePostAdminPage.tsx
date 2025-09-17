@@ -27,7 +27,7 @@ const CreatePostPage = () => {
   };
 
   return (
-    <div className="container mx-auto py-4">
+    <div>
       <h1 className="text-3xl font-bold mb-4">Tạo bài viết mới</h1>
       <PostForm onSubmit={handleSubmit} />
     </div>

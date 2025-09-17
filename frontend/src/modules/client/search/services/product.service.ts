@@ -202,8 +202,8 @@ export const ProductService = {
     }
   },
 
-  // Tìm kiếm sản phẩm theo tên
-  searchByName: async (
+
+  visibleSearchByName: async (
     searchTerm: string,
     page: number = 1,
     limit: number = 16
@@ -217,7 +217,7 @@ export const ProductService = {
     try {
       const encodedSearchTerm = encodeURIComponent(searchTerm);
       const response = await fetch(
-        `${PRODUCT_API}/search?q=${encodedSearchTerm}&page=${page}&limit=${limit}`
+        `${PRODUCT_API}/visible-search?q=${encodedSearchTerm}&page=${page}&limit=${limit}`
       );
 
       if (!response.ok) {

@@ -442,6 +442,7 @@ const CheckoutSection = () => {
       bank: "bank",
       paypal: "paypal",
       metamask: "metamask",
+      payos: "payos",
     };
     return methodMap[method] || "cash";
   };
@@ -663,6 +664,16 @@ const CheckoutSection = () => {
           return;
         } else {
           throw new Error("Không nhận được thông tin QR code thanh toán");
+        }
+      }
+
+      // Xử lý thanh toán PayOS: nếu có link trả về thì redirect
+      if (paymentMethod === "payos") {
+        if (checkoutResponse?.payosPaymentLink) {
+          window.location.href = checkoutResponse.payosPaymentLink;
+          return;
+        } else {
+          throw new Error("Không nhận được link thanh toán PayOS");
         }
       }
 

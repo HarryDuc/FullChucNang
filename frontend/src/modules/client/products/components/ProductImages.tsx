@@ -1,10 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
+
+import { ProductVariant } from "../models/product.model";
 
 interface ProductImagesProps {
   productImages: string[];
   selectedImage: string;
   setSelectedImage: (img: string) => void;
   productName: string;
+  variantImageMap: Map<string, ProductVariant>;
+  selectedVariant: ProductVariant | null;
 }
 
 const MODAL_WIDTH = 900;
@@ -15,11 +19,89 @@ const ProductImages: React.FC<ProductImagesProps> = ({
   selectedImage,
   setSelectedImage,
   productName,
+  variantImageMap,
+  selectedVariant,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalIndex, setModalIndex] = useState(
     productImages.findIndex((img) => img === selectedImage) || 0
   );
+  const [showAllImages, setShowAllImages] = useState(false);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
+  const thumbnailsContainerRef = useRef<HTMLDivElement>(null);
+  const thumbnailRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const IMAGES_PER_PAGE = 12; // Hiển thị 2 hàng x 4 cột = 8 ảnh
+
+  // Scroll to active thumbnail
+  const scrollToActiveThumb = (index: number) => {
+    if (!thumbnailsContainerRef.current || !thumbnailRefs.current[index]) return;
+    
+    const container = thumbnailsContainerRef.current;
+    const thumbnail = thumbnailRefs.current[index];
+    
+    if (window.innerWidth >= 768) {
+      // Desktop: Vertical scrolling
+      const containerHeight = container.clientHeight;
+      const thumbTop = thumbnail.offsetTop;
+      const thumbHeight = thumbnail.clientHeight;
+      
+      // Calculate the ideal scroll position to center the thumbnail
+      const idealScrollTop = thumbTop - (containerHeight - thumbHeight) / 2;
+      
+      container.scrollTo({
+        top: idealScrollTop,
+        behavior: 'smooth'
+      });
+    } else {
+      // Mobile: Horizontal scrolling
+      const containerWidth = container.clientWidth;
+      const thumbLeft = thumbnail.offsetLeft;
+      const thumbWidth = thumbnail.clientWidth;
+      
+      // Calculate the ideal scroll position to center the thumbnail
+      const idealScrollLeft = thumbLeft - (containerWidth - thumbWidth) / 2;
+      
+      container.scrollTo({
+        left: idealScrollLeft,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  // Effect to scroll to active thumbnail when modalIndex changes
+  useEffect(() => {
+    if (isModalOpen) {
+      scrollToActiveThumb(modalIndex);
+    }
+  }, [modalIndex, isModalOpen]);
+
+  // Xử lý sự kiện vuốt
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) {
+      goToNext();
+    }
+    if (isRightSwipe) {
+      goToPrev();
+    }
+
+    setTouchStart(0);
+    setTouchEnd(0);
+  };
 
   // Open modal and set current index
   const handleMainImageClick = () => {
@@ -31,11 +113,15 @@ const ProductImages: React.FC<ProductImagesProps> = ({
   // Slide navigation
   const goToPrev = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    setModalIndex((prev) => (prev === 0 ? productImages.length - 1 : prev - 1));
+    const newIndex = modalIndex === 0 ? productImages.length - 1 : modalIndex - 1;
+    setModalIndex(newIndex);
+    setSelectedImage(productImages[newIndex]); // Trigger variant selection
   };
   const goToNext = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    setModalIndex((prev) => (prev === productImages.length - 1 ? 0 : prev + 1));
+    const newIndex = modalIndex === productImages.length - 1 ? 0 : modalIndex + 1;
+    setModalIndex(newIndex);
+    setSelectedImage(productImages[newIndex]); // Trigger variant selection
   };
 
   // Keyboard navigation in modal
@@ -54,6 +140,8 @@ const ProductImages: React.FC<ProductImagesProps> = ({
   // Click thumbnail in modal
   const handleModalThumbClick = (idx: number) => {
     setModalIndex(idx);
+    const selectedImg = productImages[idx];
+    setSelectedImage(selectedImg); // This will trigger variant selection through the parent component
   };
 
   return (
@@ -61,8 +149,11 @@ const ProductImages: React.FC<ProductImagesProps> = ({
       <div className="md:sticky md:top-32 space-y-4">
         <div className="mb-4 border border-gray-200 p-2 bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg">
           <div
-            className="relative h-96 w-full flex items-center justify-center bg-gray-50 rounded-lg cursor-zoom-in"
+            className="relative h-80 w-full md:h-96 md:w-full flex items-center justify-center bg-gray-50 rounded-lg cursor-zoom-in"
             onClick={handleMainImageClick}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
             tabIndex={0}
             aria-label="Phóng to ảnh sản phẩm"
             onKeyDown={(e) => {
@@ -70,40 +161,99 @@ const ProductImages: React.FC<ProductImagesProps> = ({
             }}
             role="button"
           >
+            {/* Nút điều hướng trái - chỉ hiển thị trên desktop */}
+            <button
+              className="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white rounded-full p-2 shadow opacity-100 transition-opacity duration-300"
+              onClick={(e) => {
+                e.stopPropagation();
+                const newIndex = productImages.findIndex((img) => img === selectedImage) === 0
+                  ? productImages.length - 1
+                  : productImages.findIndex((img) => img === selectedImage) - 1;
+                setSelectedImage(productImages[newIndex]);
+              }}
+              aria-label="Ảnh trước"
+              type="button"
+            >
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
+                <path d="M15 19l-7-7 7-7" stroke="#222" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+
             <img
               src={selectedImage || productImages[0]}
               alt={productName}
-              className="object-contain transition-all duration-500 transform hover:scale-105 max-h-96 mx-auto"
+              // Giữ nguyên kích thước chuẩn của ảnh, không crop, không stretch
+              className="transition-all duration-500 transform mx-auto w-full h-full object-contain"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
-            <span className="absolute bottom-2 right-2 bg-white/80 px-2 py-1 rounded text-xs shadow">
-              Nhấn để phóng to
-            </span>
+
+            {/* Nút điều hướng phải - chỉ hiển thị trên desktop */}
+            <button
+              className="hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white rounded-full p-2 shadow opacity-100 transition-opacity duration-300"
+              onClick={(e) => {
+                e.stopPropagation();
+                const newIndex = productImages.findIndex((img) => img === selectedImage) === productImages.length - 1
+                  ? 0
+                  : productImages.findIndex((img) => img === selectedImage) + 1;
+                setSelectedImage(productImages[newIndex]);
+              }}
+              aria-label="Ảnh tiếp theo"
+              type="button"
+            >
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
+                <path d="M9 5l7 7-7 7" stroke="#222" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
           </div>
         </div>
-        <div className="grid grid-cols-4 gap-3 px-2">
-          {productImages.map((img, index) => (
-            <div
-              key={index}
-              className={`border-2 p-1 cursor-pointer rounded-lg transition-all duration-300 flex items-center justify-center h-20 w-full bg-white shadow-sm focus:outline-none ${
-                selectedImage === img
-                  ? "border-blue-900 ring-2 ring-blue-900 shadow-md"
-                  : "border-gray-200 hover:border-blue-600 hover:ring-2 hover:ring-blue-200"
-              }`}
-              onClick={() => setSelectedImage(img)}
-              tabIndex={0}
-              aria-label={`Chọn ảnh ${index + 1}`}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") setSelectedImage(img);
-              }}
-            >
-              <img
-                src={img}
-                alt={`${productName} - ảnh ${index + 1}`}
-                className="object-cover rounded h-full w-full transition-transform duration-200 group-hover:scale-105"
-              />
+        <div className="space-y-3">
+          <div className="grid grid-cols-4 gap-3 px-2">
+            {(showAllImages ? productImages : productImages.slice(0, IMAGES_PER_PAGE)).map((img: string, index: number) => {
+              const isVariantImage = variantImageMap.has(img);
+              const variant = variantImageMap.get(img);
+              const isSelectedVariantImage = variant && selectedVariant && variant.variantName === selectedVariant.variantName;
+
+              return (
+                <div
+                  key={index}
+                  className={`relative border-1 p-1 cursor-pointer rounded-lg transition-all duration-300 flex items-center justify-center w-full bg-white shadow-sm focus:outline-none ${selectedImage === img
+                      ? "border-[#b99f08] ring-2 ring-[#b99f08] shadow-md"
+                      : isSelectedVariantImage
+                        ? "border-[#b99f08] ring-2 ring-[#b99f08] shadow-md"
+                        : "border-gray-200 hover:border-[#b99f08] hover:ring-2 hover:ring-[#b99f08]"
+                    }`}
+                  onClick={() => setSelectedImage(img)}
+                  tabIndex={0}
+                  aria-label={`Chọn ảnh ${index + 1}${isVariantImage ? ` - ${variant?.variantName}` : ''}`}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") setSelectedImage(img);
+                  }}
+                >
+                  <img
+                    src={img}
+                    alt={`${productName} - ảnh ${index + 1}${isVariantImage ? ` - ${variant?.variantName}` : ''}`}
+                    // Giữ nguyên kích thước chuẩn của ảnh, không crop, không stretch
+                    className="rounded transition-transform duration-200 group-hover:scale-105 w-16 h-16 md:w-full md:h-full"
+                  />
+                  {isVariantImage && (
+                    <div className="absolute top-0 right-0 bg-[#b99f08] text-white text-xs px-1 rounded-bl">
+                      {variant?.variantName}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {productImages.length > IMAGES_PER_PAGE && (
+            <div className="flex justify-center">
+              <button
+                onClick={() => setShowAllImages(!showAllImages)}
+                className="px-4 py-2 text-sm font-medium text-[#b99f08] bg-white border border-[#b99f08] rounded-md hover:bg-[#b99f08] hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#b99f08]"
+              >
+                {showAllImages ? 'Thu gọn' : `Xem thêm ${productImages.length - IMAGES_PER_PAGE} ảnh`}
+              </button>
             </div>
-          ))}
+          )}
         </div>
       </div>
 
@@ -116,7 +266,7 @@ const ProductImages: React.FC<ProductImagesProps> = ({
           role="dialog"
         >
           <div
-            className="relative bg-white rounded-lg shadow-lg flex flex-col md:flex-row"
+            className="relative bg-white rounded-lg shadow-lg flex flex-col w-full h-full md:flex-row"
             style={{
               width: MODAL_WIDTH,
               height: MODAL_HEIGHT,
@@ -128,97 +278,117 @@ const ProductImages: React.FC<ProductImagesProps> = ({
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Left: Main image with navigation */}
-            <button
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white rounded-full p-2 shadow"
-              onClick={goToPrev}
-              aria-label="Ảnh trước"
-              tabIndex={0}
-              type="button"
-              style={{ outline: "none" }}
-            >
-              <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
-                <path d="M15 19l-7-7 7-7" stroke="#222" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-            <div
-              className="flex-1 flex items-center justify-center bg-gray-50"
-              style={{
-                minWidth: 0,
-                minHeight: 0,
-                width: "100%",
-                height: "100%",
-                maxWidth: MODAL_WIDTH - 200,
-                maxHeight: MODAL_HEIGHT,
-              }}
-            >
-              <img
-                src={productImages[modalIndex]}
-                alt={`${productName} - ảnh phóng to`}
-                className="object-contain rounded"
+            {/* Main image container */}
+            <div className="relative flex-1 flex items-center justify-center bg-gray-50">
+              {/* Navigation buttons - Responsive positioning */}
+              <button
+                className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg md:p-3"
+                onClick={goToPrev}
+                aria-label="Ảnh trước"
+                tabIndex={0}
+                type="button"
+              >
+                <svg width="24" height="24" className="w-5 h-5 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24">
+                  <path d="M15 19l-7-7 7-7" stroke="#222" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+
+              <div
+                className="w-full h-full flex items-center justify-center"
                 style={{
-                  width: "100%",
-                  height: "100%",
                   maxWidth: "100%",
-                  maxHeight: "100%",
-                  minWidth: 0,
-                  minHeight: 0,
-                  background: "#f9fafb",
-                  display: "block",
+                  maxHeight: "calc(100vh - 150px)", // Để lại không gian cho thumbnails
                 }}
-                draggable={false}
-              />
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const selectedImg = productImages[modalIndex];
+                  setSelectedImage(selectedImg);
+                }}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
+                <img
+                  src={productImages[modalIndex]}
+                  alt={`${productName} - ảnh phóng to`}
+                  className="rounded max-w-full max-h-full object-contain"
+                  style={{
+                    background: "#f9fafb",
+                  }}
+                  draggable={false}
+                />
+              </div>
+
+              <button
+                className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg md:p-3"
+                onClick={goToNext}
+                aria-label="Ảnh tiếp theo"
+                tabIndex={0}
+                type="button"
+              >
+                <svg width="24" height="24" className="w-5 h-5 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24">
+                  <path d="M9 5l7 7-7 7" stroke="#222" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
             </div>
-            <button
-              className="absolute right-52 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white rounded-full p-2 shadow"
-              onClick={goToNext}
-              aria-label="Ảnh tiếp theo"
-              tabIndex={0}
-              type="button"
-              style={{ outline: "none" }}
-            >
-              <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
-                <path d="M9 5l7 7-7 7" stroke="#222" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-            {/* Right: Album thumbnails */}
+
+            {/* Thumbnails - Responsive layout */}
             <div
-              className="flex flex-col items-center justify-start p-4 gap-2 overflow-y-auto"
+              className="flex-none bg-white border-t md:border-l md:border-t-0 border-gray-200"
               style={{
-                width: 160,
-                minWidth: 120,
-                maxWidth: 200,
-                height: "100%",
-                background: "#fff",
-                borderLeft: "1px solid #e5e7eb",
+                height: "120px", // Fixed height on mobile
+                width: "100%", // Full width on mobile
+                [window.innerWidth >= 768 ? "width" : "height"]: window.innerWidth >= 768 ? "160px" : "120px",
               }}
             >
-              <div className="grid grid-cols-2 md:grid-cols-1 gap-2 w-full">
-                {productImages.map((img, idx) => (
-                  <div
-                    key={idx}
-                    className={`cursor-pointer rounded-lg transition-all duration-300 flex items-center justify-center h-16 w-full bg-white shadow-sm focus:outline-none ${
-                      modalIndex === idx
-                        ? "border-blue-900 ring-2 ring-blue-900 shadow-md"
-                        : "border-gray-200 hover:border-blue-600 hover:ring-2 hover:ring-blue-200"
-                    }`}
-                    onClick={() => handleModalThumbClick(idx)}
-                  >
-                    <img
-                      src={img}
-                      alt={`${productName} - ảnh ${idx + 1}`}
-                      className="object-cover rounded h-full w-full transition-transform duration-200 group-hover:scale-105"
-                      style={{
-                        maxHeight: 60,
-                        maxWidth: 90,
-                        minHeight: 0,
-                        minWidth: 0,
-                        objectFit: "cover",
-                        background: "#f9fafb",
-                      }}
-                    />
-                  </div>
-                ))}
+              <div 
+                ref={thumbnailsContainerRef}
+                className="h-[600px] overflow-x-auto md:overflow-y-auto md:overflow-x-hidden p-2 md:p-4 scroll-smooth"
+              >
+                <div className="flex md:flex-col gap-2 md:w-full" style={{ minWidth: "max-content" }}>
+                  {productImages.map((img, idx) => {
+                    const isVariantImage = variantImageMap.has(img);
+                    const variant = variantImageMap.get(img);
+                    const isSelectedVariantImage = variant && selectedVariant && variant.variantName === selectedVariant.variantName;
+
+                    return (
+                      <div
+                        key={idx}
+                        ref={(el) => {
+                          if (el) {
+                            thumbnailRefs.current[idx] = el;
+                          }
+                        }}
+                        className={`relative flex-none cursor-pointer rounded-lg transition-all duration-300 flex items-center justify-center 
+                          ${modalIndex === idx
+                            ? "border-[#b99f08] ring-2 ring-[#b99f08] shadow-md"
+                            : isSelectedVariantImage
+                              ? "border-[#b99f08] ring-2 ring-[#b99f08] shadow-md"
+                              : "border border-gray-200 hover:border-[#b99f08] hover:ring-2 hover:ring-[#b99f08]"
+                          }`}
+                        style={{
+                          width: "90px",
+                          height: "90px",
+                        }}
+                        onClick={() => handleModalThumbClick(idx)}
+                      >
+                        <img
+                          src={img}
+                          alt={`${productName} - ảnh ${idx + 1}${isVariantImage ? ` - ${variant?.variantName}` : ''}`}
+                          className="rounded-lg w-full h-full object-contain p-1"
+                          style={{
+                            background: "#f9fafb",
+                          }}
+                        />
+                        {isVariantImage && (
+                          <div className="absolute top-0 right-0 bg-[#b99f08] text-white text-[10px] px-1 rounded-bl">
+                            {variant?.variantName}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
             {/* Close button */}
@@ -231,7 +401,7 @@ const ProductImages: React.FC<ProductImagesProps> = ({
               style={{ outline: "none" }}
             >
               <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
-                <path d="M18 6L6 18M6 6l12 12" stroke="#222" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M18 6L6 18M6 6l12 12" stroke="#222" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
           </div>

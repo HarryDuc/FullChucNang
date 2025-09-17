@@ -58,7 +58,7 @@ export class ProductController {
 
   /**
    * Lấy danh sách tất cả sản phẩm với thông tin cơ bản (có phân trang).
-   * Chỉ trả về các trường: name, slug, basePrice, thumbnail, category.
+   * Chỉ trả về các trường: name, slug, thumbnail, category.
    * Query parameters:
    *  - page: Số trang (mặc định là 1)
    *  - limit: Số sản phẩm mỗi trang (mặc định là 10)
@@ -73,7 +73,7 @@ export class ProductController {
     const pageNumber = page ? parseInt(page, 10) || 1 : 1;
     return this.productService.findAllBasicInfo(pageNumber);
   }
-  
+
   /**
    * Lọc sản phẩm theo các tiêu chí (có phân trang)
    * @param filters Các tiêu chí lọc
@@ -133,7 +133,7 @@ export class ProductController {
   ) {
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
-    
+
     // Log request for debugging
     console.log('Filter request received:', {
       categoryId,
@@ -141,16 +141,16 @@ export class ProductController {
       page: pageNumber,
       limit: limitNumber
     });
-    
+
     // Validate and normalize filter structure
     const filters = body.filters || {};
-    
+
     // Ensure filterAttributes exists and has the correct structure
     if (!filters.filterAttributes && Object.keys(filters).length > 0) {
       // If filters were sent without the filterAttributes wrapper, wrap them
       console.log('Restructuring filters - wrapping in filterAttributes');
       filters.filterAttributes = { ...filters };
-      
+
       // Remove any non-filter fields from the wrapped structure
       ['name', 'minPrice', 'maxPrice', 'hasVariants'].forEach(field => {
         if (filters.filterAttributes[field] !== undefined) {
@@ -159,9 +159,9 @@ export class ProductController {
         }
       });
     }
-    
+
     console.log('Normalized filters:', filters);
-    
+
     return this.productService.searchProductsByCategoryAndFilters(
       categoryId,
       filters,
@@ -221,6 +221,29 @@ export class ProductController {
 
     const pageNumber = page ? parseInt(page, 10) || 1 : 1;
     return this.productService.searchByName(searchTerm, pageNumber);
+  }
+
+  @Get('visible-search')
+  async visibleSearchProducts(
+    @Query('q') searchTerm: string,
+    @Query('page') page?: string,
+  ): Promise<{
+    data: Pick<Product, 'name' | 'slug' | 'currentPrice' | 'discountPrice' | 'thumbnail'>[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> {
+    if (!searchTerm) {
+      return {
+        data: [],
+        total: 0,
+        page: 1,
+        totalPages: 0,
+      };
+    }
+
+    const pageNumber = page ? parseInt(page, 10) || 1 : 1;
+    return this.productService.getVisibleProducts(searchTerm, pageNumber);
   }
   /**
    * Lấy thông tin sản phẩm theo slug.

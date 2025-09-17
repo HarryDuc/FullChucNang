@@ -15,6 +15,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { Types } from 'mongoose';
+import { ConditionalStock } from '../../../common/validators/conditional-stock.validator';
 
 /**
  * DTO cho giá trị của thuộc tính biến thể
@@ -250,10 +251,11 @@ export class SpecificationGroupDto {
   @IsString()
   title?: string;
 
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => TechnicalSpecDto)
-  specs: TechnicalSpecDto[];
+  specs?: TechnicalSpecDto[];
 }
 
 export class SpecificationDto {
@@ -261,10 +263,11 @@ export class SpecificationDto {
   @IsString()
   title?: string;
 
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => SpecificationGroupDto)
-  groups: SpecificationGroupDto[];
+  groups?: SpecificationGroupDto[];
 }
 
 export class TechnicalSpecDto {
@@ -295,9 +298,10 @@ export class CreateProductDto {
   @IsString()
   description?: string;
 
+  @IsOptional()
   @IsNumber()
   @Min(0)
-  basePrice: number;
+  basePrice?: number;
 
   @IsOptional()
   @IsNumber()
@@ -325,19 +329,19 @@ export class CreateProductDto {
   @Type(() => CategoryInfoDto)
   category?: CategoryInfoDto;
 
-  @IsNumber()
-  @Min(0)
-  stock: number;
+  @ConditionalStock()
+  stock?: number;
 
+  @IsOptional()
   @IsNumber()
   @Min(0)
-  sold: number;
+  sold?: number;
 
   @IsBoolean()
   hasVariants: boolean;
 
-  @IsBoolean()
-  isSpecification?: boolean;
+  // @IsBoolean()
+  // isSpecification?: boolean;
 
   @IsOptional()
   @ValidateNested()
@@ -484,9 +488,9 @@ export class UpdateProductDto implements Partial<CreateProductDto> {
   @Min(0)
   sold?: number;
 
-  @IsOptional()
-  @IsBoolean()
-  isSpecification?: boolean;
+  // @IsOptional()
+  // @IsBoolean()
+  // isSpecification?: boolean;
 
   @IsOptional()
   @IsString()

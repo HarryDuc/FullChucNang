@@ -21,7 +21,7 @@ const CreateProduct = () => {
   };
 
   return (
-    <div className="container mx-auto py-4">
+    <div>
       <h2 className="text-3xl font-bold mb-4">Thêm sản phẩm</h2>
       <ProductForm
         mode="create"

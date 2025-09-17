@@ -106,7 +106,7 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
           const productData = await ProductService.getOne(slugFromUrl);
 
           // Kiểm tra nếu sản phẩm bị ẩn
-          if (productData.isVisible === false) {
+          if (productData.isVisible === true) {
             router.replace("/not_found");
             return;
           }
@@ -114,8 +114,9 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
           setProduct(productData);
 
           // Set giá và hình ảnh mặc định
-          setCurrentPrice(productData.basePrice || 0);
-          setDiscountPrice(productData.discountPrice);
+          const initialPrices = getLowestVariantPrices(productData);
+          setCurrentPrice(initialPrices.currentPrice);
+          setDiscountPrice(initialPrices.discountPrice);
 
           // Set hình ảnh mặc định
           if (productData.thumbnail) {
@@ -133,16 +134,21 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
           const productData = await ProductService.getOne(slug);
 
           // Kiểm tra nếu sản phẩm bị ẩn
-          if (productData.isVisible === false) {
+          if (productData.isVisible === true) {
             router.replace("/not_found");
             return;
           }
 
           setProduct(productData);
 
+          // Debug log để kiểm tra specification
+          console.log('Product specification:', productData.specification);
+          console.log('Product specificationDescription:', productData.specificationDescription);
+
           // Set giá và hình ảnh mặc định
-          setCurrentPrice(productData.basePrice || 0);
-          setDiscountPrice(productData.discountPrice);
+          const initialPrices = getLowestVariantPrices(productData);
+          setCurrentPrice(initialPrices.currentPrice);
+          setDiscountPrice(initialPrices.discountPrice);
 
           // Set hình ảnh mặc định
           if (productData.thumbnail) {
@@ -280,15 +286,81 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
       });
   };
 
+  // Tính giá thấp nhất từ tất cả variants
+  const getLowestVariantPrices = (productData: Product) => {
+    if (!productData.hasVariants || !productData.variants || productData.variants.length === 0) {
+      return {
+        currentPrice: productData.currentPrice !== undefined ? productData.currentPrice : 0,
+        discountPrice: productData.discountPrice,
+      };
+    }
+
+    let lowestCurrentPrice = Infinity;
+    let lowestDiscountPrice = Infinity;
+    let hasValidVariantPrice = false;
+    let allVariantsZero = true;
+
+    productData.variants.forEach((variant) => {
+      // Kiểm tra xem có variant nào có giá > 0 không
+      if (
+        (variant.variantCurrentPrice !== undefined && variant.variantCurrentPrice > 0) ||
+        (variant.variantDiscountPrice !== undefined && variant.variantDiscountPrice > 0)
+      ) {
+        allVariantsZero = false;
+        hasValidVariantPrice = true;
+      }
+
+      // Cập nhật giá gốc thấp nhất (chỉ khi > 0)
+      if (
+        variant.variantCurrentPrice !== undefined &&
+        variant.variantCurrentPrice > 0 &&
+        variant.variantCurrentPrice < lowestCurrentPrice
+      ) {
+        lowestCurrentPrice = variant.variantCurrentPrice;
+      }
+      // Cập nhật giá khuyến mãi thấp nhất (chỉ khi > 0)
+      if (
+        variant.variantDiscountPrice !== undefined &&
+        variant.variantDiscountPrice > 0 &&
+        variant.variantDiscountPrice < lowestDiscountPrice
+      ) {
+        lowestDiscountPrice = variant.variantDiscountPrice;
+      }
+    });
+
+    // Nếu tất cả variants đều có giá = 0, fallback về giá sản phẩm chính
+    if (allVariantsZero) {
+      return {
+        currentPrice: productData.currentPrice !== undefined ? productData.currentPrice : 0,
+        discountPrice: productData.discountPrice,
+      };
+    }
+
+    // Nếu có variant có giá hợp lệ
+    if (hasValidVariantPrice) {
+      return {
+        currentPrice: lowestCurrentPrice === Infinity ? (productData.currentPrice !== undefined ? productData.currentPrice : 0) : lowestCurrentPrice,
+        discountPrice: lowestDiscountPrice === Infinity ? undefined : lowestDiscountPrice,
+      };
+    }
+
+    // Fallback về giá sản phẩm chính
+    return {
+      currentPrice: productData.currentPrice !== undefined ? productData.currentPrice : 0,
+      discountPrice: productData.discountPrice,
+    };
+  };
+
   // Format price with comma separator
   const formatPrice = (price?: number) => {
-    if (!price) return "Liên hệ";
+    if (price === undefined || price === null) return "Liên hệ";
+    if (price === 0) return "Liên hệ";
     return formatPriceUtil(price);
   };
 
   // Calculate discount percentage
   const calculateDiscount = (currentPrice?: number, discountPrice?: number) => {
-    if (!currentPrice || !discountPrice || currentPrice <= discountPrice)
+    if (!currentPrice || discountPrice === undefined || discountPrice === null || currentPrice <= discountPrice)
       return 0;
     return Math.round(((currentPrice - discountPrice) / currentPrice) * 100);
   };
@@ -324,9 +396,12 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
         setSelectedImage(variant.variantGalleries[0]);
       }
     } else {
-      // Reset to original product price
-      setCurrentPrice(product?.basePrice || 0);
-      setDiscountPrice(product?.discountPrice);
+      // Reset to lowest variant prices or original product price
+      if (product) {
+        const resetPrices = getLowestVariantPrices(product);
+        setCurrentPrice(resetPrices.currentPrice);
+        setDiscountPrice(resetPrices.discountPrice);
+      }
 
       // Reset to original product image
       if (product?.thumbnail) {
@@ -342,8 +417,8 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
     variant: ProductVariant,
     baseProduct: Product
   ) => {
-    // Nếu variant có giá giảm, ưu tiên sử dụng giá giảm của variant
-    if (variant.variantDiscountPrice !== undefined) {
+    // Nếu variant có giá giảm và > 0, ưu tiên sử dụng giá giảm của variant
+    if (variant.variantDiscountPrice !== undefined && variant.variantDiscountPrice > 0) {
       return {
         currentPrice:
           variant.variantCurrentPrice || variant.variantDiscountPrice,
@@ -351,11 +426,27 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
       };
     }
 
-    // Nếu variant có giá riêng, ưu tiên sử dụng giá của variant
-    if (variant.variantCurrentPrice !== undefined) {
+    // Nếu variant có giá riêng và > 0, ưu tiên sử dụng giá của variant
+    if (variant.variantCurrentPrice !== undefined && variant.variantCurrentPrice > 0) {
       return {
         currentPrice: variant.variantCurrentPrice,
         discountPrice: variant.variantDiscountPrice,
+      };
+    }
+
+    // Nếu variant có giá nhưng tất cả = 0, fallback về giá sản phẩm chính
+    if (variant.variantCurrentPrice === 0 && variant.variantDiscountPrice === 0) {
+      return {
+        currentPrice: baseProduct.currentPrice || 0,
+        discountPrice: baseProduct.discountPrice,
+      };
+    }
+
+    // Nếu variant có giá undefined hoặc null, fallback về giá sản phẩm chính
+    if (variant.variantCurrentPrice === undefined && variant.variantDiscountPrice === undefined) {
+      return {
+        currentPrice: baseProduct.currentPrice || 0,
+        discountPrice: baseProduct.discountPrice,
       };
     }
 
@@ -379,16 +470,15 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
         }
       });
 
-      // Với sản phẩm có variant, chỉ dùng basePrice + additionalPrice
       return {
-        currentPrice: (baseProduct.basePrice || 0) + totalAdditionalPrice,
+        currentPrice: (baseProduct.currentPrice || 0) + totalAdditionalPrice,
         // Không lấy discountPrice từ sản phẩm chính khi có variant
         discountPrice: undefined,
       };
     } else {
       // Với sản phẩm không có variant, dùng giá và giảm giá từ sản phẩm chính
       return {
-        currentPrice: baseProduct.currentPrice || baseProduct.basePrice || 0,
+        currentPrice: baseProduct.currentPrice || 0,
         discountPrice: baseProduct.discountPrice,
       };
     }
@@ -420,67 +510,40 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
         return;
       }
 
-      // Check stock before adding to cart
-      const stockToCheck = selectedVariant
-        ? selectedVariant.variantStock
-        : product.stock;
-      if (stockToCheck !== undefined && stockToCheck < quantity) {
-        toast.error(
-          <div className="flex flex-col">
-            <span className="font-medium">Số lượng vượt quá tồn kho</span>
-            <span className="text-xs mt-1 text-gray-600">
-              Chỉ còn {stockToCheck} sản phẩm trong kho
-            </span>
-          </div>,
-          {
-            duration: 2000,
-            style: {
-              maxWidth: "95vw",
-              padding: "10px 15px",
-            },
-          }
-        );
-        return;
-      }
-
       // Tính giá dựa vào việc có variant hay không
       const priceData =
         product.hasVariants && selectedVariant
           ? calculateVariantPrice(selectedVariant, product) // Có variant -> tính theo variant
-          : {
-              // Không có variant -> lấy giá sản phẩm chính
-              currentPrice: product.currentPrice || product.basePrice || 0,
-              discountPrice: product.discountPrice,
-            };
+          : getLowestVariantPrices(product); // Không có variant -> lấy giá thấp nhất từ variants
 
       const selectedProductData: CartItem = selectedVariant
         ? {
-            _id: product._id || product.id || "",
-            name: product.name,
-            slug: product.slug,
-            variant: selectedVariant.variantName,
-            currentPrice: priceData.currentPrice,
-            discountPrice: priceData.discountPrice,
-            price: priceData.discountPrice || priceData.currentPrice || 0,
-            quantity: quantity,
-            image: selectedVariant.variantThumbnail || selectedImage,
-            sku: selectedVariant.sku || product.sku,
-          }
+          _id: product._id || product.id || "",
+          name: product.name,
+          slug: product.slug,
+          variant: selectedVariant.variantName,
+          currentPrice: priceData.currentPrice,
+          discountPrice: priceData.discountPrice,
+          price: priceData.discountPrice !== undefined ? priceData.discountPrice : priceData.currentPrice,
+          quantity: quantity,
+          image: selectedVariant.variantThumbnail || selectedImage,
+          sku: selectedVariant.sku || product.sku,
+        }
         : {
-            _id: product._id || product.id || "",
-            name: product.name,
-            slug: product.slug,
-            currentPrice: priceData.currentPrice,
-            discountPrice: priceData.discountPrice,
-            price: priceData.discountPrice || priceData.currentPrice || 0,
-            quantity: quantity,
-            image:
-              product.thumbnail ||
-              (product.gallery && product.gallery.length > 0
-                ? product.gallery[0]
-                : ""),
-            sku: product.sku,
-          };
+          _id: product._id || product.id || "",
+          name: product.name,
+          slug: product.slug,
+          currentPrice: priceData.currentPrice,
+          discountPrice: priceData.discountPrice,
+          price: priceData.discountPrice !== undefined ? priceData.discountPrice : priceData.currentPrice,
+          quantity: quantity,
+          image:
+            product.thumbnail ||
+            (product.gallery && product.gallery.length > 0
+              ? product.gallery[0]
+              : ""),
+          sku: product.sku,
+        };
 
       addToCartUtil(selectedProductData);
 
@@ -568,40 +631,48 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
     );
   }
 
-  // Create product images array
+  // Create product images array including all variants
   const productImages = [];
-  if (selectedVariant) {
-    if (selectedVariant.variantThumbnail) {
-      productImages.push(selectedVariant.variantThumbnail);
-    }
-    if (
-      selectedVariant.variantGalleries &&
-      selectedVariant.variantGalleries.length > 0
-    ) {
-      productImages.push(...selectedVariant.variantGalleries);
-    }
+  const variantImageMap = new Map();
+
+  // Add main product images
+  if (product?.thumbnail) {
+    productImages.push(product.thumbnail);
+  }
+  if (product?.gallery && product.gallery.length > 0) {
+    productImages.push(...product.gallery);
   }
 
-  if (productImages.length === 0) {
-    if (product?.thumbnail) {
-      productImages.push(product.thumbnail);
-    }
-    if (product?.gallery && product.gallery.length > 0) {
-      productImages.push(...product.gallery);
-    }
+  // Add variant images and create mapping
+  if (product?.variants) {
+    product.variants.forEach(variant => {
+      if (variant.variantThumbnail) {
+        productImages.push(variant.variantThumbnail);
+        variantImageMap.set(variant.variantThumbnail, variant);
+      }
+      if (variant.variantGalleries && variant.variantGalleries.length > 0) {
+        variant.variantGalleries.forEach(img => {
+          productImages.push(img);
+          variantImageMap.set(img, variant);
+        });
+      }
+    });
   }
+
+  // Remove duplicates
+  const uniqueProductImages = [...new Set(productImages)];
 
   // Calculate discount
   const discount = calculateDiscount(currentPrice, discountPrice);
 
   return (
     <>
-      <div className="bg-[#f5f5fa] min-h-screen">
+      <div className="min-h-screen">
         {/* Breadcrumb */}
         <ProductBreadcrumb product={product} />
         {/* Main Content with Sidebar Layout */}
-        <main role="main">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <main>
+          <div className="gap-8">
             {/* Main Product Content - 9 cols on large screens */}
             <div className="lg:col-span-9">
               <article
@@ -611,10 +682,19 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
               >
                 {/* Product Images */}
                 <ProductImages
-                  productImages={productImages}
+                  productImages={uniqueProductImages}
                   selectedImage={selectedImage}
-                  setSelectedImage={setSelectedImage}
+                  setSelectedImage={(img) => {
+                    setSelectedImage(img);
+                    // If image belongs to a variant, select that variant
+                    const variant = variantImageMap.get(img);
+                    if (variant) {
+                      handleVariantSelect(variant);
+                    }
+                  }}
                   productName={product.name}
+                  variantImageMap={variantImageMap}
+                  selectedVariant={selectedVariant}
                 />
                 {/* Product Info */}
                 <ProductInfo
@@ -634,21 +714,26 @@ const ProductDetailSection = ({ slug }: ProductDetailProps) => {
                 />
               </article>
               {/* Tabs for Description and Reviews */}
-              <ProductTabs
-                productSlug={product.slug}
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-                processedDescription={processedDescription}
-                hasMultipleImages={hasMultipleImages}
-                showAllImages={showAllImages}
-                setShowAllImages={setShowAllImages}
-                productName={product.name}
-                specification={product.specification}
-                specificationDescription={product.specificationDescription}
-              />
             </div>
-            {/* Right Sidebar Banner Section - 3 cols on large screens */}
-            <ProductSidebar />
+            <div className="grid grid-cols-1 lg:grid-cols-12">
+              <div className="lg:col-span-9">
+                <ProductTabs
+                  productSlug={product.slug}
+                  activeTab={activeTab}
+                  setActiveTab={setActiveTab}
+                  processedDescription={processedDescription}
+                  hasMultipleImages={hasMultipleImages}
+                  showAllImages={showAllImages}
+                  setShowAllImages={setShowAllImages}
+                  productName={product.name}
+                  specification={product.specification}
+                  specificationDescription={product.specificationDescription}
+                />
+              </div>
+              <div className="lg:col-span-3">
+                <ProductSidebar />
+              </div>
+            </div>
           </div>
         </main>
         {/* Related Products Section */}

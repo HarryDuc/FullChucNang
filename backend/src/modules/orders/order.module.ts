@@ -32,7 +32,7 @@ import { RoleService } from '../manager-permissions/services/role.service';
     forwardRef(() => AuthModule),
     PermissionsModule,
     forwardRef(() => PayPalModule),
-    CheckoutModule,
+    forwardRef(() => CheckoutModule),
     CommonModule,
   ],
   controllers: [OrderController],

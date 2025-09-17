@@ -31,7 +31,7 @@ const EditProduct = ({ slug }: { slug: string }) => {
   }
 
   return (
-    <div className="container mx-auto py-4">
+    <div>
       <h2 className="text-3xl font-bold mb-4">Chỉnh sửa sản phẩm</h2>
       <ProductForm
         mode="edit"

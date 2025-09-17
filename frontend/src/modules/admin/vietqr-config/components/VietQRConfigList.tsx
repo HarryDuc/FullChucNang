@@ -57,42 +57,44 @@ export const VietQRConfigList: React.FC = () => {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Ngân hàng
-            </th>
-            {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Mã ngân hàng
-            </th> */}
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              ShortName (theo bin)
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Số tài khoản
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Tên tài khoản
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Template
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Trạng thái
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Thao tác
-            </th>
-          </tr>
-        </thead>
+    <div className="overflow-x-auto min-h-[400px]">
+      <table className="divide-y divide-gray-200">
+      <thead className="bg-gray-50">
+            <tr>
+              <th className="px-3 md:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap w-[180px] max-w-[220px]">
+                Ngân hàng
+              </th>
+              {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Mã ngân hàng
+              </th> */}
+              <th className="px-3 md:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap w-[120px]">
+                ShortName
+              </th>
+              <th className="px-3 md:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap w-[140px]">
+                Số tài khoản
+              </th>
+              <th className="px-3 md:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap w-[180px]">
+                Tên tài khoản
+              </th>
+              <th className="px-3 md:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap w-[120px]">
+                Template
+              </th>
+              <th className="px-3 md:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap w-[100px]">
+                Trạng thái
+              </th>
+              <th className="px-3 md:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap w-[100px]">
+                Thao tác
+              </th>
+            </tr>
+          </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {configs.map((config) => (
             <tr key={config._id} className="hover:bg-gray-50">
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {config.bankName}
-              </td>
+                <td className="px-3 md:px-4 py-4 whitespace-nowrap text-sm text-gray-900 w-[180px] max-w-[220px]">
+                  <div className="truncate" title={config.bankName}>
+                    {config.bankName}
+                  </div>
+                </td>
               {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 {config.bankBin}
               </td> */}

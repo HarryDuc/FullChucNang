@@ -57,7 +57,7 @@ export interface Product {
   sku: string;
   description?: string;
   shortDescription?: string;
-  basePrice: number;
+  basePrice?: number;
   importPrice?: number;
   gallery?: string[];
   isFeatured?: boolean;
@@ -205,13 +205,13 @@ export const getProductsByCategory = async (
     if (categoryId) params.append('categoryId', categoryId);
     if (page) params.append('page', page.toString());
     if (limit) params.append('limit', limit.toString());
-    
+
     // Add filter parameters
     if (filters.name) params.append('name', filters.name);
     if (filters.minPrice !== undefined) params.append('minPrice', filters.minPrice.toString());
     if (filters.maxPrice !== undefined) params.append('maxPrice', filters.maxPrice.toString());
     if (filters.hasVariants !== undefined) params.append('hasVariants', filters.hasVariants.toString());
-    
+
     // Add filter attributes
     if (filters.filterAttributes) {
       Object.entries(filters.filterAttributes).forEach(([key, value]) => {

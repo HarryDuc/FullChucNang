@@ -59,7 +59,11 @@ export const updateCategoriesProduct = async (
 };
 
 export const deleteCategoriesProduct = async (slug: string): Promise<void> => {
-  await api.delete(`${API_URL}/${slug}`);
+  await api.delete(`${API_URL}/${slug}`, {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  });
 };
 
 export const CategoriesService = {

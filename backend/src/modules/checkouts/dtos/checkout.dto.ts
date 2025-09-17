@@ -60,6 +60,16 @@ export class CreateCheckoutDto {
   @IsString()
   slug?: string;
 
+  // Đường dẫn trả về sau thanh toán (PayOS)
+  @IsOptional()
+  @IsString()
+  returnUrl?: string;
+
+  // Đường dẫn hủy thanh toán (PayOS)
+  @IsOptional()
+  @IsString()
+  cancelUrl?: string;
+
   // 👤 ID người dùng
   @IsNotEmpty()
   @IsString()

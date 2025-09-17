@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { FaShoppingCart, FaMinus, FaPlus } from "react-icons/fa";
+import { FaShoppingCart, FaMinus, FaPlus, FaTimes } from "react-icons/fa";
 import { convertToSlug } from "../../../../../utils/ProductUtil";
 import type {
   Product,
@@ -30,6 +30,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
   product,
   currentPrice,
   discountPrice,
+  discount,
   selectedVariant,
   handleVariantSelect,
   quantity,
@@ -40,99 +41,43 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
   buyNow,
   formatPrice,
 }) => {
-  // Tìm giá thấp nhất trong các variants
-  const getLowestVariantPrices = () => {
-    if (!product.variants || product.variants.length === 0)
-      return { lowest: product.basePrice || 0, lowestDiscount: undefined };
+  const [showMobileVariantPopup, setShowMobileVariantPopup] = useState(false);
+  const [actionType, setActionType] = useState<'cart' | 'buy' | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
-    let lowest = Infinity;
-    let lowestDiscount = Infinity;
-
-    product.variants.forEach((variant) => {
-      // Cập nhật giá gốc thấp nhất
-      if (
-        variant.variantCurrentPrice !== undefined &&
-        variant.variantCurrentPrice < lowest
-      ) {
-        lowest = variant.variantCurrentPrice;
-      }
-      // Cập nhật giá khuyến mãi thấp nhất
-      if (
-        variant.variantDiscountPrice !== undefined &&
-        variant.variantDiscountPrice < lowestDiscount
-      ) {
-        lowestDiscount = variant.variantDiscountPrice;
-      }
-    });
-
-    return {
-      lowest: lowest === Infinity ? product.basePrice || 0 : lowest,
-      lowestDiscount: lowestDiscount === Infinity ? undefined : lowestDiscount,
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
     };
-  };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
-  // Tính tổng giá tăng thêm từ các thuộc tính được chọn
-  const calculateAdditionalPrice = () => {
-    if (!selectedVariant || !product.variantAttributes) return 0;
-
-    let totalAdditional = 0;
-    selectedVariant.combination.forEach((comb) => {
-      const attribute = product.variantAttributes?.find(
-        (attr) => attr.name === comb.attributeName
-      );
-      const value = attribute?.values.find((val) => val.value === comb.value);
-      if (value?.additionalPrice) {
-        totalAdditional += value.additionalPrice;
+  const handleMobileAction = (type: 'cart' | 'buy') => {
+    if (product.variantAttributes && product.variantAttributes.length > 0) {
+      setActionType(type);
+      setShowMobileVariantPopup(true);
+    } else {
+      if (type === 'cart') {
+        addToCart();
+      } else {
+        buyNow();
       }
-    });
-    return totalAdditional;
+    }
   };
 
-  const additionalPrice = calculateAdditionalPrice();
+  const handleMobileVariantSelect = (variant: ProductVariant | null) => {
+    handleVariantSelect(variant);
+  };
 
-  // Xác định giá hiển thị dựa trên việc có variant hay không
-  const { lowest, lowestDiscount } = product.hasVariants
-    ? selectedVariant
-      ? {
-          lowest: selectedVariant.variantCurrentPrice,
-          lowestDiscount: selectedVariant.variantDiscountPrice,
-        }
-      : getLowestVariantPrices() // Nếu chưa chọn variant, lấy giá thấp nhất
-    : {
-        lowest: product.currentPrice || product.basePrice || 0,
-        lowestDiscount: product.discountPrice,
-      };
-
-  // Tính giá hiển thị theo thứ tự ưu tiên
-  const displayPrice = product.hasVariants
-    ? selectedVariant
-      ? selectedVariant.variantDiscountPrice || // Ưu tiên giá giảm của variant
-        selectedVariant.variantCurrentPrice || // Sau đó là giá bán của variant
-        (product.basePrice || 0) + additionalPrice // Cuối cùng là basePrice + additionalPrice
-      : lowestDiscount || lowest // Nếu chưa chọn variant, ưu tiên giá giảm thấp nhất
-    : product.discountPrice || product.currentPrice || product.basePrice || 0;
-
-  // Xác định giá gốc để tính % giảm giá
-  const originalPrice = product.hasVariants
-    ? selectedVariant
-      ? selectedVariant.variantCurrentPrice ||
-        (product.basePrice || 0) + additionalPrice
-      : lowest
-    : product.currentPrice || product.basePrice || 0;
+  // Sử dụng giá được truyền từ parent component thay vì tự tính toán
+  const displayPrice = discountPrice !== undefined && discountPrice > 0 ? discountPrice : currentPrice;
+  const originalPrice = currentPrice;
 
   // Đảm bảo giá trị không bị undefined
   const finalDisplayPrice = displayPrice || 0;
   const finalOriginalPrice = originalPrice || 0;
-
-  // Tính toán phần trăm giảm giá
-  const calculatedDiscount =
-    finalDisplayPrice &&
-    finalOriginalPrice &&
-    finalDisplayPrice < finalOriginalPrice
-      ? Math.round(
-          ((finalOriginalPrice - finalDisplayPrice) / finalOriginalPrice) * 100
-        )
-      : 0;
 
   // Kiểm tra xem một giá trị có được chọn trong biến thể hiện tại không
   const isValueSelected = (attributeName: string, value: string) => {
@@ -188,6 +133,13 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
     return matchingVariant || null;
   };
 
+  // Determine if discount should be shown
+  const shouldShowDiscount =
+    discount > 0 &&
+    finalDisplayPrice > 0 &&
+    finalOriginalPrice > 0 &&
+    finalDisplayPrice !== finalOriginalPrice;
+
   return (
     <div className="px-4 space-y-6">
       <h1 className="text-xl md:text-2xl font-bold mb-4 text-gray-800">
@@ -199,8 +151,8 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         </p>
       )}
       <div className="mb-6">
-        {calculatedDiscount > 0 ? (
-          <div className="border-dashed border-2 border-gray-300 bg-blue-50 rounded-lg p-3 transition-all duration-300 shadow hover:shadow-md">
+        {shouldShowDiscount ? (
+          <div className="border-dashed border-2 border-gray-300 bg-[#f7f5e9dc] rounded-lg p-3 transition-all duration-300 shadow hover:shadow-md">
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex-1">
                 <span className="text-xl text-blue-900 font-bold">
@@ -211,7 +163,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                 </span>
               </div>
               <div className="bg-red-600 text-white px-3 py-2 rounded-lg text-sm font-bold">
-                GIẢM {calculatedDiscount}%
+                GIẢM {discount}%
               </div>
             </div>
             <div className="mt-2 text-sm text-gray-600">
@@ -222,231 +174,363 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
             </div>
           </div>
         ) : (
-          <div className="bg-blue-50 rounded-lg p-6 transition-all duration-300 shadow hover:shadow-md">
-            <span className="text-xl text-blue-900 font-bold">
+          <div className="border-dashed border-2 border-gray-300 bg-[#f7f5e9dc] rounded-lg p-3 transition-all duration-300 shadow hover:shadow-md">
+            <span className="text-xl text-[#b99f08] font-bold">
               {formatPrice(finalDisplayPrice)}
             </span>
-            {finalDisplayPrice === 0 && (
+            {(finalDisplayPrice === 0 || finalDisplayPrice === undefined) && (
               <p className="mt-2 text-sm text-gray-600">
                 Vui lòng liên hệ để biết thêm chi tiết về giá
               </p>
             )}
           </div>
         )}
+        {product.variantAttributes && product.variantAttributes.length > 0 && !isMobile && (
+          <div className="hidden md:flex flex-col gap-4 mt-4">
+            {product.variantAttributes.map(
+              (attribute: VariantAttribute, attrIndex: number) => (
+                <div
+                  key={attrIndex}
+                  className="flex flex-row items-start gap-x-4 gap-y-2"
+                >
+                  <span className="text-base mr-2 min-w-[90px] text-gray-500 pt-2 whitespace-nowrap">
+                    {attribute.name}
+                  </span>
+                  <div
+                    className="flex flex-row flex-wrap gap-2 max-h-[315px] overflow-y-auto pr-1 custom-scrollbar"
+                    style={{
+                      minWidth: 0,
+                    }}
+                  >
+                    {attribute.values.map(
+                      (value: VariantAttributeValue, valueIndex: number) => {
+                        const isSelected = isValueSelected(
+                          attribute.name,
+                          value.value
+                        );
+                        return (
+                          <button
+                            key={valueIndex}
+                            className={`px-4 py-2 border rounded-lg text-sm transition-all duration-200 whitespace-nowrap
+                              ${isSelected
+                                ? "border-[#c0a83d] bg-[#b99f08] text-white"
+                                : "border-[#c0a83d] hover:border-[#c0a83d] hover:bg-[#c0a83d] hover:text-white mt-1"
+                              }`}
+                            onClick={() => {
+                              const matchingVariant = findMatchingVariant(
+                                attribute.name,
+                                value.value
+                              );
+                              handleVariantSelect(matchingVariant || null);
+                            }}
+                          >
+                            {value.value}
+                            {(value.additionalPrice || 0) > 0 && (
+                              <span className="ml-1 text-sm text-gray-500">
+                                (+{formatPrice(value.additionalPrice)})
+                              </span>
+                            )}
+                          </button>
+                        );
+                      }
+                    )}
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+        )}
+        
+        {/* Mobile Variant Popup */}
+        {showMobileVariantPopup && (
+          <>
+            <div 
+              className="fixed inset-0 bg-black/40 z-40 md:hidden" 
+              onClick={() => setShowMobileVariantPopup(false)}
+            />
+            <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl z-[60] md:hidden max-h-[70vh] overflow-y-auto pb-[84px]"> {/* Add padding bottom for floating controls */}
+              <div className="sticky top-0 bg-white p-4 border-b flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <img 
+                    src={selectedVariant?.variantThumbnail || product.thumbnail || ''} 
+                    alt={product.name} 
+                    className="w-20 h-20 object-cover rounded-lg border"
+                  />
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      {formatPrice(finalDisplayPrice)}{" "}
+                      {shouldShowDiscount && (
+                        <span className="font-medium text-sm text-gray-400 line-through ml-2">
+                          {formatPrice(finalOriginalPrice)}
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-sm text-gray-500">Đã chọn: {selectedVariant?.variantName || 'Chưa chọn'}</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowMobileVariantPopup(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full"
+                >
+                  <FaTimes className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+              
+              <div className="p-4 space-y-4 mb-6">
+                {product.variantAttributes?.map((attribute: VariantAttribute, attrIndex: number) => (
+                  <div key={attrIndex} className="space-y-2">
+                    <span className="text-sm font-medium text-gray-700">
+                      {attribute.name}
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {attribute.values.map((value: VariantAttributeValue, valueIndex: number) => {
+                        const isSelected = isValueSelected(attribute.name, value.value);
+                        return (
+                          <button
+                            key={valueIndex}
+                            className={`px-4 py-2 border rounded-lg text-sm transition-all duration-200 whitespace-nowrap
+                              ${isSelected
+                                ? "border-[#c0a83d] bg-[#b99f08] text-white"
+                                : "border-[#c0a83d] hover:border-[#c0a83d] hover:bg-[#c0a83d] hover:text-white"
+                              }`}
+                            onClick={() => {
+                              const matchingVariant = findMatchingVariant(
+                                attribute.name,
+                                value.value
+                              );
+                              handleMobileVariantSelect(matchingVariant);
+                            }}
+                          >
+                            {value.value}
+                            {(value.additionalPrice || 0) > 0 && (
+                              <span className="ml-1 text-sm text-gray-500">
+                                (+{formatPrice(value.additionalPrice)})
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Floating quantity and action bar */}
+              <div className="fixed bottom-0 right-0 left-0 z-[60] md:hidden bg-white border-t flex flex-col sm:flex-row items-stretch px-4 py-3 gap-2">
+                <div className="flex items-center gap-2 flex-1 justify-end">
+                  <span className="text-sm font-medium text-gray-700">Số lượng:</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      className={`border border-gray-300 h-8 w-8 flex items-center justify-center rounded-lg ${quantity <= 1 ? "cursor-not-allowed" : "hover:bg-gray-100"}`}
+                      onClick={decreaseQuantity}
+                      disabled={quantity <= 1}
+                    >
+                      <FaMinus className={`${quantity <= 1 ? "opacity-50" : ""} text-gray-600 text-xs`} />
+                    </button>
+                    <input
+                      type="text"
+                      className="h-8 w-16 border border-gray-300 text-center rounded-lg text-sm"
+                      value={quantity}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (/^[1-9]\d*$/.test(value) || value === "") {
+                          const newQuantity = value === "" ? 1 : Number.parseInt(value);
+                          setQuantity(newQuantity);
+                        }
+                      }}
+                      onBlur={() => {
+                        if (quantity < 1) setQuantity(1);
+                      }}
+                    />
+                    <button
+                      className="border border-gray-300 h-8 w-8 flex items-center justify-center rounded-lg hover:bg-gray-100"
+                      onClick={increaseQuantity}
+                    >
+                      <FaPlus className="text-gray-600 text-xs" />
+                    </button>
+                  </div>
+                </div>
+                <button
+                  className={`w-full sm:w-auto py-3 px-6 transition-all duration-300 rounded-xl font-semibold shadow-md text-sm mt-2 sm:mt-0 ${
+                    !selectedVariant 
+                      ? "bg-gray-400 text-white cursor-not-allowed"
+                      : "bg-gradient-to-r from-[#c0a83d] to-[#b99f08] text-white hover:from-[#b99f08] hover:to-[#c0a83d]"
+                  }`}
+                  onClick={() => {
+                    if (!selectedVariant) return;
+                    if (actionType === 'cart') {
+                      addToCart();
+                    } else {
+                      buyNow();
+                    }
+                    setShowMobileVariantPopup(false);
+                  }}
+                >
+                  {!selectedVariant 
+                    ? "Vui lòng chọn phân loại" 
+                    : actionType === 'cart' 
+                      ? 'Thêm vào giỏ hàng' 
+                      : 'Mua ngay'}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+        
+        <style jsx>{`
+          .custom-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: #b3b3b3 #f5f5fa;
+            scrollbar-gutter: stable;
+          }
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+            background: #f5f5fa;
+            border-radius: 10px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #b3b3b3;
+            border-radius: 10px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #888;
+          }
+        `}</style>
         <div
-          className="text-gray-800 mb-6 p-4 pb-2 bg-gray-50"
+          className="text-gray-800 mb-6 p-4 pb-2 bg-gray-50 mt-4"
           dangerouslySetInnerHTML={{
             __html:
               product?.shortDescription || product?.description
                 ? (product?.shortDescription || product?.description || "")
-                    .replace(/src="([^"]+)"/g, (match: string, src: string) =>
+                  .replace(/src="([^"]+)"/g, (match: string, src: string) =>
+                    src.startsWith("http")
+                      ? match
+                      : `src="${process.env.NEXT_PUBLIC_API_URL}${src}"`
+                  )
+                  .replace(
+                    /data-src="([^"]+)"/g,
+                    (match: string, src: string) =>
                       src.startsWith("http")
                         ? match
-                        : `src="${process.env.NEXT_PUBLIC_API_URL}${src}"`
-                    )
-                    .replace(
-                      /data-src="([^"]+)"/g,
-                      (match: string, src: string) =>
-                        src.startsWith("http")
-                          ? match
-                          : `data-src="${process.env.NEXT_PUBLIC_API_URL}${src}"`
-                    )
-                    .replace(
-                      /data-srcset="([^"]+)"/g,
-                      (match: string, srcset: string) => {
-                        if (srcset.includes("http")) return match;
-                        const newSrcset = srcset
-                          .split(",")
-                          .map(
-                            (s: string) =>
-                              `${process.env.NEXT_PUBLIC_API_URL}${s.trim()}`
-                          )
-                          .join(", ");
-                        return `data-srcset="${newSrcset}"`;
-                      }
-                    )
-                    .replace(/<p>&nbsp;<\/p>/g, "")
+                        : `data-src="${process.env.NEXT_PUBLIC_API_URL}${src}"`
+                  )
+                  .replace(
+                    /data-srcset="([^"]+)"/g,
+                    (match: string, srcset: string) => {
+                      if (srcset.includes("http")) return match;
+                      const newSrcset = srcset
+                        .split(",")
+                        .map(
+                          (s: string) =>
+                            `${process.env.NEXT_PUBLIC_API_URL}${s.trim()}`
+                        )
+                        .join(", ");
+                      return `data-srcset="${newSrcset}"`;
+                    }
+                  )
+                  .replace(/<p>&nbsp;<\/p>/g, "")
                 : "",
           }}
           itemProp="description"
         />
         {selectedVariant && (
-          <div className="mt-4 space-y-2">
+          <div className="hidden mt-4 space-y-2 md:block">
             <p className="text-sm text-gray-600">
               Loại sản phẩm đã chọn:{" "}
               <span className="font-medium">{selectedVariant.variantName}</span>
             </p>
-            {selectedVariant.variantStock !== undefined && (
-              <p className="text-sm text-gray-600">
-                Số lượng còn lại:{" "}
-                <span className="font-medium">
-                  {selectedVariant.variantStock}
-                </span>
-              </p>
-            )}
           </div>
         )}
       </div>
-      {product.variantAttributes && product.variantAttributes.length > 0 && (
-        <div className="space-y-4">
-          {product.variantAttributes.map(
-            (attribute: VariantAttribute, attrIndex: number) => (
-              <div key={attrIndex} className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">
-                  {attribute.name}:
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {attribute.values.map(
-                    (value: VariantAttributeValue, valueIndex: number) => {
-                      const isSelected = isValueSelected(
-                        attribute.name,
-                        value.value
-                      );
-                      return (
-                        <button
-                          key={valueIndex}
-                          className={`px-4 py-2 border rounded-lg font-medium transition-all duration-200
-                        ${
-                          isSelected
-                            ? "border-blue-900 bg-blue-50 text-blue-900 shadow"
-                            : "border-gray-300 hover:border-blue-900 hover:bg-blue-50"
-                        } ${
-                            findMatchingVariant(attribute.name, value.value)
-                              ?.variantStock === 0
-                              ? "opacity-50 cursor-not-allowed"
-                              : ""
-                          }`}
-                          onClick={() => {
-                            const matchingVariant = findMatchingVariant(
-                              attribute.name,
-                              value.value
-                            );
-                            if (matchingVariant?.variantStock === 0) return;
-                            handleVariantSelect(matchingVariant || null);
-                          }}
-                          disabled={
-                            findMatchingVariant(attribute.name, value.value)
-                              ?.variantStock === 0
-                          }
-                        >
-                          {value.value}
-                          {(value.additionalPrice || 0) > 0 && (
-                            <span className="ml-1 text-sm text-gray-500">
-                              (+{formatPrice(value.additionalPrice)})
-                            </span>
-                          )}
-                          {findMatchingVariant(attribute.name, value.value)
-                            ?.variantStock === 0 && (
-                            <span className="ml-1 text-sm text-red-500">
-                              (Hết hàng)
-                            </span>
-                          )}
-                        </button>
-                      );
-                    }
-                  )}
-                </div>
-              </div>
-            )
-          )}
-        </div>
-      )}
-      <div className="mb-6">
-        <label htmlFor="quantity" className="block text-lg font-semibold mb-2">
-          Số lượng:
-        </label>
-        <div className="flex items-center gap-2">
-          <button
-            className={`border border-gray-300 h-10 w-10 flex items-center justify-center rounded-lg ${
-              quantity <= 1 ? "cursor-not-allowed" : "hover:bg-gray-100"
-            }`}
-            onClick={decreaseQuantity}
-            disabled={quantity <= 1}
-            aria-label="Giảm số lượng"
-          >
-            <FaMinus
-              className={`${quantity <= 1 ? "opacity-50" : ""} text-gray-600`}
-            />
-          </button>
-          <input
-            id="quantity"
-            type="text"
-            className="h-10 w-16 border-t border-b border-gray-300 text-center rounded-none"
-            value={quantity}
-            onChange={(e) => {
-              const value = e.target.value;
-              if (/^[1-9]\d*$/.test(value) || value === "") {
-                const newQuantity = value === "" ? 1 : Number.parseInt(value);
-                if (selectedVariant?.variantStock !== undefined) {
-                  setQuantity(
-                    Math.min(newQuantity, selectedVariant.variantStock)
-                  );
-                } else {
+
+      <div className="hidden mb-6 md:block">
+        <div className="flex items-center gap-4">
+          <label htmlFor="quantity" className="text-lg font-semibold mb-0">
+            Số lượng:
+          </label>
+          <div className="flex items-center gap-2">
+            <button
+              className={`border border-gray-300 h-10 w-10 flex items-center justify-center rounded-lg ${quantity <= 1 ? "cursor-not-allowed" : "hover:bg-gray-100"
+                }`}
+              onClick={decreaseQuantity}
+              disabled={quantity <= 1}
+              aria-label="Giảm số lượng"
+            >
+              <FaMinus
+                className={`${quantity <= 1 ? "opacity-50" : ""} text-gray-600`}
+              />
+            </button>
+            <input
+              id="quantity"
+              type="text"
+              className="h-10 w-16 border-t border-b border-gray-300 text-center rounded-none"
+              value={quantity}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (/^[1-9]\d*$/.test(value) || value === "") {
+                  const newQuantity = value === "" ? 1 : Number.parseInt(value);
                   setQuantity(newQuantity);
                 }
-              }
-            }}
-            onBlur={() => {
-              if (quantity < 1) setQuantity(1);
-            }}
-            aria-label="Số lượng sản phẩm"
-          />
-          <button
-            className={`border border-gray-300 h-10 w-10 flex items-center justify-center rounded-lg ${
-              selectedVariant?.variantStock !== undefined &&
-              quantity >= selectedVariant.variantStock
-                ? "cursor-not-allowed opacity-50"
-                : "hover:bg-gray-100"
-            }`}
-            onClick={increaseQuantity}
-            disabled={
-              selectedVariant?.variantStock !== undefined &&
-              quantity >= selectedVariant.variantStock
-            }
-            aria-label="Tăng số lượng"
-          >
-            <FaPlus className="text-gray-600" />
-          </button>
+              }}
+              onBlur={() => {
+                if (quantity < 1) setQuantity(1);
+              }}
+              aria-label="Số lượng sản phẩm"
+            />
+            <button
+              className={`border border-gray-300 h-10 w-10 flex items-center justify-center rounded-lg hover:bg-gray-100`}
+              onClick={increaseQuantity}
+              aria-label="Tăng số lượng"
+            >
+              <FaPlus className="text-gray-600" />
+            </button>
+          </div>
         </div>
-        {selectedVariant?.variantStock !== undefined &&
-          selectedVariant.variantStock <= 5 && (
-            <p className="text-sm text-red-600 mt-2">
-              Chỉ còn {selectedVariant.variantStock} sản phẩm
-            </p>
-          )}
       </div>
-      <div className="flex flex-col sm:flex-row gap-4 mb-8">
+      {/* Desktop buttons */}
+      <div className="hidden md:flex flex-col sm:flex-row gap-4 mb-8">
         <button
-          className={`py-3 px-6 bg-white border border-blue-900 text-blue-900 hover:bg-blue-50 flex items-center justify-center gap-2 flex-1 rounded-lg font-semibold shadow text-sm ${
-            selectedVariant?.variantStock === 0
-              ? "opacity-50 cursor-not-allowed"
-              : ""
-          }`}
+          className={`py-3 px-6 bg-white border border-[#b99f08] text-[#b99f08] hover:bg-[#f7f5e9dc] flex items-center justify-center gap-2 flex-1 rounded-lg font-semibold shadow text-sm`}
           onClick={addToCart}
-          disabled={selectedVariant?.variantStock === 0}
           aria-label="Thêm vào giỏ hàng"
         >
           <FaShoppingCart />
           <span>Thêm vào giỏ hàng</span>
         </button>
         <button
-          className={`py-3 px-6 bg-blue-900 text-white hover:bg-blue-800 flex-1 rounded-lg font-semibold shadow text-sm ${
-            selectedVariant?.variantStock === 0
-              ? "opacity-50 cursor-not-allowed"
-              : ""
-          }`}
+          className="py-3 px-6 bg-gradient-to-r from-[#c0a83d] to-[#b99f08] text-white hover:from-[#b99f08] hover:to-[#c0a83d] transition-all duration-300 flex-1 rounded-xl font-semibold shadow-md text-sm"
           onClick={buyNow}
-          disabled={selectedVariant?.variantStock === 0}
           aria-label="Mua ngay"
         >
           Mua ngay
         </button>
       </div>
-      <div className="bg-gray-50 px-4 pt-3 pb-1 border-l-4 border-blue-900 rounded-lg">
-        <p className="font-bold text-gray-800">
+
+      {/* Mobile fixed bottom buttons */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-3 flex gap-2 md:hidden z-50">
+        <button
+          className={`py-3 flex-1 bg-white border border-[#b99f08] text-[#b99f08] flex items-center justify-center gap-2 rounded-lg font-semibold shadow-sm text-sm`}
+          onClick={() => handleMobileAction('cart')}
+          aria-label="Thêm vào giỏ hàng"
+        >
+          <FaShoppingCart />
+          <span>Thêm vào giỏ hàng</span>
+        </button>
+        <button
+          className="py-3 flex-1 bg-gradient-to-r from-[#c0a83d] to-[#b99f08] text-white transition-all duration-300 rounded-xl font-semibold shadow-md text-sm"
+          onClick={() => handleMobileAction('buy')}
+          aria-label="Mua ngay"
+        >
+          Mua ngay
+        </button>
+      </div>
+      <div className="bg-gray-50 px-4 pt-3 pb-1 border-l-4 border-[#b99f08] rounded-xl shadow-sm">
+        <p className="font-  text-gray-800">
           <strong>Mua hàng tại Décor & More - tích điểm nhận xu ngay</strong>
         </p>
       </div>
+
       <div className="mt-6 space-y-1">
         {product.category && product.category.main && (
           <p className="text-gray-600">

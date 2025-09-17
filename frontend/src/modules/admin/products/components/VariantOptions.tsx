@@ -5,6 +5,7 @@ import {
   VariantAttributeValue,
   ProductVariant,
 } from "../models/product.model";
+import { useImages } from "../../../../common/hooks/useImages";
 
 interface VariantOptionsProps {
   initialAttributes?: VariantAttribute[];
@@ -22,6 +23,7 @@ export const VariantOptions: React.FC<VariantOptionsProps> = ({
   const [attributes, setAttributes] =
     useState<VariantAttribute[]>(initialAttributes);
   const [variants, setVariants] = useState<ProductVariant[]>(initialVariants);
+  const { uploadImage, uploadMultipleImages, loading } = useImages();
 
   // Cập nhật variants khi attributes thay đổi
   useEffect(() => {
@@ -107,7 +109,7 @@ export const VariantOptions: React.FC<VariantOptionsProps> = ({
   const updateVariant = (
     variantIndex: number,
     field: keyof ProductVariant,
-    value: string | number
+    value: string | number | string[]
   ) => {
     const newVariants = [...variants];
     const variant = newVariants[variantIndex];
@@ -122,10 +124,40 @@ export const VariantOptions: React.FC<VariantOptionsProps> = ({
       variant.variantCurrentPrice = value as number;
     } else if (field === "variantDiscountPrice") {
       variant.variantDiscountPrice = value as number;
+    } else if (field === "variantThumbnail") {
+      variant.variantThumbnail = value as string;
+    } else if (field === "variantGalleries") {
+      variant.variantGalleries = value as string[];
     }
 
     setVariants(newVariants);
     onVariantsChange(newVariants);
+  };
+
+  // Upload ảnh thumbnail cho variant
+  const handleThumbnailUpload = async (variantIndex: number, file: File) => {
+    const result = await uploadImage(file);
+    if (result && result.imageUrl) {
+      updateVariant(variantIndex, "variantThumbnail", result.imageUrl);
+    }
+  };
+
+  // Upload ảnh gallery cho variant
+  const handleGalleryUpload = async (variantIndex: number, files: FileList) => {
+    const fileArray = Array.from(files);
+    const results = await uploadMultipleImages(fileArray);
+    if (results && results.length > 0) {
+      const imageUrls = results.map(result => result.imageUrl).filter(Boolean);
+      const currentGalleries = variants[variantIndex].variantGalleries || [];
+      updateVariant(variantIndex, "variantGalleries", [...currentGalleries, ...imageUrls]);
+    }
+  };
+
+  // Xóa ảnh gallery
+  const removeGalleryImage = (variantIndex: number, imageIndex: number) => {
+    const currentGalleries = variants[variantIndex].variantGalleries || [];
+    const newGalleries = currentGalleries.filter((_, index) => index !== imageIndex);
+    updateVariant(variantIndex, "variantGalleries", newGalleries);
   };
 
   // Tạo variants từ combinations
@@ -203,6 +235,7 @@ export const VariantOptions: React.FC<VariantOptionsProps> = ({
         variantImportPrice: existingVariant?.variantImportPrice || 0,
         variantCurrentPrice: existingVariant?.variantCurrentPrice || 0,
         variantDiscountPrice: existingVariant?.variantDiscountPrice || 0,
+        variantThumbnail: existingVariant?.variantThumbnail || "",
         variantGalleries: existingVariant?.variantGalleries || [],
       };
     });
@@ -276,7 +309,7 @@ export const VariantOptions: React.FC<VariantOptionsProps> = ({
                   className="flex-1 px-3 py-2 border border-gray-300 rounded"
                   placeholder="VD: Đỏ, XL..."
                 />
-                <input
+                {/* <input
                   type="number"
                   value={value.additionalPrice || 0}
                   onChange={(e) =>
@@ -289,7 +322,7 @@ export const VariantOptions: React.FC<VariantOptionsProps> = ({
                   }
                   className="w-32 px-3 py-2 border border-gray-300 rounded"
                   placeholder="Giá thêm"
-                />
+                /> */}
                 <button
                   type="button"
                   onClick={() => removeAttributeValue(attrIndex, valueIndex)}
@@ -307,110 +340,147 @@ export const VariantOptions: React.FC<VariantOptionsProps> = ({
       {variants.length > 0 && (
         <div className="mt-8">
           <h4 className="text-lg font-semibold mb-4">Danh sách biến thể</h4>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tên biến thể
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    SKU
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Số lượng tồn
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Giá nhập
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Giá bán
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Giá khuyến mãi
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {variants.map((variant, index) => (
-                  <tr key={index}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {variant.variantName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {variants.map((variant, index) => (
+              <div key={index} className="bg-white rounded-lg shadow-md p-6 space-y-4">
+                <div className="border-b pb-4">
+                  <h5 className="text-lg font-medium text-gray-900">{variant.variantName}</h5>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">SKU</label>
+                    <input
+                      type="text"
+                      value={variant.sku}
+                      onChange={(e) => updateVariant(index, "sku", e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Số lượng tồn</label>
+                    <input
+                      type="number"
+                      value={variant.variantStock}
+                      onChange={(e) => updateVariant(index, "variantStock", Number(e.target.value))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      min="0"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Giá nhập</label>
+                    <input
+                      type="number"
+                      value={variant.variantImportPrice}
+                      onChange={(e) => updateVariant(index, "variantImportPrice", Number(e.target.value))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      min="0"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Giá bán</label>
+                    <input
+                      type="number"
+                      value={variant.variantCurrentPrice}
+                      onChange={(e) => updateVariant(index, "variantCurrentPrice", Number(e.target.value))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      min="0"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Giá khuyến mãi</label>
+                    <input
+                      type="number"
+                      value={variant.variantDiscountPrice}
+                      onChange={(e) => updateVariant(index, "variantDiscountPrice", Number(e.target.value))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      min="0"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4 mt-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Ảnh thumbnail</label>
+                    <div className="space-y-3">
+                      {variant.variantThumbnail && (
+                        <div className="relative inline-block">
+                          <img
+                            src={variant.variantThumbnail}
+                            alt="Thumbnail"
+                            className="w-24 h-24 object-cover rounded-lg border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => updateVariant(index, "variantThumbnail", "")}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      )}
                       <input
-                        type="text"
-                        value={variant.sku}
-                        onChange={(e) =>
-                          updateVariant(index, "sku", e.target.value)
-                        }
-                        className="w-full px-2 py-1 border border-gray-300 rounded"
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            handleThumbnailUpload(index, file);
+                          }
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        disabled={loading}
                       />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                      {loading && <div className="text-sm text-gray-500">Đang upload...</div>}
+                    </div>
+                  </div>
+
+                  {/* <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Ảnh gallery</label>
+                    <div className="space-y-3">
+                      {variant.variantGalleries && variant.variantGalleries.length > 0 && (
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                          {variant.variantGalleries.map((imageUrl, imageIndex) => (
+                            <div key={imageIndex} className="relative">
+                              <img
+                                src={imageUrl}
+                                alt={`Gallery ${imageIndex + 1}`}
+                                className="w-full h-24 object-cover rounded-lg border"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeGalleryImage(index, imageIndex)}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       <input
-                        type="number"
-                        value={variant.variantStock}
-                        onChange={(e) =>
-                          updateVariant(
-                            index,
-                            "variantStock",
-                            Number(e.target.value)
-                          )
-                        }
-                        className="w-full px-2 py-1 border border-gray-300 rounded"
-                        min="0"
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={(e) => {
+                          const files = e.target.files;
+                          if (files && files.length > 0) {
+                            handleGalleryUpload(index, files);
+                          }
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        disabled={loading}
                       />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <input
-                        type="number"
-                        value={variant.variantImportPrice}
-                        onChange={(e) =>
-                          updateVariant(
-                            index,
-                            "variantImportPrice",
-                            Number(e.target.value)
-                          )
-                        }
-                        className="w-full px-2 py-1 border border-gray-300 rounded"
-                        min="0"
-                      />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <input
-                        type="number"
-                        value={variant.variantCurrentPrice}
-                        onChange={(e) =>
-                          updateVariant(
-                            index,
-                            "variantCurrentPrice",
-                            Number(e.target.value)
-                          )
-                        }
-                        className="w-full px-2 py-1 border border-gray-300 rounded"
-                        min="0"
-                      />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <input
-                        type="number"
-                        value={variant.variantDiscountPrice}
-                        onChange={(e) =>
-                          updateVariant(
-                            index,
-                            "variantDiscountPrice",
-                            Number(e.target.value)
-                          )
-                        }
-                        className="w-full px-2 py-1 border border-gray-300 rounded"
-                        min="0"
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      {loading && <div className="text-sm text-gray-500">Đang upload...</div>}
+                    </div>
+                  </div> */}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

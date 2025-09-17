@@ -23,7 +23,7 @@ export const CategoryPostService = {
   create: async (dto: CreateCategoryPostDto): Promise<CategoryPostResponse<CategoryPost>> => {
     const response = await api.post(API_URL, dto, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
     });
@@ -33,7 +33,7 @@ export const CategoryPostService = {
   update: async (slug: string, dto: UpdateCategoryPostDto): Promise<CategoryPostResponse<CategoryPost>> => {
     const response = await api.patch(`${API_URL}/${slug}`, dto, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
     });

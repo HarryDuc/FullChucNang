@@ -23,6 +23,8 @@ import { Auth, AuthSchema } from '../auth/schemas/auth.schema';
 import { VerifyService } from '../verify/services/verify.service';
 import { UsersRepository } from '../users/repositories/users.repository';
 import { User, UserSchema } from '../users/schemas/users.schema';
+import { PayosModule } from '../payos/payos.module';
+import { PayosService } from '../payos/payos.service';
 
 @Module({
   imports: [
@@ -41,9 +43,10 @@ import { User, UserSchema } from '../users/schemas/users.schema';
     forwardRef(() => PayPalModule),
     forwardRef(() => AuthModule),
     PermissionsModule,
+    PayosModule,
   ],
   controllers: [CheckoutController, MetamaskPaymentController],
-  providers: [CheckoutService, BankTransferService, MetamaskPaymentService, RoleService, AuthService, UsersService, VerifyService, UsersRepository],
+  providers: [CheckoutService, BankTransferService, MetamaskPaymentService, RoleService, AuthService, UsersService, VerifyService, UsersRepository, PayosService],
   exports: [CheckoutService],
 })
 export class CheckoutModule { }

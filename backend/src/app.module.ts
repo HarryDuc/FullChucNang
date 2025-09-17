@@ -39,7 +39,7 @@ import { RedirectMiddleware } from './modules/redirects/middlewares/redirect.mid
 import { RedirectsModule } from './modules/redirects/redirects.module';
 import { FilterModule } from './modules/filters/filter.module';
 import { SpecificationModule } from './modules/specification/specification.module';
-
+import { PayosModule } from './modules/payos/payos.module';
 @Module({
   imports: [
     // ✅ Đọc biến môi trường từ file `.env`
@@ -89,6 +89,7 @@ import { SpecificationModule } from './modules/specification/specification.modul
     RedirectsModule, // ✅ Import module quản lý redirect URLs
     FilterModule, // ✅ Import module quản lý filter
     SpecificationModule,
+    PayosModule,
     // ✅ Cấu hình MailerModule để gửi email
     MailerModule.forRoot({
       transport: {

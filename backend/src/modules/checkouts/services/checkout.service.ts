@@ -10,6 +10,7 @@ import { Order } from '../../orders/schemas/order.schema';
 import { CreateCheckoutDto } from '../dtos/checkout.dto';
 import { removeVietnameseTones } from '../../../common/utils/slug.utils';
 import { BankTransferService } from './bank-transfer.service';
+import { PayosService } from '../../payos/payos.service';
 
 @Injectable()
 export class CheckoutService {
@@ -17,6 +18,7 @@ export class CheckoutService {
     @InjectModel(Checkout.name) private checkoutModel: Model<Checkout>,
     @InjectModel(Order.name) private orderModel: Model<Order>,
     private readonly bankTransferService: BankTransferService,
+    private readonly payosService: PayosService,
   ) { }
 
   // 📌 Tạo slug từ name + 6 ký tự cuối của _id
@@ -30,7 +32,8 @@ export class CheckoutService {
   }
 
   // 🛒 Tạo thanh toán mới
-  async create(dto: CreateCheckoutDto): Promise<Checkout> {
+  // NOTE: Return type is any because we return a plain object, not a Mongoose Document
+  async create(dto: CreateCheckoutDto & { returnUrl?: string; cancelUrl?: string }): Promise<any> {
     try {
       console.log('Creating checkout with data:', JSON.stringify(dto, null, 2));
 
@@ -54,6 +57,8 @@ export class CheckoutService {
 
       // ⚙️ Nếu là thanh toán chuyển khoản, sinh mã QR và lưu vào paymentMethodInfo
       let paymentMethodInfo = {};
+      let payosPaymentLink: string | undefined = undefined;
+      let payosOrderCode: number | undefined = undefined;
       if (dto.paymentMethod === 'bank') {
         try {
           paymentMethodInfo = await this.bankTransferService.generateTransferInfo(
@@ -64,6 +69,28 @@ export class CheckoutService {
           console.error('Error generating QR code:', error);
           throw new BadRequestException('Không thể tạo mã QR. Vui lòng thử lại sau.');
         }
+      } else if (dto.paymentMethod === 'payos') {
+        payosOrderCode = Date.now() % 9000000000000000;
+        // description không quá 25 ký tự
+        const description = `TT DH ${payosOrderCode}`;
+        try {
+          const payosRes = await this.payosService.createPaymentLink({
+            orderCode: payosOrderCode,
+            amount,
+            description,
+            returnUrl: dto.returnUrl || `${process.env.FRONTEND_URL}/return`,
+            cancelUrl: dto.cancelUrl || `${process.env.FRONTEND_URL}/cancel`,
+            buyerName: dto.name,
+            buyerEmail: dto.email,
+            buyerPhone: dto.phone,
+            buyerAddress: dto.address,
+          });
+          paymentMethodInfo = payosRes;
+          payosPaymentLink = payosRes?.payosPaymentLink;
+        } catch (error) {
+          console.error('Error creating PayOS payment link:', error);
+          throw new BadRequestException('Không thể tạo link thanh toán PayOS. Vui lòng thử lại sau.');
+        }
       }
 
       // ✅ Tạo _id trước để dùng cho slug
@@ -72,19 +99,33 @@ export class CheckoutService {
 
       console.log('Generated slug for checkout:', slug);
 
-      // ✅ Tạo đơn thanh toán với slug đã chuẩn bị
-      const created = await this.checkoutModel.create({
-        _id: tempId, // gán _id thủ công
-        ...dto,
-        slug, // ✅ bắt buộc truyền slug ngay lúc create
-        paymentMethod: dto.paymentMethod || 'cash',
-        paymentStatus: dto.paymentStatus || 'pending',
-        orderCode: dto.orderCode || order.slug,
-        paymentMethodInfo,
-      });
+      let created;
+      if (dto.paymentMethod === 'payos') {
+        created = await this.checkoutModel.create({
+          _id: tempId,
+          ...dto,
+          slug,
+          paymentMethod: dto.paymentMethod || 'cash',
+          paymentStatus: dto.paymentStatus || 'pending',
+          orderCode: payosOrderCode, // Lưu đúng orderCode số cho PayOS
+          paymentMethodInfo,
+        });
+      } else {
+        created = await this.checkoutModel.create({
+          _id: tempId,
+          ...dto,
+          slug,
+          paymentMethod: dto.paymentMethod || 'cash',
+          paymentStatus: dto.paymentStatus || 'pending',
+          orderCode: dto.orderCode || order.slug,
+          paymentMethodInfo,
+        });
+      }
 
       console.log('Checkout created successfully:', created._id);
-      return created;
+      // Always return a plain object with optional payosPaymentLink
+      const createdObj = created.toObject();
+      return payosPaymentLink ? { ...createdObj, payosPaymentLink } : createdObj;
     } catch (error) {
       console.error('Error in checkout creation:', error);
 
@@ -163,6 +204,29 @@ export class CheckoutService {
 
     found.paymentStatus = status;
     return found.save();
+  }
+
+  // Thêm hàm cập nhật trạng thái thanh toán cho checkout theo orderCode
+  async updateCheckoutPaymentStatusByOrderCode(orderCode: string, status: 'pending' | 'paid' | 'failed', paymentMethodInfo?: any) {
+    const checkout = await this.checkoutModel.findOne({ orderCode })
+    if (checkout) {
+      // Nếu có paymentMethodInfo từ webhook, lấy status thực tế từ đó
+      if (paymentMethodInfo && paymentMethodInfo.data && paymentMethodInfo.data.status) {
+        if (paymentMethodInfo.data.status === 'PAID') {
+          checkout.paymentStatus = 'paid'
+        } else if (paymentMethodInfo.data.status === 'FAILED') {
+          checkout.paymentStatus = 'failed'
+        } else {
+          checkout.paymentStatus = 'pending'
+        }
+        checkout.paymentMethodInfo = paymentMethodInfo
+      } else {
+        checkout.paymentStatus = status
+      }
+      await checkout.save()
+      return checkout
+    }
+    return null
   }
 
   // ❌ Xoá đơn

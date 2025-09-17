@@ -22,7 +22,7 @@ interface DisplayProduct {
   rating?: number;
   sku?: string;
   hasVariants?: boolean;
-  basePrice?: number;
+  currentPrice?: number;
   variants?: Array<{
     variantCurrentPrice?: number;
     variantDiscountPrice?: number;
@@ -44,7 +44,7 @@ const Search = () => {
   // Thêm hàm tính giá thấp nhất từ variants
   const getLowestVariantPrices = (product: DisplayProduct) => {
     if (!product.variants || product.variants.length === 0) {
-      return { lowest: product.basePrice || 0, lowestDiscount: undefined };
+      return { lowest: product.currentPrice || 0, lowestDiscount: undefined };
     }
 
     let lowest = Infinity;
@@ -68,7 +68,7 @@ const Search = () => {
     });
 
     return {
-      lowest: lowest === Infinity ? product.basePrice || 0 : lowest,
+      lowest: lowest === Infinity ? product.currentPrice || 0 : lowest,
       lowestDiscount: lowestDiscount === Infinity ? undefined : lowestDiscount,
     };
   };
@@ -130,7 +130,7 @@ const Search = () => {
 
         // Chỉ tìm kiếm sản phẩm
         const { data: productData, totalPages: productTotalPages } =
-          await ProductService.searchByName(query, page);
+          await ProductService.visibleSearchByName(query, page);
 
         setProductResults((prev) => {
           const existingSlugs = new Set(prev.map((item) => item.slug));
@@ -228,7 +228,6 @@ const Search = () => {
                           image: product.thumbnail || "",
                           sku: product.sku,
                           hasVariants: product.hasVariants,
-                          basePrice: product.basePrice,
                           variants: product.variants,
                         })
                       }

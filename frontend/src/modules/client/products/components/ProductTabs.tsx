@@ -44,6 +44,9 @@ const ProductTabs: React.FC<ProductTabsProps> = ({
   specification,
   specificationDescription,
 }) => {
+  // Debug log để kiểm tra props
+  console.log('ProductTabs props - specification:', specification);
+  console.log('ProductTabs props - specificationDescription:', specificationDescription);
   const { isAuthenticated } = useAuth();
   const { user } = useUser();
   const [rating, setRating] = useState(0);
@@ -115,9 +118,8 @@ const ProductTabs: React.FC<ProductTabsProps> = ({
         onClick={() => setRating(star)}
         onMouseEnter={() => setHoveredStar(star)}
         onMouseLeave={() => setHoveredStar(0)}
-        className={`text-2xl ${
-          star <= (hoveredStar || rating) ? "text-yellow-400" : "text-gray-300"
-        } hover:text-yellow-400 transition-colors`}
+        className={`text-2xl ${star <= (hoveredStar || rating) ? "text-yellow-400" : "text-gray-300"
+          } hover:text-yellow-400 transition-colors`}
         aria-label={`Rate ${star} stars`}
       >
         ★
@@ -126,7 +128,18 @@ const ProductTabs: React.FC<ProductTabsProps> = ({
   };
 
   const renderSpecifications = () => {
-    if (!specification || !specification.groups) return null;
+    console.log('renderSpecifications - specification:', specification);
+    console.log('renderSpecifications - specificationDescription:', specificationDescription);
+
+    if (!specification) {
+      console.log('No specification found');
+      return null;
+    }
+
+    if (!specification.groups || specification.groups.length === 0) {
+      console.log('No specification groups found');
+      return null;
+    }
 
     return (
       <div className="mt-8">
@@ -159,11 +172,10 @@ const ProductTabs: React.FC<ProductTabsProps> = ({
       <div className="border-b border-gray-200 bg-white rounded-t-lg shadow-sm">
         <div className="flex" role="tablist">
           <button
-            className={`px-8 py-4 font-semibold text-lg rounded-t-lg focus:outline-none transition-all duration-200 ${
-              activeTab === "description"
+            className={`px-8 py-4 font-semibold text-lg rounded-t-lg focus:outline-none transition-all duration-200 ${activeTab === "description"
                 ? "border-b-4 border-blue-900 text-blue-900 bg-blue-50"
                 : "text-gray-600 hover:text-blue-900 bg-transparent"
-            }`}
+              }`}
             onClick={() => setActiveTab("description")}
             role="tab"
             aria-selected={activeTab === "description"}
@@ -173,11 +185,10 @@ const ProductTabs: React.FC<ProductTabsProps> = ({
             Mô tả
           </button>
           <button
-            className={`px-8 py-4 font-semibold text-lg rounded-t-lg focus:outline-none transition-all duration-200 ${
-              activeTab === "specification"
+            className={`px-8 py-4 font-semibold text-lg rounded-t-lg focus:outline-none transition-all duration-200 ${activeTab === "specification"
                 ? "border-b-4 border-blue-900 text-blue-900 bg-blue-50"
                 : "text-gray-600 hover:text-blue-900 bg-transparent"
-            }`}
+              }`}
             onClick={() => setActiveTab("specification")}
             role="tab"
             aria-selected={activeTab === "specification"}
@@ -187,11 +198,10 @@ const ProductTabs: React.FC<ProductTabsProps> = ({
             Thông số kỹ thuật
           </button>
           <button
-            className={`px-8 py-4 font-semibold text-lg rounded-t-lg focus:outline-none transition-all duration-200 ${
-              activeTab === "reviews"
+            className={`px-8 py-4 font-semibold text-lg rounded-t-lg focus:outline-none transition-all duration-200 ${activeTab === "reviews"
                 ? "border-b-4 border-blue-900 text-blue-900 bg-blue-50"
                 : "text-gray-600 hover:text-blue-900 bg-transparent"
-            }`}
+              }`}
             onClick={() => setActiveTab("reviews")}
             role="tab"
             aria-selected={activeTab === "reviews"}
@@ -243,12 +253,19 @@ const ProductTabs: React.FC<ProductTabsProps> = ({
             aria-labelledby="specification-tab"
           >
             {renderSpecifications()}
-            <div
-              className="text-gray-600 mb-6 bg-gray-50 overflow-hidden product-description-container p-4 rounded-lg"
-              dangerouslySetInnerHTML={{
-                __html: specificationDescription || "",
-              }}
-            />
+            {specificationDescription && (
+              <div
+                className="text-gray-600 mb-6 bg-gray-50 overflow-hidden product-description-container p-4 rounded-lg"
+                dangerouslySetInnerHTML={{
+                  __html: specificationDescription,
+                }}
+              />
+            )}
+            {(!specification || !specification.groups || specification.groups.length === 0) && !specificationDescription && (
+              <div className="text-center py-8 text-gray-500">
+                <p>Chưa có thông số kỹ thuật cho sản phẩm này.</p>
+              </div>
+            )}
           </div>
         ) : (
           <div role="tabpanel" id="reviews-panel" aria-labelledby="reviews-tab">
