@@ -39,6 +39,7 @@ This comprehensive guide outlines best practices, conventions, and standards for
     Development Philosophy
     - Write clean, maintainable, and scalable code
     - Follow SOLID principles
+    - 100% ban on icons, hard code, write professionally
     - Prefer functional and declarative programming patterns over imperative
     - Emphasize type safety and static analysis
     - Practice component-driven development
@@ -243,9 +244,9 @@ Here is your **project structure and guidelines translated into English** with n
 
 ---
 
-## 🧱 PROJECT STRUCTURE
+##  PROJECT STRUCTURE
 
-### 📦 **FRONTEND: `frontend/`**
+###  **FRONTEND: `frontend/`**
 
 ```
 frontend/
@@ -269,7 +270,7 @@ frontend/
 │   └── styles/                 # CSS / Tailwind
 ```
 
-### 📦 **BACKEND: `backend/`**
+###  **BACKEND: `backend/`**
 
 ```
 backend/
@@ -309,7 +310,7 @@ backend/
 **Examples:**
 
 ```typescript
-// ✅ DO: Call interactive feedback before asking questions
+// DO: Call interactive feedback before asking questions
 await mcp_interactive_feedback({
   project_directory: "/absolute/path/to/your/project",
   summary: "Need clarification on database choice for the project"
@@ -317,7 +318,7 @@ await mcp_interactive_feedback({
 ```
 
 ```typescript
-// ✅ DO: Call interactive feedback before completing requests
+// DO: Call interactive feedback before completing requests
 await mcp_interactive_feedback({
   project_directory: "/absolute/path/to/your/project",
   summary: "Completed user authentication implementation with JWT"
@@ -332,9 +333,9 @@ await mcp_interactive_feedback({
 ---
 ---
 
-## 🧭 GENERAL CONVENTIONS
+## GENERAL CONVENTIONS
 
-### 📛 **API Identification**
+### **API Identification**
 
 - **All backend APIs must use the prefix `/[name_api]sapi` instead of `api/`.**
 - Define frontend API URLs in `src/config/apiRoutes.ts`:
@@ -352,7 +353,7 @@ export const API_ROUTES = {
 };
 ```
 
-### 📂 **Module Structure (Same for Frontend and Backend)**
+###  **Module Structure (Same for Frontend and Backend)**
 
 ```bash
 [module-name]/
@@ -371,15 +372,15 @@ export const API_ROUTES = {
 
 ---
 
-## 🔁 STATE MANAGEMENT & REALTIME
+##  STATE MANAGEMENT & REALTIME
 
-### 🧠 **State Management (Frontend)**
+### **State Management (Frontend)**
 
 - Use **Redux Toolkit**:
   - Each module can have its own `slice` (`authSlice`, `cartSlice`, ...)
 - Use **RTK Query** for efficient API calls (cache, polling, optimistic update).
 
-### 🔄 **Realtime Communication**
+### **Realtime Communication**
 
 - Use **Socket.IO** client in frontend (`common/services/socketService.ts`)
 - Connect NestJS with **@nestjs/websockets** + `socket.io`
@@ -387,9 +388,9 @@ export const API_ROUTES = {
 
 ---
 
-## 🛠️ CODING RULES
+## CODING RULES
 
-### ✅ **Frontend**
+###  **Frontend**
 
 - Do not use UI libraries like MUI, AntD → Only use TailwindCSS.
 - Break UI into small components.
@@ -397,7 +398,7 @@ export const API_ROUTES = {
 - Use clear folder and file naming (snake_case or camelCase).
 - Avoid calling API directly in components → use `services` or `RTK Query`.
 
-### ✅ **Backend**
+###  **Backend**
 
 - Each module should have `controllers`, `dtos`, `services`, `schemas`, `repositories`.
 - Do not write business logic directly in controllers.
@@ -406,15 +407,15 @@ export const API_ROUTES = {
 
 ---
 
-## ✅ FINAL CHECKLIST
+##  FINAL CHECKLIST
 
 | Item to Check                           | Required | Notes |
 |----------------------------------------|----------|-------|
-| Separate `admin`, `auth`, `client`     | ✅        | Clear module structure on frontend |
-| Each module has `components`, `services`, `hooks`, `models` | ✅ | For frontend |
-| Each backend module has `dtos`, `services`, `schemas`, `controllers` | ✅ | NestJS standard |
-| API paths use `sapi/` prefix           | ✅        | For RESTful & organized structure |
-| APIs called through `apiRoutes.ts`     | ✅        | Easy to manage |
-| State managed with Redux/RTK Query     | ✅        | Full-featured & optimized |
-| UI built with TailwindCSS              | ✅        | No external UI libraries |
-| Real-time uses Socket.IO if needed     | ✅        | Used for checkout, notifications... |
+| Separate `admin`, `auth`, `client`     |         | Clear module structure on frontend |
+| Each module has `components`, `services`, `hooks`, `models` |  | For frontend |
+| Each backend module has `dtos`, `services`, `schemas`, `controllers` | | NestJS standard |
+| API paths use `sapi/` prefix           |         | For RESTful & organized structure |
+| APIs called through `apiRoutes.ts`     |         | Easy to manage |
+| State managed with Redux/RTK Query     |         | Full-featured & optimized |
+| UI built with TailwindCSS              |         | No external UI libraries |
+| Real-time uses Socket.IO if needed     |         | Used for checkout, notifications... |
