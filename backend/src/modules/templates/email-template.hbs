@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{subject}}</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+
+    .container {
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+      text-align: center;
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: #007bff;
+      margin-bottom: 10px;
+    }
+
+    .content {
+      margin-bottom: 30px;
+    }
+
+    .order-info {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+
+    .order-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .order-item:last-child {
+      border-bottom: none;
+    }
+
+    .total {
+      font-weight: bold;
+      font-size: 18px;
+      color: #007bff;
+      text-align: right;
+      margin-top: 15px;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .button {
+      display: inline-block;
+      background-color: #007bff;
+      color: white;
+      padding: 12px 24px;
+      text-decoration: none;
+      border-radius: 5px;
+      margin: 20px 0;
+    }
+
+    .button:hover {
+      background-color: #0056b3;
+    }
+
+    .highlight {
+      color: #007bff;
+      font-weight: bold;
+    }
+
+    .success {
+      color: #28a745;
+      font-weight: bold;
+    }
+
+    .warning {
+      color: #ffc107;
+      font-weight: bold;
+    }
+
+    .danger {
+      color: #dc3545;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>{{subject}}</h1>
+    </div>
+
+    <div class="content">
+      <p>Xin chào <span class="highlight">{{customerName}}</span>,</p>
+
+      <p>{{{content}}}</p>
+
+      {{#if orderNumber}}
+      <div class="order-info">
+        <h3>Thông tin đơn hàng</h3>
+        <p><strong>Mã đơn hàng:</strong> <span class="highlight">{{orderNumber}}</span></p>
+        <p><strong>Ngày đặt hàng:</strong> {{orderDate}}</p>
+        <p><strong>Tổng tiền:</strong> <span class="highlight">{{totalAmount}} VNĐ</span></p>
+
+        {{#if orderItems}}
+        <h4>Chi tiết đơn hàng:</h4>
+        {{#each orderItems}}
+        <div class="order-item">
+          <span>{{name}} x {{quantity}}</span>
+          <span>{{price}} VNĐ</span>
+        </div>
+        {{/each}}
+        {{/if}}
+      </div>
+      {{/if}}
+
+      {{#if paymentAmount}}
+      <div class="order-info">
+        <h3>Thông tin thanh toán</h3>
+        <p><strong>Số tiền thanh toán:</strong> <span class="success">{{paymentAmount}} VNĐ</span>
+        </p>
+        <p><strong>Phương thức thanh toán:</strong> {{paymentMethod}}</p>
+        <p><strong>Ngày thanh toán:</strong> {{paymentDate}}</p>
+        {{#if transactionId}}
+        <p><strong>Mã giao dịch:</strong> {{transactionId}}</p>
+        {{/if}}
+      </div>
+      {{/if}}
+
+      {{#if trackingNumber}}
+      <div class="order-info">
+        <h3>Thông tin vận chuyển</h3>
+        <p><strong>Mã vận đơn:</strong> <span class="highlight">{{trackingNumber}}</span></p>
+        <p><strong>Ngày giao hàng:</strong> {{shippingDate}}</p>
+        {{#if estimatedDelivery}}
+        <p><strong>Dự kiến nhận hàng:</strong> {{estimatedDelivery}}</p>
+        {{/if}}
+      </div>
+      {{/if}}
+
+      {{#if cancellationReason}}
+      <div class="order-info">
+        <h3>Thông tin hủy đơn hàng</h3>
+        <p><strong>Lý do hủy:</strong> {{cancellationReason}}</p>
+        <p><strong>Ngày hủy:</strong> {{cancellationDate}}</p>
+        {{#if refundAmount}}
+        <p><strong>Số tiền hoàn:</strong> <span class="success">{{refundAmount}} VNĐ</span></p>
+        {{/if}}
+      </div>
+      {{/if}}
+    </div>
+
+    <div class="footer">
+      <p>Cảm ơn bạn đã tin tưởng và sử dụng dịch vụ của chúng tôi!</p>
+      <p>Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi.</p>
+      <p>Thời gian gửi: {{currentDate}} lúc {{currentTime}}</p>
+    </div>
+  </div>
+</body>
+
+</html>

@@ -7,6 +7,7 @@ import { OrderStatus } from "../models/order.models";
 import SearchOrders from "./SearchOrders";
 import { OrderWithCheckout } from "../services/order.service";
 import { OrderService } from "../services/order.service";
+import EmailManagement from "./EmailManagement";
 
 const ListOrders = () => {
   const {
@@ -24,6 +25,7 @@ const ListOrders = () => {
     null
   );
   const [searchNotFound, setSearchNotFound] = useState(false);
+  const [showEmailManagement, setShowEmailManagement] = useState(false);
 
   const handleDelete = async (slug: string) => {
     if (confirm("Bạn có chắc chắn muốn xóa đơn hàng này?")) {
@@ -102,8 +104,21 @@ const ListOrders = () => {
     }
   };
 
+  /**
+   * Render danh sách đơn hàng, sắp xếp từ ngày mới nhất xuống (descending by createdAt)
+   * - Nếu có searchResult thì chỉ hiển thị đơn đó
+   * - Nếu không, sắp xếp orders theo createdAt mới nhất trước
+   */
   const renderOrders = () => {
-    const displayOrders = searchResult ? [searchResult] : orders;
+    // Nếu có searchResult thì chỉ hiển thị đơn đó, không cần sort
+    const displayOrders = searchResult
+      ? [searchResult]
+      : [...orders].sort((a, b) => {
+        // Nếu thiếu createdAt thì để xuống cuối
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+        return dateB - dateA // mới nhất trước
+      })
 
     if (searchNotFound) {
       return (
@@ -112,7 +127,7 @@ const ListOrders = () => {
             Không tìm thấy đơn hàng với mã này.
           </td>
         </tr>
-      );
+      )
     }
 
     if (displayOrders.length === 0) {
@@ -122,15 +137,15 @@ const ListOrders = () => {
             Không có đơn hàng nào.
           </td>
         </tr>
-      );
+      )
     }
 
     return displayOrders.map((order, index) => {
-      const uniqueKey = order.slug || `order-${index}`;
+      const uniqueKey = order.slug || `order-${index}`
       return (
         <tr key={uniqueKey} className="border hover:bg-gray-50">
           <td className="border p-2 text-center">{index + 1}</td>
-          <td className="border p-2">{order.slug || "Không có"}</td>
+          <td className="border p-2">{order.slug || 'Không có'}</td>
           <td className="border p-2 text-center">
             {calculateTotalItems(order.orderItems)}
           </td>
@@ -143,7 +158,7 @@ const ListOrders = () => {
             ) : (
               <select
                 value={order.status}
-                onChange={(e) =>
+                onChange={e =>
                   handleStatusChange(order.slug!, e.target.value as OrderStatus)
                 }
                 className={`p-1 rounded border ${getStatusColor(
@@ -165,10 +180,10 @@ const ListOrders = () => {
                 <div>
                   <select
                     value={order.checkout.paymentStatus}
-                    onChange={(e) =>
+                    onChange={e =>
                       handlePaymentStatusChange(
-                        order.checkout?.slug || "",
-                        e.target.value as "pending" | "paid" | "failed"
+                        order.checkout?.slug || '',
+                        e.target.value as 'pending' | 'paid' | 'failed'
                       )
                     }
                     className={`p-1 rounded border ${getPaymentStatusColor(
@@ -180,10 +195,10 @@ const ListOrders = () => {
                     <option value="failed">Thanh toán thất bại</option>
                   </select>
                   <div className="text-xs text-gray-500 mt-1">
-                    {order.checkout.paymentMethod === "cash" && "Tiền mặt"}
-                    {order.checkout.paymentMethod === "bank" && "Chuyển khoản"}
-                    {order.checkout.paymentMethod === "payos" && "PayOS"}
-                    {order.checkout.paymentMethod === "paypal" && "PayPal"}
+                    {order.checkout.paymentMethod === 'cash' && 'Tiền mặt'}
+                    {order.checkout.paymentMethod === 'bank' && 'Chuyển khoản'}
+                    {order.checkout.paymentMethod === 'payos' && 'PayOS'}
+                    {order.checkout.paymentMethod === 'paypal' && 'PayPal'}
                   </div>
                 </div>
               )
@@ -200,8 +215,8 @@ const ListOrders = () => {
           </td>
           <td className="border p-2">
             {order.createdAt
-              ? new Date(order.createdAt).toLocaleDateString("vi-VN")
-              : "Không có"}
+              ? new Date(order.createdAt).toLocaleDateString('vi-VN')
+              : 'Không có'}
           </td>
           <td className="border p-2">
             <a
@@ -220,24 +235,47 @@ const ListOrders = () => {
             </button>
           </td>
         </tr>
-      );
-    });
-  };
+      )
+    })
+  }
 
   if (loading) return <p>Đang tải danh sách đơn hàng...</p>;
   if (error) return <p className="text-red-500">Lỗi: {error}</p>;
 
+  // Show email management if toggled
+  if (showEmailManagement) {
+    return (
+      <div className="p-6">
+        <div className="mb-4 flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Quản lý Email Đơn hàng</h1>
+          <button
+            onClick={() => setShowEmailManagement(false)}
+            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+          >
+            ← Quay lại Danh sách
+          </button>
+        </div>
+        <EmailManagement />
+      </div>
+    );
+  }
+
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold mb-4">Danh sách đơn hàng</h1>
+      <div className="mb-4 flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Danh sách đơn hàng</h1>
+        <button
+          onClick={() => setShowEmailManagement(true)}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center"
+        >
+          <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          Quản lý Email
+        </button>
+      </div>
 
       <div className="mb-4 flex justify-between items-center">
-        <button
-          className="bg-blue-500 text-white px-3 py-2 rounded mb-4"
-          onClick={() => router.push("/orders/create")}
-        >
-          + Tạo đơn hàng
-        </button>
         <SearchOrders
           onSearchResult={(order) => {
             setSearchResult(order);

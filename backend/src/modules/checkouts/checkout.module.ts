@@ -25,12 +25,17 @@ import { UsersRepository } from '../users/repositories/users.repository';
 import { User, UserSchema } from '../users/schemas/users.schema';
 import { PayosModule } from '../payos/payos.module';
 import { PayosService } from '../payos/payos.service';
+import { OrderEmailService } from '../orders/services/order-email.service';
+import { Product, ProductSchema } from '../products/schemas/product.schema';
+import { EmailConfig, EmailConfigSchema } from '../orders/schemas/email-config.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Checkout.name, schema: CheckoutSchema },
       { name: Order.name, schema: OrderSchema },
+      { name: Product.name, schema: ProductSchema },
+      { name: EmailConfig.name, schema: EmailConfigSchema },
       { name: Role.name, schema: RoleSchema },
       { name: RolePermission.name, schema: RolePermissionSchema },
       { name: Permission.name, schema: PermissionSchema },
@@ -46,7 +51,7 @@ import { PayosService } from '../payos/payos.service';
     PayosModule,
   ],
   controllers: [CheckoutController, MetamaskPaymentController],
-  providers: [CheckoutService, BankTransferService, MetamaskPaymentService, RoleService, AuthService, UsersService, VerifyService, UsersRepository, PayosService],
+  providers: [CheckoutService, BankTransferService, MetamaskPaymentService, RoleService, AuthService, UsersService, VerifyService, UsersRepository, PayosService, OrderEmailService],
   exports: [CheckoutService],
 })
 export class CheckoutModule { }

@@ -11,14 +11,18 @@ import { CreateCheckoutDto } from '../dtos/checkout.dto';
 import { removeVietnameseTones } from '../../../common/utils/slug.utils';
 import { BankTransferService } from './bank-transfer.service';
 import { PayosService } from '../../payos/payos.service';
+import { OrderEmailService } from '../../orders/services/order-email.service';
+import { Product } from '../../products/schemas/product.schema';
 
 @Injectable()
 export class CheckoutService {
   constructor(
     @InjectModel(Checkout.name) private checkoutModel: Model<Checkout>,
     @InjectModel(Order.name) private orderModel: Model<Order>,
+    @InjectModel(Product.name) private productModel: Model<Product>,
     private readonly bankTransferService: BankTransferService,
     private readonly payosService: PayosService,
+    private readonly orderEmailService: OrderEmailService,
   ) { }
 
   // 📌 Tạo slug từ name + 6 ký tự cuối của _id
@@ -123,6 +127,34 @@ export class CheckoutService {
       }
 
       console.log('Checkout created successfully:', created._id);
+
+      // Gửi email xác nhận đơn hàng sau khi tạo checkout
+      try {
+        // Lấy thông tin đơn hàng với sản phẩm
+        const order = await this.orderModel
+          .findById(dto.orderId)
+          .populate('orderItems.product')
+          .exec();
+
+        if (order) {
+          // Lấy danh sách sản phẩm
+          const products = order.orderItems.map(item => item.product as unknown as Product);
+
+          // Gửi email xác nhận đơn hàng
+          await this.orderEmailService.sendOrderConfirmationEmail(
+            order,
+            created,
+            products,
+            true, // sendToUser
+            true  // sendToAdmin
+          );
+          console.log('✅ Order confirmation email sent successfully');
+        }
+      } catch (emailError) {
+        console.error('❌ Error sending order confirmation email:', emailError);
+        // Không throw error để không ảnh hưởng đến flow tạo checkout
+      }
+
       // Always return a plain object with optional payosPaymentLink
       const createdObj = created.toObject();
       return payosPaymentLink ? { ...createdObj, payosPaymentLink } : createdObj;
@@ -202,14 +234,30 @@ export class CheckoutService {
     const found = await this.checkoutModel.findOne({ slug }).exec();
     if (!found) throw new NotFoundException('Không tìm thấy đơn');
 
+    const previousStatus = found.paymentStatus;
     found.paymentStatus = status;
-    return found.save();
+    await found.save();
+
+    // Gửi email thông báo thanh toán thành công nếu status chuyển sang paid
+    if (status === 'paid' && previousStatus !== 'paid') {
+      try {
+        await this.sendPaymentSuccessEmail(found.orderId.toString(), found._id.toString(), true, true);
+        console.log('✅ Payment success email sent successfully');
+      } catch (emailError) {
+        console.error('❌ Error sending payment success email:', emailError);
+        // Không throw error để không ảnh hưởng đến flow cập nhật
+      }
+    }
+
+    return found;
   }
 
   // Thêm hàm cập nhật trạng thái thanh toán cho checkout theo orderCode
   async updateCheckoutPaymentStatusByOrderCode(orderCode: string, status: 'pending' | 'paid' | 'failed', paymentMethodInfo?: any) {
     const checkout = await this.checkoutModel.findOne({ orderCode })
     if (checkout) {
+      const previousStatus = checkout.paymentStatus;
+
       // Nếu có paymentMethodInfo từ webhook, lấy status thực tế từ đó
       if (paymentMethodInfo && paymentMethodInfo.data && paymentMethodInfo.data.status) {
         if (paymentMethodInfo.data.status === 'PAID') {
@@ -223,10 +271,58 @@ export class CheckoutService {
       } else {
         checkout.paymentStatus = status
       }
+
       await checkout.save()
+
+      // Gửi email thông báo thanh toán thành công nếu status chuyển từ pending/failed sang paid
+      if (checkout.paymentStatus === 'paid' && previousStatus !== 'paid') {
+        await this.sendPaymentSuccessEmail(checkout.orderId.toString(), checkout._id.toString(), true, true);
+      }
+
       return checkout
     }
     return null
+  }
+
+  /**
+   * Gửi email thông báo thanh toán thành công
+   * @param orderId - ID của đơn hàng
+   * @param checkoutId - ID của checkout
+   * @param sendToUser - Có gửi cho user không (mặc định true)
+   * @param sendToAdmin - Có gửi cho admin không (mặc định true)
+   */
+  async sendPaymentSuccessEmail(
+    orderId: string,
+    checkoutId: string,
+    sendToUser: boolean = true,
+    sendToAdmin: boolean = true,
+  ): Promise<void> {
+    try {
+      // Lấy thông tin đơn hàng với sản phẩm
+      const order = await this.orderModel
+        .findById(orderId)
+        .populate('orderItems.product')
+        .exec();
+
+      if (!order) {
+        throw new NotFoundException('Không tìm thấy đơn hàng');
+      }
+
+      // Lấy thông tin checkout
+      const checkout = await this.checkoutModel.findById(checkoutId).exec();
+      if (!checkout) {
+        throw new NotFoundException('Không tìm thấy thông tin thanh toán');
+      }
+
+      // Lấy danh sách sản phẩm
+      const products = order.orderItems.map(item => item.product as unknown as Product);
+
+      // Gửi email thông báo thanh toán thành công
+      await this.orderEmailService.sendPaymentSuccessEmail(order, checkout, products, sendToUser, sendToAdmin);
+    } catch (error) {
+      console.error('Error sending payment success email:', error);
+      // Không throw error để không ảnh hưởng đến flow thanh toán
+    }
   }
 
   // ❌ Xoá đơn

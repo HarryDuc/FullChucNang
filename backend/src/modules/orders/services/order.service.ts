@@ -269,6 +269,8 @@ import { Order } from '../schemas/order.schema';
 import { CreateOrderDto, UpdateOrderDto } from '../dtos/order.dto';
 import { removeVietnameseTones } from 'src/common/utils/slug.utils';
 import { Product } from '../../products/schemas/product.schema';
+import { OrderEmailService } from './order-email.service';
+import { Checkout } from '../../checkouts/schemas/checkout.schema';
 
 /**
  * OrderService xử lý các thao tác CRUD cho đơn hàng.
@@ -282,6 +284,8 @@ export class OrderService {
   constructor(
     @InjectModel(Order.name) private orderModel: Model<Order>,
     @InjectModel(Product.name) private productModel: Model<Product>,
+    @InjectModel(Checkout.name) private checkoutModel: Model<Checkout>,
+    private readonly orderEmailService: OrderEmailService,
   ) { }
 
   /**
@@ -292,7 +296,7 @@ export class OrderService {
     // 🔢 Tạo mã đơn hàng dạng DM + số chữ số ngẫu nhiên theo length
     let min = Math.pow(10, length - 1);
     let max = Math.pow(10, length) - 1;
-    let orderCode = `DM${Math.floor(min + Math.random() * (max - min + 1))}`;
+    let orderCode = `HD${Math.floor(min + Math.random() * (max - min + 1))}`;
 
     // 🔄 Kiểm tra xem mã đã tồn tại chưa, nếu có thì tạo lại
     const existingOrder = await this.orderModel.findOne({ orderCode }).exec();
@@ -388,6 +392,88 @@ export class OrderService {
     await savedOrder.save();
 
     return savedOrder;
+  }
+
+  /**
+   * Gửi email xác nhận đơn hàng khi đơn hàng được tạo
+   * @param orderId - ID của đơn hàng
+   * @param checkoutId - ID của checkout
+   * @param sendToUser - Có gửi cho user không (mặc định true)
+   * @param sendToAdmin - Có gửi cho admin không (mặc định true)
+   */
+  async sendOrderConfirmationEmail(
+    orderId: string,
+    checkoutId: string,
+    sendToUser: boolean = true,
+    sendToAdmin: boolean = true,
+  ): Promise<void> {
+    try {
+      // Lấy thông tin đơn hàng với sản phẩm
+      const order = await this.orderModel
+        .findById(orderId)
+        .populate('orderItems.product')
+        .exec();
+
+      if (!order) {
+        throw new NotFoundException('Không tìm thấy đơn hàng');
+      }
+
+      // Lấy thông tin checkout
+      const checkout = await this.checkoutModel.findById(checkoutId).exec();
+      if (!checkout) {
+        throw new NotFoundException('Không tìm thấy thông tin thanh toán');
+      }
+
+      // Lấy danh sách sản phẩm
+      const products = order.orderItems.map(item => item.product as unknown as Product);
+
+      // Gửi email xác nhận đơn hàng
+      await this.orderEmailService.sendOrderConfirmationEmail(order, checkout, products, sendToUser, sendToAdmin);
+    } catch (error) {
+      console.error('Error sending order confirmation email:', error);
+      // Không throw error để không ảnh hưởng đến flow tạo đơn hàng
+    }
+  }
+
+  /**
+   * Gửi email thông báo thanh toán thành công
+   * @param orderId - ID của đơn hàng
+   * @param checkoutId - ID của checkout
+   * @param sendToUser - Có gửi cho user không (mặc định true)
+   * @param sendToAdmin - Có gửi cho admin không (mặc định true)
+   */
+  async sendPaymentSuccessEmail(
+    orderId: string,
+    checkoutId: string,
+    sendToUser: boolean = true,
+    sendToAdmin: boolean = true,
+  ): Promise<void> {
+    try {
+      // Lấy thông tin đơn hàng với sản phẩm
+      const order = await this.orderModel
+        .findById(orderId)
+        .populate('orderItems.product')
+        .exec();
+
+      if (!order) {
+        throw new NotFoundException('Không tìm thấy đơn hàng');
+      }
+
+      // Lấy thông tin checkout
+      const checkout = await this.checkoutModel.findById(checkoutId).exec();
+      if (!checkout) {
+        throw new NotFoundException('Không tìm thấy thông tin thanh toán');
+      }
+
+      // Lấy danh sách sản phẩm
+      const products = order.orderItems.map(item => item.product as unknown as Product);
+
+      // Gửi email thông báo thanh toán thành công
+      await this.orderEmailService.sendPaymentSuccessEmail(order, checkout, products, sendToUser, sendToAdmin);
+    } catch (error) {
+      console.error('Error sending payment success email:', error);
+      // Không throw error để không ảnh hưởng đến flow thanh toán
+    }
   }
 
   /**

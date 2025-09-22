@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thanh toán thành công</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+
+    .container {
+      background-color: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 300;
+    }
+
+    .header p {
+      margin: 10px 0 0 0;
+      opacity: 0.9;
+    }
+
+    .success-icon {
+      font-size: 48px;
+      margin-bottom: 15px;
+    }
+
+    .content {
+      padding: 30px;
+    }
+
+    .payment-info {
+      background-color: #d4edda;
+      border: 1px solid #c3e6cb;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .payment-info h2 {
+      color: #155724;
+      margin-top: 0;
+      font-size: 20px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 0;
+      padding: 8px 0;
+      border-bottom: 1px solid #c3e6cb;
+    }
+
+    .info-row:last-child {
+      border-bottom: none;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .info-label {
+      color: #155724;
+      font-weight: 500;
+    }
+
+    .info-value {
+      color: #155724;
+    }
+
+    .customer-info {
+      background-color: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .customer-info h3 {
+      margin-top: 0;
+      color: #1976d2;
+    }
+
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      background-color: white;
+    }
+
+    .items-table th,
+    .items-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    .items-table th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+      color: #495057;
+    }
+
+    .items-table tr:hover {
+      background-color: #f8f9fa;
+    }
+
+    .total-section {
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 8px 0;
+    }
+
+    .total-row.final {
+      font-size: 18px;
+      font-weight: bold;
+      color: #28a745;
+      border-top: 2px solid #28a745;
+      padding-top: 10px;
+      margin-top: 15px;
+    }
+
+    .next-steps {
+      background-color: #e8f5e8;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .next-steps h3 {
+      color: #2e7d32;
+      margin-top: 0;
+    }
+
+    .next-steps ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .next-steps li {
+      margin: 8px 0;
+      color: #2e7d32;
+    }
+
+    .footer {
+      background-color: #f8f9fa;
+      padding: 20px;
+      text-align: center;
+      color: #6c757d;
+      font-size: 14px;
+    }
+
+    .footer a {
+      color: #28a745;
+      text-decoration: none;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    .tracking-info {
+      background-color: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .tracking-info h3 {
+      margin-top: 0;
+      color: #856404;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+
+      .info-row {
+        flex-direction: column;
+      }
+
+      .info-value {
+        margin-top: 5px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="success-icon">✅</div>
+      <h1>Thanh toán thành công!</h1>
+      <p>Đơn hàng của bạn đã được xác nhận và đang được xử lý</p>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <!-- Payment Information -->
+      <div class="payment-info">
+        <h2>💳 Thông tin thanh toán</h2>
+        <div class="info-row">
+          <span class="info-label">Mã đơn hàng:</span>
+          <span class="info-value"><strong>#{{orderCode}}</strong></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Ngày thanh toán:</span>
+          <span class="info-value">{{paymentDate}} lúc {{paymentTime}}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Phương thức thanh toán:</span>
+          <span class="info-value">{{paymentMethod}}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Số tiền:</span>
+          <span class="info-value"><strong>{{totalPrice}}</strong></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Trạng thái:</span>
+          <span class="info-value">
+            <span class="status-badge">Đã thanh toán</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Customer Information -->
+      <div class="customer-info">
+        <h3>👤 Thông tin giao hàng</h3>
+        <p><strong>Người nhận:</strong> {{customerName}}</p>
+        <p><strong>Email:</strong> {{customerEmail}}</p>
+        <p><strong>Số điện thoại:</strong> {{customerPhone}}</p>
+        <p><strong>Địa chỉ giao hàng:</strong> {{customerAddress}}</p>
+      </div>
+
+      <!-- Order Items -->
+      <h3>🛍️ Chi tiết đơn hàng</h3>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>STT</th>
+            <th>Sản phẩm</th>
+            <th>Biến thể</th>
+            <th>Số lượng</th>
+            <th>Đơn giá</th>
+            <th>Thành tiền</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each orderItems}}
+          <tr>
+            <td>{{index}}</td>
+            <td>{{productName}}</td>
+            <td>{{variant}}</td>
+            <td>{{quantity}}</td>
+            <td>{{price}}</td>
+            <td><strong>{{total}}</strong></td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+
+      <!-- Total Section -->
+      <div class="total-section">
+        <div class="total-row final">
+          <span>Tổng cộng đã thanh toán:</span>
+          <span>{{totalPrice}}</span>
+        </div>
+      </div>
+
+      <!-- Next Steps -->
+      <div class="next-steps">
+        <h3>📝 Bước tiếp theo</h3>
+        <ul>
+          {{#each nextSteps}}
+          <li>{{this}}</li>
+          {{/each}}
+        </ul>
+      </div>
+
+      <!-- Tracking Information -->
+      <div class="tracking-info">
+        <h3>📦 Theo dõi đơn hàng</h3>
+        <p>Chúng tôi sẽ gửi thông tin vận chuyển chi tiết qua SMS và Email trong vòng 24 giờ tới.
+        </p>
+        <p><strong>Thời gian giao hàng dự kiến:</strong> 2-3 ngày làm việc</p>
+        <p><strong>Liên hệ hỗ trợ:</strong> Nếu có bất kỳ thắc mắc nào, vui lòng gọi hotline:
+          1900-xxxx</p>
+      </div>
+
+      <!-- Thank You Message -->
+      <div
+        style="text-align: center; margin: 30px 0; padding: 20px; background-color: #f8f9fa; border-radius: 8px;">
+        <h3 style="color: #28a745; margin-top: 0;">🙏 Cảm ơn bạn đã tin tưởng!</h3>
+        <p>Chúng tôi cam kết mang đến cho bạn những sản phẩm chất lượng tốt nhất và dịch vụ chăm sóc
+          khách hàng tận tình.</p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>© 2025. Tất cả quyền được bảo lưu.</p>
+    </div>
+  </div>
+</body>
+
+</html>

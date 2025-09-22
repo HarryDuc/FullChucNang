@@ -35,7 +35,7 @@ export class VerifyService {
       console.log('📧 Sending email...');
       await this.mailerService.sendMail({
         to: email,
-        subject: 'Xác thực tài khoản Katsun Decor',
+        subject: 'Xác thực tài khoản',
         template: './verification',
         context: { verificationCode },
       });

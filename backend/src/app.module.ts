@@ -25,6 +25,7 @@ import { RolesGuard } from 'src/common/guards/roles.guard';
 // Import MailerModule để xử lý email
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+import { handlebarsHelpers } from './modules/templates/handlebars-helpers';
 import { join } from 'path';
 import { VerifyModule } from './modules/verify/verify.module';
 import { ContactListModule } from './modules/info-website/info-website.module';
@@ -106,11 +107,11 @@ import { PayosModule } from './modules/payos/payos.module';
         debug: true,
       },
       defaults: {
-        from: `"Katsun Decor" <${process.env.MAIL_USER}>`,
+        from: `"Hệ thống thông báo tự động" <${process.env.MAIL_USER}>`,
       },
       template: {
-        dir: join(__dirname, '..', 'src', 'modules', 'verify', 'templates'), // ✅ Sửa đường dẫn chính xác
-        adapter: new HandlebarsAdapter(),
+        dir: join(__dirname, '..', 'src', 'modules', 'templates'), // ✅ Sửa đường dẫn chính xác
+        adapter: new HandlebarsAdapter(handlebarsHelpers as any),
         options: {
           strict: true,
         },

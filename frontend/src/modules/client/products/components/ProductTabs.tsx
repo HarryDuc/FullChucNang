@@ -47,8 +47,7 @@ const ProductTabs: React.FC<ProductTabsProps> = ({
   // Debug log để kiểm tra props
   console.log('ProductTabs props - specification:', specification);
   console.log('ProductTabs props - specificationDescription:', specificationDescription);
-  const { isAuthenticated } = useAuth();
-  const { user } = useUser();
+  const { isAuthenticated, user } = useAuth();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [hoveredStar, setHoveredStar] = useState(0);
@@ -307,7 +306,7 @@ const ProductTabs: React.FC<ProductTabsProps> = ({
             )}
 
             {/* Form đánh giá */}
-            {isAuthenticated && user ? (
+            {isAuthenticated ? (
               <form onSubmit={handleSubmitReview} className="mt-8">
                 <h3 className="text-lg font-semibold mb-4">
                   {reviews.length === 0

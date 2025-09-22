@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Xác nhận đơn hàng</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+
+    .container {
+      background-color: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 300;
+    }
+
+    .header p {
+      margin: 10px 0 0 0;
+      opacity: 0.9;
+    }
+
+    .content {
+      padding: 30px;
+    }
+
+    .order-info {
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .order-info h2 {
+      color: #495057;
+      margin-top: 0;
+      font-size: 20px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 0;
+      padding: 8px 0;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .info-row:last-child {
+      border-bottom: none;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .info-label {
+      color: #6c757d;
+      font-weight: 500;
+    }
+
+    .info-value {
+      color: #495057;
+    }
+
+    .customer-info {
+      background-color: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .customer-info h3 {
+      margin-top: 0;
+      color: #1976d2;
+    }
+
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      background-color: white;
+    }
+
+    .items-table th,
+    .items-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    .items-table th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+      color: #495057;
+    }
+
+    .items-table tr:hover {
+      background-color: #f8f9fa;
+    }
+
+    .total-section {
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 8px 0;
+    }
+
+    .total-row.final {
+      font-size: 18px;
+      font-weight: bold;
+      color: #28a745;
+      border-top: 2px solid #28a745;
+      padding-top: 10px;
+      margin-top: 15px;
+    }
+
+    .payment-info {
+      background-color: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .payment-info h3 {
+      margin-top: 0;
+      color: #856404;
+    }
+
+    .footer {
+      background-color: #f8f9fa;
+      padding: 20px;
+      text-align: center;
+      color: #6c757d;
+      font-size: 14px;
+    }
+
+    .footer a {
+      color: #667eea;
+      text-decoration: none;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .status-pending {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+
+    .status-paid {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    .status-failed {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+
+      .info-row {
+        flex-direction: column;
+      }
+
+      .info-value {
+        margin-top: 5px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>🎉 Đơn hàng đã được tạo thành công!</h1>
+      <p>Cảm ơn bạn đã đặt hàng.</p>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <!-- Order Information -->
+      <div class="order-info">
+        <h2>📋 Thông tin đơn hàng</h2>
+        <div class="info-row">
+          <span class="info-label">Mã đơn hàng:</span>
+          <span class="info-value"><strong>#{{orderCode}}</strong></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Ngày đặt:</span>
+          <span class="info-value">{{orderDate}} lúc {{orderTime}}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Trạng thái thanh toán:</span>
+          <span class="info-value">
+            <span class="status-badge status-{{paymentStatus}}">{{paymentStatus}}</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Customer Information -->
+      <div class="customer-info">
+        <h3>👤 Thông tin khách hàng</h3>
+        <p><strong>Tên:</strong> {{customerName}}</p>
+        <p><strong>Email:</strong> {{customerEmail}}</p>
+        <p><strong>Số điện thoại:</strong> {{customerPhone}}</p>
+        <p><strong>Địa chỉ giao hàng:</strong> {{customerAddress}}</p>
+      </div>
+
+      <!-- Order Items -->
+      <h3>🛍️ Chi tiết đơn hàng</h3>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>STT</th>
+            <th>Sản phẩm</th>
+            <th>Biến thể</th>
+            <th>Số lượng</th>
+            <th>Đơn giá</th>
+            <th>Thành tiền</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each orderItems}}
+          <tr>
+            <td>{{index}}</td>
+            <td>{{productName}}</td>
+            <td>{{variant}}</td>
+            <td>{{quantity}}</td>
+            <td>{{price}}</td>
+            <td><strong>{{total}}</strong></td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+
+      <!-- Total Section -->
+      <div class="total-section">
+        <div class="total-row">
+          <span>Tạm tính:</span>
+          <span>{{subtotalPrice}}</span>
+        </div>
+        {{#if hasDiscount}}
+        <div class="total-row">
+          <span>Mã giảm giá ({{voucherCode}}):</span>
+          <span style="color: #dc3545;">-{{discountAmount}}</span>
+        </div>
+        {{/if}}
+        <div class="total-row final">
+          <span>Tổng cộng:</span>
+          <span>{{totalPrice}}</span>
+        </div>
+      </div>
+
+      <!-- Payment Information -->
+      <div class="payment-info">
+        <h3>💳 Thông tin thanh toán</h3>
+        <p><strong>Phương thức thanh toán:</strong> {{paymentMethod}}</p>
+        <p><strong>Trạng thái:</strong> {{paymentStatus}}</p>
+
+        {{#if (eq paymentMethod "Thanh toán khi nhận hàng")}}
+        <p>💰 Bạn sẽ thanh toán khi nhận hàng. Chúng tôi sẽ liên hệ với bạn để xác nhận đơn hàng.
+        </p>
+        {{/if}}
+
+        {{#if (eq paymentMethod "Chuyển khoản ngân hàng")}}
+        <p>🏦 Vui lòng thực hiện chuyển khoản theo thông tin đã cung cấp. Sau khi nhận được thanh
+          toán, chúng tôi sẽ xác nhận đơn hàng.</p>
+        {{/if}}
+
+        {{#if (eq paymentMethod "Thanh toán qua PayOS")}}
+        <p>💳 Vui lòng hoàn tất thanh toán qua link PayOS đã được gửi. Sau khi thanh toán thành
+          công, đơn hàng sẽ được xác nhận.</p>
+        {{/if}}
+      </div>
+
+      <!-- Next Steps -->
+      <div style="background-color: #e8f5e8; border-radius: 8px; padding: 20px; margin: 20px 0;">
+        <h3 style="color: #2e7d32; margin-top: 0;">📝 Bước tiếp theo</h3>
+        <ul style="margin: 0; padding-left: 20px;">
+          <li>Chúng tôi sẽ xác nhận đơn hàng trong vòng 24 giờ</li>
+          <li>Đơn hàng sẽ được chuẩn bị và giao trong 2-3 ngày làm việc</li>
+          <li>Bạn sẽ nhận được thông tin vận chuyển qua SMS/Email</li>
+          <li>Nếu có thắc mắc, vui lòng liên hệ hotline: 1900-xxxx</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>© 2025. Tất cả quyền được bảo lưu.</p>
+    </div>
+  </div>
+</body>
+
+</html>
