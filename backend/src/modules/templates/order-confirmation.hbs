@@ -209,7 +209,7 @@
   <div class="container">
     <!-- Header -->
     <div class="header">
-      <h1>🎉 Đơn hàng đã được tạo thành công!</h1>
+      <h1>Đơn hàng đã được tạo thành công!</h1>
       <p>Cảm ơn bạn đã đặt hàng.</p>
     </div>
 
@@ -217,7 +217,7 @@
     <div class="content">
       <!-- Order Information -->
       <div class="order-info">
-        <h2>📋 Thông tin đơn hàng</h2>
+        <h2>Thông tin đơn hàng</h2>
         <div class="info-row">
           <span class="info-label">Mã đơn hàng:</span>
           <span class="info-value"><strong>#{{orderCode}}</strong></span>
@@ -236,7 +236,7 @@
 
       <!-- Customer Information -->
       <div class="customer-info">
-        <h3>👤 Thông tin khách hàng</h3>
+        <h3>Thông tin khách hàng</h3>
         <p><strong>Tên:</strong> {{customerName}}</p>
         <p><strong>Email:</strong> {{customerEmail}}</p>
         <p><strong>Số điện thoại:</strong> {{customerPhone}}</p>
@@ -244,7 +244,7 @@
       </div>
 
       <!-- Order Items -->
-      <h3>🛍️ Chi tiết đơn hàng</h3>
+      <h3>Chi tiết đơn hàng</h3>
       <table class="items-table">
         <thead>
           <tr>
@@ -290,29 +290,29 @@
 
       <!-- Payment Information -->
       <div class="payment-info">
-        <h3>💳 Thông tin thanh toán</h3>
+        <h3>Thông tin thanh toán</h3>
         <p><strong>Phương thức thanh toán:</strong> {{paymentMethod}}</p>
         <p><strong>Trạng thái:</strong> {{paymentStatus}}</p>
 
         {{#if (eq paymentMethod "Thanh toán khi nhận hàng")}}
-        <p>💰 Bạn sẽ thanh toán khi nhận hàng. Chúng tôi sẽ liên hệ với bạn để xác nhận đơn hàng.
+        <p>Bạn sẽ thanh toán khi nhận hàng. Chúng tôi sẽ liên hệ với bạn để xác nhận đơn hàng.
         </p>
         {{/if}}
 
         {{#if (eq paymentMethod "Chuyển khoản ngân hàng")}}
-        <p>🏦 Vui lòng thực hiện chuyển khoản theo thông tin đã cung cấp. Sau khi nhận được thanh
+        <p>Vui lòng thực hiện chuyển khoản theo thông tin đã cung cấp. Sau khi nhận được thanh
           toán, chúng tôi sẽ xác nhận đơn hàng.</p>
         {{/if}}
 
         {{#if (eq paymentMethod "Thanh toán qua PayOS")}}
-        <p>💳 Vui lòng hoàn tất thanh toán qua link PayOS đã được gửi. Sau khi thanh toán thành
+        <p>Vui lòng hoàn tất thanh toán qua link PayOS đã được gửi. Sau khi thanh toán thành
           công, đơn hàng sẽ được xác nhận.</p>
         {{/if}}
       </div>
 
       <!-- Next Steps -->
       <div style="background-color: #e8f5e8; border-radius: 8px; padding: 20px; margin: 20px 0;">
-        <h3 style="color: #2e7d32; margin-top: 0;">📝 Bước tiếp theo</h3>
+        <h3 style="color: #2e7d32; margin-top: 0;">Bước tiếp theo</h3>
         <ul style="margin: 0; padding-left: 20px;">
           <li>Chúng tôi sẽ xác nhận đơn hàng trong vòng 24 giờ</li>
           <li>Đơn hàng sẽ được chuẩn bị và giao trong 2-3 ngày làm việc</li>
