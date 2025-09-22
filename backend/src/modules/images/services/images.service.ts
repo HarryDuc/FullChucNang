@@ -5,7 +5,8 @@ import { Image } from '../schemas/image.schema';
 import { removeVietnameseTones } from '../utils/image.utils';
 import * as fs from 'fs';
 import * as path from 'path';
-import { exiftool } from 'exiftool-vendored';
+import { PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { createR2Client, getR2Config } from '../utils/r2.config';
 
 export interface PaginatedImages {
   images: Image[];
@@ -15,24 +16,13 @@ export interface PaginatedImages {
 
 @Injectable()
 export class ImagesService {
-  constructor(@InjectModel(Image.name) private imageModel: Model<Image>) {
-    // Create tmp directory if it doesn't exist
-    const tmpDir = path.join(__dirname, '../../tmp');
-    if (!fs.existsSync(tmpDir)) {
-      fs.mkdirSync(tmpDir, { recursive: true });
-    }
-  }
+  private r2Client;
+  private r2Config;
 
-  /**
-   * ✅ Extract metadata from image file
-   */
-  private async extractMetadata(filePath: string): Promise<Record<string, any>> {
-    try {
-      const metadata = await exiftool.read(filePath);
-      return metadata;
-    } catch (error) {
-      console.error('Error extracting metadata:', error);
-      return {};
+  constructor(@InjectModel(Image.name) private imageModel: Model<Image>) {
+    this.r2Config = getR2Config();
+    if (this.r2Config.isR2Enabled) {
+      this.r2Client = createR2Client();
     }
   }
 
@@ -47,7 +37,6 @@ export class ImagesService {
     let count = 1;
     let slug = baseSlug;
 
-    // ✅ Kiểm tra xem slug đã tồn tại chưa
     while (await this.imageModel.exists({ slug })) {
       slug = `${baseSlug}-${count}`;
       count++;
@@ -57,35 +46,72 @@ export class ImagesService {
   }
 
   /**
-   * ✅ Lưu thông tin file vào database (tên file không thay đổi)
+   * ✅ Generate unique filename
    */
-  async saveImageToDB(file: Express.Multer.File, useTable?: string, useId?: string): Promise<Image> {
+  private generateUniqueFilename(originalName: string, slug: string): string {
+    const fileExt = path.extname(originalName);
+    const timestamp = Date.now();
+    return `${slug}-${timestamp}${fileExt}`;
+  }
+
+  /**
+   * ✅ Upload file to R2
+   */
+  private async uploadToR2(file: Express.Multer.File, filename: string): Promise<string> {
+    try {
+      const command = new PutObjectCommand({
+        Bucket: this.r2Config.bucketName,
+        Key: filename,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+        // Thêm metadata để tối ưu cho image
+        Metadata: {
+          'original-name': file.originalname,
+          'file-size': file.size.toString(),
+          'upload-time': new Date().toISOString(),
+        },
+      });
+
+      await this.r2Client.send(command);
+      return `${this.r2Config.cdnUrl}/${filename}`;
+    } catch (error) {
+      console.error('R2 Upload Error:', error);
+      throw new Error(`Failed to upload to R2: ${error.message}`);
+    }
+  }
+
+  /**
+   * ✅ Lưu thông tin file vào database
+   */
+  async saveImageToDB(file: Express.Multer.File): Promise<Image> {
     if (!file) throw new Error('❌ Không tìm thấy file upload!');
 
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-
-    // ✅ Lưu đường dẫn đúng với thư mục năm/tháng
-    const imageUrl = `/uploads/${year}/${month}/${file.filename}`;
-    const filePath = path.join(__dirname, `../../../../uploads/${year}/${month}/${file.filename}`);
-
     const slug = await this.generateUniqueSlug(file.originalname);
+    let imageUrl: string;
+    let location: string;
 
-    // Extract metadata
-    const metadata = await this.extractMetadata(filePath);
+    if (this.r2Config.isR2Enabled) {
+      // For R2 storage, generate a unique filename and upload to R2
+      const filename = this.generateUniqueFilename(file.originalname, slug);
+      imageUrl = await this.uploadToR2(file, filename);
+      location = imageUrl; // Use the same CDN URL for both imageUrl and location
+    } else {
+      // For local storage, use the existing file path
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      imageUrl = `/uploads/images/${year}/${month}/${file.filename}`;
+      location = `${process.env.SERVER_URL}${imageUrl}`;
+    }
 
     const image = new this.imageModel({
       originalName: file.originalname,
       imageUrl,
+      location,
       slug,
       alt: slug,
       caption: '',
       description: '',
-      size: file.size,
-      useTable,
-      useId,
-      metadata,
     });
 
     return image.save();
@@ -94,63 +120,122 @@ export class ImagesService {
   /**
    * ✅ Xử lý upload 1 ảnh
    */
-  async handleFileUpload(file: Express.Multer.File, useTable?: string, useId?: string): Promise<Image> {
-    return this.saveImageToDB(file, useTable, useId);
+  async handleFileUpload(file: Express.Multer.File): Promise<Image> {
+    return this.saveImageToDB(file);
   }
 
   /**
    * ✅ Xử lý upload nhiều ảnh
    */
-  async handleMultipleFileUpload(
-    files: Express.Multer.File[],
-    useTable?: string,
-    useId?: string,
-  ): Promise<Image[]> {
+  async handleMultipleFileUpload(files: Express.Multer.File[]): Promise<Image[]> {
     if (!files || files.length === 0) {
       throw new Error('❌ Không có ảnh nào để tải lên!');
     }
-    return Promise.all(files.map((file) => this.saveImageToDB(file, useTable, useId)));
+    return Promise.all(files.map((file) => this.saveImageToDB(file)));
   }
 
   /**
    * ✅ Xóa ảnh theo slug
    */
   async deleteImageBySlug(slug: string): Promise<{ message: string }> {
-    // ✅ Truy vấn trước để lấy thông tin ảnh
     const image = await this.imageModel.findOne({ slug }).select('imageUrl');
 
     if (!image) {
       throw new NotFoundException(`Không tìm thấy ảnh với slug: ${slug}`);
     }
 
-    // ✅ Phân tích URL để lấy year, month, filename
-    const imageUrlParts = image.imageUrl.split('/');
-    const year = imageUrlParts[imageUrlParts.length - 3]; // Lấy phần năm
-    const month = imageUrlParts[imageUrlParts.length - 2]; // Lấy phần tháng
-    const filename = imageUrlParts[imageUrlParts.length - 1]; // Lấy tên file
+    if (this.r2Config.isR2Enabled) {
+      if (image.imageUrl.startsWith(this.r2Config.cdnUrl)) {
+        const key = image.imageUrl.replace(`${this.r2Config.cdnUrl}/`, '');
+        try {
+          await this.r2Client.send(
+            new DeleteObjectCommand({
+              Bucket: this.r2Config.bucketName,
+              Key: key,
+            })
+          );
+        } catch (error) {
+          console.error('Failed to delete from R2:', error);
+        }
+      }
+    } else {
+      // Handle local file deletion
+      const imageUrlParts = image.imageUrl.split('/');
+      const year = imageUrlParts[imageUrlParts.length - 3];
+      const month = imageUrlParts[imageUrlParts.length - 2];
+      const filename = imageUrlParts[imageUrlParts.length - 1];
 
-    // ✅ Chỉnh lại đường dẫn file theo đúng cấu trúc thư mục
-    const filePath = path.join(
-      __dirname,
-      `../../../../uploads/${year}/${month}/${filename}`,
-    );
+      const filePath = path.join(
+        __dirname,
+        `../../../../uploads/images/${year}/${month}/${filename}`,
+      );
 
-    try {
-      await fs.promises.access(filePath, fs.constants.F_OK); // Kiểm tra file tồn tại
-      await fs.promises.unlink(filePath);
-    } catch (err: unknown) {
-      if (
-        (err as { code?: string }).code !== 'ENOENT' &&
-        err instanceof Error
-      ) {
-        throw new Error(`Lỗi khi xóa file: ${err.message}`);
+      try {
+        await fs.promises.access(filePath, fs.constants.F_OK);
+        await fs.promises.unlink(filePath);
+      } catch (err: unknown) {
+        if (
+          (err as { code?: string }).code !== 'ENOENT' &&
+          err instanceof Error
+        ) {
+          throw new Error(`Lỗi khi xóa file: ${err.message}`);
+        }
       }
     }
 
-    // ✅ Xóa record trong database
     await this.imageModel.deleteOne({ slug });
+    return { message: `Đã xóa ảnh thành công` };
+  }
 
-    return { message: `Đã xóa ảnh: ${filename}` };
+  /**
+   * ✅ Xóa ảnh theo URL (không cần slug)
+   */
+  async deleteByUrl(url: string): Promise<{ message: string }> {
+    // Tìm bản ghi để xóa trong DB nếu có
+    const image = await this.imageModel.findOne({ imageUrl: url }).select('_id imageUrl');
+
+    if (this.r2Config.isR2Enabled) {
+      if (url.startsWith(this.r2Config.cdnUrl)) {
+        const key = url.replace(`${this.r2Config.cdnUrl}/`, '');
+        try {
+          await this.r2Client.send(
+            new DeleteObjectCommand({
+              Bucket: this.r2Config.bucketName,
+              Key: key,
+            })
+          );
+        } catch (error) {
+          console.error('Failed to delete from R2:', error);
+        }
+      }
+    } else {
+      // Handle local file deletion
+      const imageUrlParts = url.split('/');
+      const year = imageUrlParts[imageUrlParts.length - 3];
+      const month = imageUrlParts[imageUrlParts.length - 2];
+      const filename = imageUrlParts[imageUrlParts.length - 1];
+
+      const filePath = path.join(
+        __dirname,
+        `../../../../uploads/images/${year}/${month}/${filename}`,
+      );
+
+      try {
+        await fs.promises.access(filePath, fs.constants.F_OK);
+        await fs.promises.unlink(filePath);
+      } catch (err: unknown) {
+        if ((err as { code?: string }).code !== 'ENOENT' && err instanceof Error) {
+          throw new Error(`Lỗi khi xóa file: ${err.message}`);
+        }
+      }
+    }
+
+    // Xóa bản ghi DB nếu tồn tại
+    if (image?._id) {
+      await this.imageModel.deleteOne({ _id: image._id });
+    }
+
+    return { message: `Đã xóa ảnh thành công` };
   }
 
   /**
@@ -178,18 +263,16 @@ export class ImagesService {
   }
 
   /**
-   * ✅ Xử lý upload ảnh từ SunEditor và lưu vào database
+   * ✅ Xử lý upload ảnh từ SunEditor
    */
   async handleEditorFileUpload(
     file: Express.Multer.File,
-    useTable?: string,
-    useId?: string,
   ): Promise<{ result: { url: string; name: string; size: number }[] }> {
     if (!file) {
       throw new Error('❌ Không tìm thấy file upload!');
     }
 
-    const savedImage = await this.saveImageToDB(file, useTable, useId);
+    const savedImage = await this.saveImageToDB(file);
 
     return {
       result: [

@@ -4,7 +4,7 @@ import { Model } from 'mongoose';
 import { Post, PostDocument, PostStatus } from '../schemas/post.schema';
 import { CreatePostDto } from '../dtos/create-posts.dto';
 import { UpdatePostDto } from '../dtos/update-posts.dto';
-import { normalizeForSearch } from '../../../common/utils/normalizeForSearch';
+import { normalizeForSearchPost } from '../../../common/utils/normalizeForSearch';
 
 @Injectable()
 export class PostRepository {
@@ -14,7 +14,7 @@ export class PostRepository {
    * Tạo bài viết mới
    */
   create(dto: CreatePostDto) {
-    const normalized = normalizeForSearch(dto.title);
+    const normalized = normalizeForSearchPost(dto.title);
     return this.model.create({
       ...dto,
       normalizedTitle: normalized
@@ -72,7 +72,7 @@ export class PostRepository {
     const update: any = { ...dto };
 
     if (dto.title) {
-      const normalized = normalizeForSearch(dto.title);
+      const normalized = normalizeForSearchPost(dto.title);
       update.normalizedTitle = normalized;
     }
 
@@ -113,7 +113,7 @@ export class PostRepository {
    * Tìm kiếm bài viết theo tên (và/hoặc tác giả), có phân trang
    */
   async searchByName(name: string, skip = 0, limit = 10, includeHidden = false) {
-    const normalizedSearch = normalizeForSearch(name || '');
+    const normalizedSearch = normalizeForSearchPost(name || '');
 
     // Tạo query với điều kiện OR để tìm kiếm linh hoạt hơn
     const query = {
@@ -154,7 +154,7 @@ export class PostRepository {
   }
 
   async countSearchByName(name: string, includeHidden = false) {
-    const normalizedSearch = normalizeForSearch(name || '');
+    const normalizedSearch = normalizeForSearchPost(name || '');
 
     // Tạo query với điều kiện OR để tìm kiếm linh hoạt hơn
     const query = {

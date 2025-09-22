@@ -18,6 +18,7 @@ const nextConfig = {
     domains: [
       "cdn.decorandmore.vn",
       "decorandmore.vn",
+      "cdn.nhaoplus.com.vn",
       "storage.googleapis.com",
       "lh3.googleusercontent.com",
       "anotherdomain.com",

@@ -2,49 +2,32 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { removeVietnameseTones } from '../utils/image.utils';
 
-@Schema({ timestamps: true }) // ✅ Tự động thêm `createdAt`, `updatedAt`
+@Schema({ timestamps: true })
 export class Image extends Document {
   @Prop({ required: true })
-  originalName: string; // ✅ Tên file gốc (giữ nguyên)
+  originalName: string;
 
   @Prop({ required: true, unique: true })
-  imageUrl: string; // ✅ Đường dẫn ảnh trên server
+  imageUrl: string;
 
-  @Prop({
-    default: function (this: Image) {
-      return `${process.env.SERVER_URL}${this.imageUrl}`; // ✅ `location` luôn chứa giá trị của `imageUrl`
-    },
-  })
+  @Prop({ required: true })
   location: string;
 
   @Prop({ required: true, unique: true })
-  slug: string; // ✅ Slug duy nhất để quản lý ảnh
+  slug: string;
 
   @Prop({
     default: function (this: Image) {
-      return removeVietnameseTones(this.originalName); // ✅ Tạo alt tự động từ tên gốc
+      return removeVietnameseTones(this.originalName);
     },
   })
-  alt: string; // ✅ Văn bản thay thế
+  alt: string;
 
   @Prop({ default: '' })
-  caption: string; // ✅ Chú thích ảnh
+  caption: string;
 
   @Prop({ default: '' })
-  description: string; // ✅ Mô tả ảnh
-
-  @Prop({ type: Number })
-  size: number; // ✅ Kích thước file
-
-  @Prop({ type: String })
-  useTable: string; // ✅ Bảng sử dụng ảnh
-
-  @Prop({ type: String })
-  useId: string; // ✅ ID của bản ghi sử dụng ảnh
-
-  @Prop({ type: Object })
-  metadata: Record<string, any>; // ✅ Metadata của ảnh
+  description: string;
 }
 
-// ✅ Tạo schema Mongoose
 export const ImageSchema = SchemaFactory.createForClass(Image);

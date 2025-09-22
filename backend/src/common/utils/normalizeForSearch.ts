@@ -23,3 +23,13 @@ export function normalizeForSearch(str: string): { normalized: string; withDiacr
     withDiacritics: withDiacritics.replace(/[^a-zA-Z0-9\sàáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/g, '') // chỉ giữ chữ, số, khoảng trắng và dấu tiếng Việt
   };
 }
+export function normalizeForSearchPost(str: string): string {
+  if (!str) return '';
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // bỏ dấu tiếng Việt
+    .replace(/[đĐ]/g, 'd') // thay đ -> d
+    .replace(/[^a-zA-Z0-9\s]/g, '') // bỏ ký tự đặc biệt, giữ khoảng trắng
+    .toLowerCase()
+    .trim();
+}
