@@ -21,7 +21,7 @@ export class ReviewService {
       // First find the product by slug
       const product = await this.productModel.findOne({ slug: productSlug }).exec();
       if (!product) {
-        throw new NotFoundException('Product not found');
+        throw new NotFoundException('Sản phẩm không tồn tại');
       }
 
       // Find completed orders for this user that contain the product
@@ -62,7 +62,7 @@ export class ReviewService {
     }).exec();
 
     if (existingReview) {
-      throw new BadRequestException('You have already reviewed this product');
+      throw new BadRequestException('Bạn đã đánh giá sản phẩm này');
     }
 
     // Check if user has purchased, received the product and paid for it
@@ -72,7 +72,7 @@ export class ReviewService {
     );
 
     if (!canReview) {
-      throw new BadRequestException('You can only review products you have purchased, received and paid for');
+      throw new BadRequestException('Bạn chỉ có thể đánh giá sản phẩm bạn đã mua, nhận và thanh toán');
     }
 
     const createdReview = new this.reviewModel({
@@ -99,7 +99,7 @@ export class ReviewService {
   async findOne(id: string): Promise<Review> {
     const review = await this.reviewModel.findById(id).exec();
     if (!review) {
-      throw new NotFoundException('Review not found');
+      throw new NotFoundException('Đánh giá không tồn tại');
     }
     return review;
   }
@@ -109,7 +109,7 @@ export class ReviewService {
       .findByIdAndUpdate(id, updateReviewDto, { new: true })
       .exec();
     if (!updatedReview) {
-      throw new NotFoundException('Review not found');
+      throw new NotFoundException('Đánh giá không tồn tại');
     }
     return updatedReview;
   }
@@ -121,7 +121,7 @@ export class ReviewService {
       { new: true },
     ).exec();
     if (!result) {
-      throw new NotFoundException('Review not found');
+      throw new NotFoundException('Đánh giá không tồn tại');
     }
   }
 

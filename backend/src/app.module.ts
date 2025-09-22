@@ -107,7 +107,7 @@ import { PayosModule } from './modules/payos/payos.module';
         debug: true,
       },
       defaults: {
-        from: `"Hệ thống thông báo tự động" <${process.env.MAIL_USER}>`,
+        from: `"NO REPLY" <${process.env.MAIL_USER}>`,
       },
       template: {
         dir: join(__dirname, '..', 'src', 'modules', 'templates'), // ✅ Sửa đường dẫn chính xác

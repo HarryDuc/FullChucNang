@@ -299,7 +299,7 @@ const EmailConfigSettings = () => {
       </div>
 
       {/* Configuration URLs */}
-      <div className="bg-white shadow rounded-lg p-6">
+      <div className="bg-white shadow rounded-lg p-6 hidden">
         <h3 className="text-lg font-medium text-gray-900 mb-4">Cấu hình URL</h3>
         <div className="space-y-4">
           <div>

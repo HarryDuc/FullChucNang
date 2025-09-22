@@ -35,8 +35,8 @@ export class OrderEmailService {
         sendAdminOrderNotification: true,
         sendAdminPaymentSuccess: true,
         adminEmails: [process.env.ADMIN_EMAIL],
-        adminDashboardUrl: process.env.ADMIN_DASHBOARD_URL,
-        adminOrdersUrl: process.env.ADMIN_ORDERS_URL,
+        adminDashboardUrl: process.env.FRONTEND_URL + '/admin',
+        adminOrdersUrl: process.env.FRONTEND_URL + '/admin/orders',
         defaultAdminEmail: process.env.ADMIN_EMAIL,
         emailEnabled: true,
       });
