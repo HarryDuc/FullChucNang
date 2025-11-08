@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 interface PaymentMethodProps {
   paymentMethod: string;
   onPaymentMethodChange: (method: string) => void;
@@ -59,7 +57,7 @@ const PaymentMethod = ({
               className="ml-3 flex items-center text-gray-700"
             >
               PayPal{" "}
-              <Image
+              <img
                 src="/paypal-logo.png"
                 alt="PayPal"
                 className="h-6 ml-2"
@@ -87,7 +85,7 @@ const PaymentMethod = ({
               className="ml-3 flex items-center text-gray-700"
             >
               MetaMask{" "}
-              <Image
+              <img
                 src="/metamask-fox.svg"
                 alt="MetaMask"
                 className="h-6 ml-2"

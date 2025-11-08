@@ -205,9 +205,19 @@ const AdminSidebar = ({ collapsed, toggleSidebar }: AdminSidebarProps) => {
       },
     },
     {
+      href: "/admin/upimg",
+      icon: <MdOutlinePermMedia />,
+      label: "Thư viện ảnh",
+      group: "Nội dung",
+      requiredPermission: {
+        resource: "images",
+        action: "read",
+      },
+    },
+    {
       href: "/admin/media",
       icon: <MdOutlinePermMedia />,
-      label: "Thư viện media",
+      label: "Toàn bộ ảnh",
       group: "Nội dung",
       requiredPermission: {
         resource: "images",

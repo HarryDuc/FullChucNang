@@ -284,4 +284,24 @@ export class ImagesService {
       ],
     };
   }
+
+
+  /**
+   * ✅ Tìm ảnh theo ID
+   */
+  async findById(id: string): Promise<Image> {
+    const image = await this.imageModel.findById(id).exec();
+    if (!image) {
+      throw new NotFoundException('Image not found');
+    }
+    return image;
+  }
+
+  /**
+   * ✅ Upload ảnh (alias cho handleFileUpload)
+   */
+  async uploadImage(file: Express.Multer.File): Promise<Image> {
+    return this.handleFileUpload(file);
+  }
+
 }

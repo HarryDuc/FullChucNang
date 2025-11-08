@@ -13,7 +13,6 @@ import SearchComponent from "./SearchComponent";
 import { listenCartChange } from "../../../../../../utils/cartUtils";
 import InfoBar from "./InfoBar";
 import { useInfoWebsite } from "@/modules/client/common/hooks/useInfoWebsite";
-import Image from "next/image";
 
 interface CartItem {
   _id: string;

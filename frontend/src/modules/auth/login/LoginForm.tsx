@@ -12,7 +12,6 @@ import {
 } from "../common/services/authService";
 import { useSearchParams } from "next/navigation";
 import { useUser } from "@/modules/client/users/hooks/useUser";
-import Image from "next/image";
 import MetamaskLogin from "../components/MetamaskLogin";
 
 const LoginForm = () => {
@@ -103,7 +102,7 @@ const LoginForm = () => {
             type="button"
             className="w-full mb-4 py-3 px-4 flex items-center justify-center gap-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
-            <Image
+            <img
               src="/google-icon.svg"
               alt="Google"
               className="w-5 h-5"

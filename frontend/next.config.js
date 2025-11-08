@@ -1,34 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // ? B?t ch? d? nghi�m ng?t c?a React d? ph�t hi?n l?i s?m
   reactStrictMode: true,
 
-  // ? B? qua l?i ESLint khi build production
   eslint: {
     ignoreDuringBuilds: true,
   },
 
-  // ? B? qua l?i TypeScript khi build production (n?u c?n)
   typescript: {
     ignoreBuildErrors: true,
   },
 
-  // ? Cho ph�p hi?n th? ?nh t? c�c domain b�n ngo�i (bao g?m backend b?n)
   images: {
-    domains: [
-      "cdn.decorandmore.vn",
-      "decorandmore.vn",
-      "cdn.nhaoplus.com.vn",
-      "storage.googleapis.com",
-      "lh3.googleusercontent.com",
-      "anotherdomain.com",
-      "example.com",
-      "via.placeholder.com",
-      "source.unsplash.com",
-      "i.ibb.co",
-      "localhost",
-      'antimatter.vn',
-    ],
+    domains: ["*"],
   },
 
   // ? Vi?t l?i du?ng d?n (rewrites) n?u b?n mu?n mapping route
@@ -60,4 +43,5 @@ nextConfig.rewrites = async () => {
     },
   ];
 };
+
 module.exports = nextConfig;

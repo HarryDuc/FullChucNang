@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { useFlashSaleProducts } from "../hooks/useFlashSaleProducts";
-import Image from "next/image";
 import { DeleteFlashSaleDialog } from "./DeleteFlashSaleDialog";
 import { AddFlashSaleDialog } from "./AddFlashSaleDialog";
 import Link from "next/link";
@@ -101,10 +100,11 @@ export const FlashSaleList = () => {
               <tr key={product._id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="relative w-16 h-16">
-                    <Image
+                    <img
                       src={product.thumbnail}
                       alt={product.name}
-                      fill
+                      width={64}
+                      height={64}
                       className="object-cover rounded"
                     />
                   </div>

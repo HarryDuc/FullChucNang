@@ -4,7 +4,6 @@ import { useProducts } from "../hooks/useProducts";
 import SearchProducts from "./SearchProducts";
 import ProductFilters from "./ProductFilters";
 import { ProductService } from "../services/product.service";
-import Image from "next/image";
 
 interface FilterOption {
   id: string;
@@ -123,7 +122,7 @@ const ListProducts = () => {
     switch (columnId) {
       case "thumbnail":
         return value ? (
-          <Image
+          <img
             src={value}
             alt="Thumbnail"
             className="w-16 h-16 object-cover rounded"

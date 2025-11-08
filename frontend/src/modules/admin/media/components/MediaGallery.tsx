@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useImages } from "@/modules/admin/media/hooks/useImages";
-import Image from "next/image";
 import { ImageResponse } from "@/modules/admin/media/services/images.service";
 
 interface MediaGalleryProps {
@@ -132,10 +131,9 @@ export function MediaGallery({ onSelect, className }: MediaGalleryProps) {
               className={`group relative aspect-square rounded-lg overflow-hidden border cursor-pointer hover:border-blue-500 transition-colors`}
               onClick={() => handleImageClick(image)}
             >
-              <Image
+              <img
                 src={image.imageUrl}
                 alt={image.alt || image.originalName}
-                fill
                 className="object-cover"
                 sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 20vw"
               />
@@ -184,10 +182,9 @@ export function MediaGallery({ onSelect, className }: MediaGalleryProps) {
               </button>
             </div>
             <div className="relative aspect-video">
-              <Image
+              <img
                 src={selectedImage.imageUrl}
                 alt={selectedImage.alt || selectedImage.originalName}
-                fill
                 className="object-contain"
               />
             </div>

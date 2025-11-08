@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import {
   FaPhoneAlt,
@@ -137,7 +136,7 @@ const ContactButtons = () => {
       return <Icon size={20} />;
     } else if (iconData.type === "image" && iconData.imageSrc) {
       return (
-        <Image
+        <img
           src={iconData.imageSrc}
           alt="icon"
           width={28}

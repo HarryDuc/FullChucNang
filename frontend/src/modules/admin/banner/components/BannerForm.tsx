@@ -3,7 +3,6 @@ import { useAdminBanner } from "../hooks/useBanner";
 import { Banner } from "@/modules/client/home/models/banner.model";
 import { useForm } from "react-hook-form";
 import { useImages } from "@/common/hooks/useImages";
-import Image from "next/image";
 
 interface BannerFormData {
   title?: string;
@@ -205,10 +204,9 @@ export const BannerForm: React.FC<BannerFormProps> = ({
                 <div className="mt-2">
                   <p className="text-sm text-gray-600 mb-1">Xem trước:</p>
                   <div className="relative w-full h-48">
-                    <Image
+                    <img
                       src={previewImage}
                       alt="Preview"
-                      fill
                       className="object-contain rounded-md"
                     />
                   </div>

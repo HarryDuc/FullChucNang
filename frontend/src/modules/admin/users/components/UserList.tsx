@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { UserService } from "../services/user.service";
 import { User } from "../models/user.model";
-import Image from "next/image";
 
 export default function UserList() {
   const [users, setUsers] = useState<User[]>([]);
@@ -196,7 +195,7 @@ export default function UserList() {
               <tr key={user.id} className="hover:bg-gray-50">
                 <td className="py-2 px-4 border-b">
                   {user.avatar ? (
-                    <Image
+                    <img
                       src={user.avatar}
                       alt="avatar"
                       className="w-10 h-10 rounded-full object-cover"

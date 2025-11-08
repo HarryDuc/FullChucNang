@@ -41,6 +41,7 @@ import { RedirectsModule } from './modules/redirects/redirects.module';
 import { FilterModule } from './modules/filters/filter.module';
 import { SpecificationModule } from './modules/specification/specification.module';
 import { PayosModule } from './modules/payos/payos.module';
+import { UpimgModule } from './modules/upimg/upimg.module';
 @Module({
   imports: [
     // ✅ Đọc biến môi trường từ file `.env`
@@ -91,6 +92,7 @@ import { PayosModule } from './modules/payos/payos.module';
     FilterModule, // ✅ Import module quản lý filter
     SpecificationModule,
     PayosModule,
+    UpimgModule,
     // ✅ Cấu hình MailerModule để gửi email
     MailerModule.forRoot({
       transport: {

@@ -13,7 +13,6 @@ import {
 import { useProducts } from "../hooks/useProducts";
 import CategoryTree, { Category } from "./CategoryTree";
 import { VariantOptions } from "./VariantOptions";
-import Image from "next/image";
 import SunEditerUploadImage from "../../common/components/SunEditer";
 import SunEditerForSpecification from "../../common/components/SunEditerForSpecification";
 import { useProductSpecification } from '../hooks/useProductSpecification';
@@ -782,7 +781,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               className="w-full"
             />
             {thumbnail && (
-              <Image
+              <img
                 src={thumbnail}
                 alt="Thumbnail"
                 className="mt-2 w-32 h-32 object-cover"
@@ -809,7 +808,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             <div className="grid grid-cols-4 gap-2 mt-2">
               {gallery.map((url, index) => (
                 <div key={index} className="relative">
-                  <Image
+                  <img
                     src={url}
                     alt={`Gallery ${index + 1}`}
                     className="w-full h-24 object-cover"

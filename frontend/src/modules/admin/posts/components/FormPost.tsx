@@ -13,7 +13,6 @@ import {
 import PostCategoryTree from "./CategoryPostTree";
 import { usePosts } from "@/modules/admin/posts/hooks/usePosts";
 import { useAuth } from "@/context/AuthContext";
-import Image from "next/image";
 import SunEditerUploadImage from "../../common/components/SunEditer";
 
 /** Loại bỏ domain từ HTML, chỉ giữ phần relative */
@@ -298,7 +297,7 @@ const PostForm: React.FC<Props> = ({ initialData, isEdit = false }) => {
               onChange={handleThumbnailChange}
             />
             {thumbnailFile ? (
-              <Image
+              <img
                 src={URL.createObjectURL(thumbnailFile)}
                 alt="preview"
                 className="w-24 h-24 mt-2 rounded shadow"
@@ -306,7 +305,7 @@ const PostForm: React.FC<Props> = ({ initialData, isEdit = false }) => {
                 height={96}
               />
             ) : initialThumbnail ? (
-              <Image
+              <img
                 src={`${process.env.NEXT_PUBLIC_API_URL}${initialThumbnail}`}
                 alt="preview"
                 className="w-24 h-24 mt-2 rounded shadow"
