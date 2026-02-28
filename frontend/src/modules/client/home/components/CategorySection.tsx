@@ -54,11 +54,12 @@ interface ProductData {
 
 // Các slug được quy định để hiển thị (dạng slug)
 const allowedCategorySlugs = [
-  "camera",
-  "dong-ho",
-  "dien-thoai",
-  "laptop",
-  "pc",
+  "decor-cao-cap",
+  "do-phong-thuy",
+  "den-trang-tri",
+  "do-gom",
+  "mo-hinh-xe-vintage",
+  "san-pham-khac",
 ];
 
 // Banner images tương ứng (theo thứ tự trong allowedCategorySlugs)
